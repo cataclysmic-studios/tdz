@@ -1,11 +1,11 @@
 {
-  "name": "flamework-game",
+  "name": "tdz",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rbxtsc",
-    "watch": "rbxtsc -w"
+    "build": "rbxtsc -p",
+    "dev": "rbxtsc -w -p"
   },
   "keywords": [],
   "repository": {
