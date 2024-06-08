@@ -1,4 +1,4 @@
-import { HttpService as HTTP } from "@rbxts/services";
+import { HttpService as HTTP, DataStoreService as DataStore } from "@rbxts/services";
 import { endsWith, slice } from "@rbxts/string-utils";
 import { $env } from "rbxts-transform-env";
 import Object from "@rbxts/object-utils";
@@ -6,17 +6,13 @@ import Object from "@rbxts/object-utils";
 import { MissingEnvValueException } from "shared/exceptions";
 import Log from "shared/logger";
 
-const DB_AUTH = $env.string("FIREBASE_AUTH");
 const DB_URL = $env.string("FIREBASE_URL");
-
-// Complain if we don't have values to input
-if (DB_AUTH === undefined)
-  throw new MissingEnvValueException("DISCORD_WEBHOOK");
 if (DB_URL === undefined)
-  throw new MissingEnvValueException("DISCORD_WEBHOOK");
+  throw new MissingEnvValueException("FIREBASE_URL");
 
 export default class Firebase {
-  private readonly auth = `.json?auth=${DB_AUTH}`;
+  private readonly auth = DataStore.GetDataStore("Secrets", "SUCKMEOFF").GetAsync("FIREBASE_AUTH")[0];
+  private readonly authURL = `.json?auth=${this.auth}`;
   private readonly baseURL = this.fixPath(DB_URL) + "/";
 
   public set(path?: string, value?: unknown, headers: Record<string, string> = { "X-HTTP-Method-Override": "PUT" }): void {
@@ -75,7 +71,7 @@ export default class Firebase {
 
   private getEndpoint(path?: string): string {
     path = this.fixPath(path);
-    return this.baseURL + HTTP.UrlEncode(path === undefined ? "" : `/${path}`) + this.auth;
+    return this.baseURL + HTTP.UrlEncode(path === undefined ? "" : `/${path}`) + this.authURL;
   }
 
   private fixPath(path?: string): string {

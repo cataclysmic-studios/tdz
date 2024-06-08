@@ -33,7 +33,7 @@ export class GitHubInfoService implements OnInit, LogStart {
     const repeatTryGet = (): GitHubInfo => {
       const [success, info] = pcall(() => this.retrieve());
       if (!success) {
-        task.wait();
+        task.wait(0.5);
         return repeatTryGet();
       }
       return info;
@@ -52,6 +52,6 @@ export class GitHubInfoService implements OnInit, LogStart {
   }
 
   private request<T>(path: string): T {
-    return <T>HTTP.JSONDecode(HTTP.GetAsync(`${this.baseURL}/${this.repository}/${path}`, true));
+    return <T>HTTP.JSONDecode(HTTP.GetAsync(`${this.baseURL}/${this.repository}/${path}`));
   }
 }

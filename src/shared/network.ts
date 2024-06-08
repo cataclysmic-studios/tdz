@@ -3,15 +3,14 @@ import type { GitHubInfo } from "./structs/github";
 import type { GamepassInfo } from "./structs/roblox-api";
 
 interface ServerEvents {
-  encoded: {
-    test(message: string, n: number, isCool: boolean): void;
-  };
   data: {
     initialize(): void;
     set(directory: string, value: unknown): void;
     increment(directory: string, amount?: number): void;
     decrement(directory: string, amount?: number): void;
     addToArray(directory: string, value: defined): void;
+    deleteFromArray(directory: string, value: defined): void;
+    updateLoginStreak(): void;
   };
   character: {
     toggleDefaultMovement(on: boolean): void;

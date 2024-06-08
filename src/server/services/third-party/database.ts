@@ -1,4 +1,4 @@
-import { type OnInit, Service } from "@flamework/core";
+import { type OnInit, type OnStart, Service } from "@flamework/core";
 import { startsWith } from "@rbxts/string-utils";
 import Signal from "@rbxts/signal";
 
@@ -8,27 +8,31 @@ import { Events, Functions } from "server/network";
 import { type PlayerData, INITIAL_DATA } from "shared/data-models/player-data";
 import Firebase from "server/firebase";
 
-const db = new Firebase;
-
 @Service({ loadOrder: 0 })
-export class DatabaseService implements OnInit, OnPlayerLeave, LogStart {
+export class DatabaseService implements OnInit, OnStart, OnPlayerLeave, LogStart {
 	public readonly loaded = new Signal<(player: Player) => void>;
 	public readonly updated = new Signal<(player: Player, directory: string, value: unknown) => void>;
 	public playerData: Record<string, PlayerData> = {};
 
+	private db!: Firebase;
+
 	public onInit(): void {
-		this.playerData = this.getDatabase();
+		Events.data.initialize.connect(player => this.setup(player));
 		Events.data.set.connect((player, directory, value) => this.set(player, directory, value));
 		Events.data.increment.connect((player, directory, amount) => this.increment(player, directory, amount));
 		Events.data.decrement.connect((player, directory, amount) => this.decrement(player, directory, amount));
 		Events.data.addToArray.connect((player, directory, value) => this.addToArray(player, directory, value));
-		Events.data.initialize.connect(player => this.setup(player));
-
+		Events.data.deleteFromArray.connect((player, directory, value) => this.deleteFromArray(player, directory, value));
 		Functions.data.get.setCallback((player, directory, defaultValue) => this.get(player, directory ?? "", defaultValue));
 	}
 
+	public onStart(): void {
+		this.db = new Firebase;
+		this.playerData = this.getDatabase();
+	}
+
 	public onPlayerLeave(player: Player): void {
-		db.set(`playerData/${player.UserId}`, this.getCached(player));
+		this.db.set(`playerData/${player.UserId}`, this.getCached(player));
 	}
 
 	public get<T>(player: Player, directory: string, defaultValue?: T): T {
@@ -48,7 +52,7 @@ export class DatabaseService implements OnInit, OnPlayerLeave, LogStart {
 		const lastPiece = pieces[pieces.size() - 1];
 		for (const piece of pieces) {
 			if (piece === lastPiece) continue;
-			data = <Record<string, unknown>>(data ?? {})[piece];
+			data = <Record<string, unknown>>(data ?? {})[piece] ?? {};
 		}
 
 		data[lastPiece] = value;
@@ -72,12 +76,23 @@ export class DatabaseService implements OnInit, OnPlayerLeave, LogStart {
 		this.set(player, directory, array);
 	}
 
+	public deleteFromArray<T extends defined = defined>(player: Player, directory: string, value: T): void {
+		const array = this.get<T[]>(player, directory);
+		array.remove(array.indexOf(value));
+		this.set(player, directory, array);
+	}
+
+	public filterFromArray<T extends defined = defined>(player: Player, directory: string, filter: (value: T, index: number) => boolean): void {
+		const array = this.get<T[]>(player, directory, []);
+		this.set(player, directory, array.filter(filter));
+	}
+
 	public delete(player: Player, directory: string): void {
 		this.set(player, directory, undefined);
 	}
 
 	public getDatabase(): Record<string, PlayerData> {
-		return db.get("playerData", {});
+		return this.db.get("playerData", {});
 	}
 
 	private getCached(player: Player): PlayerData {
@@ -90,11 +105,24 @@ export class DatabaseService implements OnInit, OnPlayerLeave, LogStart {
 	}
 
 	private setup(player: Player): void {
-		const data = db.get<PlayerData>(`playerData/${player.UserId}`, table.clone(INITIAL_DATA));
+		const data = this.db.get<PlayerData>(`playerData/${player.UserId}`, table.clone(INITIAL_DATA));
 		this.playerData[tostring(player.UserId)] = data;
-		// this.initialize(player, "coins", 0);
+		this.initialize(player, "coins", 0);
+		this.initialize(player, "ownedTowers", []);
+		this.initialize(player, "lastLogin", 0);
+		this.initialize(player, "loginStreak", 0);
+		this.initialize(player, "claimedDaily", false);
+		this.initializeSettings(player);
 
 		this.loaded.Fire(player);
+	}
+
+	private initializeSettings(player: Player): void {
+		this.initialize(player, "settings/general/autoskip", false);
+		this.initialize(player, "settings/audio/sfx", 100);
+		this.initialize(player, "settings/audio/music", 100);
+		this.initialize(player, "settings/audio/ambience", 100);
+		this.initialize(player, "settings/graphics/towerVFX", true);
 	}
 
 	private initialize<T>(player: Player, directory: string, initialValue: T): void {

@@ -1,6 +1,23 @@
 
 export const INITIAL_DATA = {
-  // coins: 0
+  coins: 0,
+  ownedTowers: <string[]>[],
+  lastLogin: 0,
+  loginStreak: 0,
+  claimedDaily: false,
+  settings: {
+    general: {
+      autoskip: false
+    },
+    audio: {
+      sfx: 100,
+      music: 100,
+      ambience: 100
+    },
+    graphics: {
+      towerVFX: true
+    }
+  }
 };
 
 export type PlayerData = typeof INITIAL_DATA;
