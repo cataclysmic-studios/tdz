@@ -1,16 +1,9 @@
 import { Controller } from "@flamework/core";
-import type { Components } from "@flamework/components";
 
 import { Player } from "shared/utility/client";
 
-import type { Movement } from "client/components/movement";
-
 @Controller()
 export class CharacterController {
-  public constructor(
-    private readonly components: Components
-  ) { }
-
   public get(): Maybe<CharacterModel> {
     return <Maybe<CharacterModel>>Player.Character;
   }
@@ -37,13 +30,5 @@ export class CharacterController {
 
   public mustGetHumanoid(): Humanoid {
     return this.mustGet().Humanoid;
-  }
-
-  public getMovement(): Maybe<Movement> {
-    return this.components.getComponent(this.mustGet());
-  }
-
-  public async waitForMovement(): Promise<Movement> {
-    return this.components.waitForComponent(this.mustGet());
   }
 }

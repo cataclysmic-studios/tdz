@@ -1,4 +1,3 @@
-import { Components } from "@flamework/components";
 import { Controller, type OnStart } from "@flamework/core";
 import { Context as InputContext } from "@rbxts/gamejoy";
 import { RunService as Runtime } from "@rbxts/services";
@@ -7,14 +6,11 @@ import Iris from "@rbxts/iris";
 
 import { Player } from "shared/utility/client";
 import { DEVELOPERS } from "shared/constants";
-import type { FirstPersonAnimatedCamera } from "client/components/cameras/first-person-animated";
 import type Spring from "shared/classes/spring";
 import type Wave from "shared/classes/wave";
 
-import type { Movement } from "client/components/movement";
 import type { CameraController } from "./camera";
 import type { MouseController } from "./mouse";
-import type { CharacterController } from "./character";
 
 @Controller()
 export class ControlPanelController implements OnStart {
@@ -25,19 +21,16 @@ export class ControlPanelController implements OnStart {
   });
 
   public constructor(
-    private readonly components: Components,
     private readonly camera: CameraController,
     private readonly mouse: MouseController,
-    private readonly character: CharacterController
   ) { }
 
   public async onStart(): Promise<void> {
     const windowSize = new Vector2(300, 400);
-    const movement = await this.components.waitForComponent<Movement>(this.character.mustGet());
     let open = false;
 
     this.input
-      .Bind("RightShift", () => {
+      .Bind("Comma", () => {
         if (!Runtime.IsStudio() && !DEVELOPERS.includes(Player.UserId)) return;
         open = !open;
       })
@@ -56,8 +49,6 @@ export class ControlPanelController implements OnStart {
       Iris.Window(["Control Panel"], { size: Iris.State(windowSize) });
 
       this.renderCameraTab();
-      this.renderProceduralAnimationsTab();
-      this.renderMovementTab(movement);
 
       Iris.End();
     });
@@ -80,119 +71,6 @@ export class ControlPanelController implements OnStart {
 
     if (this.camera.currentName !== componentIndex.get())
       this.camera.set(componentIndex.get());
-
-    Iris.End();
-  }
-
-  private renderProceduralAnimationsTab(): void {
-    Iris.Tree(["Procedural Animations"]);
-    {
-      Iris.Tree(["First Person Animated Camera"]);
-      {
-        const camera = this.camera.get<FirstPersonAnimatedCamera>("FirstPersonAnimated");
-        Iris.Tree(["Landing"]);
-        {
-          const animation = camera.animator.animations.landing;
-          const damping = Iris.SliderNum(["Damping", 0.1, 0.1, 10], { number: Iris.State(animation.damping) });
-          if (damping.numberChanged())
-            animation.damping = damping.state.number.get();
-
-          this.renderSpringSettings(animation.spring);
-        }
-        Iris.End();
-        Iris.Tree(["Mouse Sway"]);
-        {
-          const animation = camera.animator.animations.mouseSway;
-          const damping = Iris.SliderNum(["Damping", 0.1, 0.1, 10], { number: Iris.State(animation.damping) });
-          if (damping.numberChanged())
-            animation.damping = damping.state.number.get();
-
-          const limit = Iris.SliderNum(["Limit", 0.05, 0.05, 5], { number: Iris.State(animation.limit) });
-          if (limit.numberChanged())
-            animation.limit = limit.state.number.get();
-        }
-        Iris.End();
-        Iris.Tree(["Walk Cycle"]);
-        {
-          const animation = camera.animator.animations.walkCycle;
-          const damping = Iris.SliderNum(["Damping", 0.1, 0.1, 10], { number: Iris.State(animation.damping) });
-          if (damping.numberChanged())
-            animation.damping = damping.state.number.get();
-
-          const minimumSpeed = Iris.SliderNum(["Minimum Walk Speed", 0.5, 0, 30], { number: Iris.State(animation.minimumSpeed) });
-          if (minimumSpeed.numberChanged())
-            animation.minimumSpeed = minimumSpeed.state.number.get();
-
-          this.renderSpringSettings(animation.spring);
-          this.renderWaveSettings(animation.sineWave);
-          this.renderWaveSettings(animation.cosineWave, "Cosine");
-        }
-        Iris.End();
-      }
-      Iris.End();
-    }
-    Iris.End()
-  }
-
-  private renderMovementTab(movement?: Movement): void {
-    if (movement === undefined) return;
-    Iris.Tree(["Movement"]);
-
-    const speed = Iris.SliderNum(["Speed", 0.05, 0.05, 30], { number: Iris.State(movement.getSpeed()) });
-    if (speed.numberChanged())
-      movement.attributes.Movement_Speed = speed.state.number.get();
-
-    const acceleration = Iris.SliderNum(["Acceleration", 0.01, 0, 3], { number: Iris.State(movement.getAcceleration()) });
-    if (acceleration.numberChanged())
-      movement.attributes.Movement_Acceleration = acceleration.state.number.get();
-
-    const friction = Iris.SliderNum(["Friction", 0.01, 0, 1], { number: Iris.State(movement.friction) });
-    if (friction.numberChanged())
-      movement.attributes.Movement_Friction = friction.state.number.get();
-
-    const airFriction = Iris.SliderNum(["Air Friction", 0.01, 0, 1], { number: Iris.State(movement.getAirFriction()) });
-    if (airFriction.numberChanged())
-      movement.attributes.Movement_AirFriction = airFriction.state.number.get();
-
-    Iris.Separator();
-
-    const canMoveMidair = Iris.Checkbox(["Can Move Midair?"], { isChecked: Iris.State(movement.canMoveMidair()) });
-    if (canMoveMidair.checked())
-      movement.attributes.Movement_CanMoveMidair = true;
-    if (canMoveMidair.unchecked())
-      movement.attributes.Movement_CanMoveMidair = false;
-
-    const jumpCooldown = Iris.SliderNum(["Jump Cooldown", 0.01, 0, 5], { number: Iris.State(movement.getJumpCooldown()) });
-    if (jumpCooldown.numberChanged())
-      movement.attributes.Movement_JumpCooldown = jumpCooldown.state.number.get();
-
-    const jumpForce = Iris.SliderNum(["Jump Force", 1, 0, 100], { number: Iris.State(movement.getJumpForce()) });
-    if (jumpForce.numberChanged())
-      movement.attributes.Movement_JumpForce = jumpForce.state.number.get();
-
-    const gravitationalConstant = Iris.SliderNum(["Gravitational Constant (G)", 0.025, 0.1, 20], { number: Iris.State(movement.getG()) });
-    if (gravitationalConstant.numberChanged())
-      movement.attributes.Movement_GravitationalConstant = gravitationalConstant.state.number.get();
-
-    const restrictive = Iris.Checkbox(["Restrictive?"], { isChecked: Iris.State(movement.isRestrictive()) });
-    if (restrictive.checked())
-      movement.attributes.Movement_Restrictive = true;
-    if (restrictive.unchecked())
-      movement.attributes.Movement_Restrictive = false;
-
-    const maxEdgeHeight = Iris.SliderNum(["Restrictive Max Edge Height", 0.01, 0, 5], { number: Iris.State(movement.getRestrictiveMaxEdgeHeight()) });
-    if (maxEdgeHeight.numberChanged())
-      movement.attributes.Movement_RestrictiveMaxEdgeHeight = maxEdgeHeight.state.number.get();
-
-    const rotational = Iris.Checkbox(["Rotational?"], { isChecked: Iris.State(movement.isRotational()) });
-    if (rotational.checked())
-      movement.attributes.Movement_Rotational = true;
-    if (rotational.unchecked())
-      movement.attributes.Movement_Rotational = false;
-
-    const rotationSpeed = Iris.SliderNum(["Rotation Speed", 0.01, 0, 5], { number: Iris.State(movement.getRotationSpeed()) });
-    if (rotationSpeed.numberChanged())
-      movement.attributes.Movement_RotationSpeed = rotationSpeed.state.number.get();
 
     Iris.End();
   }

@@ -4,10 +4,8 @@ import { Workspace as World } from "@rbxts/services";
 import type { LogStart } from "shared/hooks";
 import { DefaultCamera } from "client/components/cameras/default";
 import { FirstPersonCamera } from "client/components/cameras/first-person";
-import { AerialCamera } from "client/components/cameras/aerial";
 import { FixedCamera } from "client/components/cameras/fixed";
 import { FlyOnTheWallCamera } from "client/components/cameras/fly-on-the-wall";
-import { FirstPersonAnimatedCamera } from "client/components/cameras/first-person-animated";
 
 import type { CameraControllerComponent } from "client/base-components/camera-controller-component";
 
@@ -15,10 +13,8 @@ import type { CameraControllerComponent } from "client/base-components/camera-co
 interface Cameras {
   readonly Default: DefaultCamera;
   readonly FirstPerson: FirstPersonCamera;
-  readonly Aerial: AerialCamera;
   readonly Fixed: FixedCamera;
   readonly FlyOnTheWall: FlyOnTheWallCamera;
-  readonly FirstPersonAnimated: FirstPersonAnimatedCamera;
 }
 
 @Controller()
@@ -32,10 +28,8 @@ export class CameraController implements OnInit, OnRender, LogStart {
     this.cameras = {
       Default: DefaultCamera.create(this),
       FirstPerson: FirstPersonCamera.create(this),
-      Aerial: AerialCamera.create(this),
       Fixed: FixedCamera.create(this),
-      FlyOnTheWall: FlyOnTheWallCamera.create(this),
-      FirstPersonAnimated: FirstPersonAnimatedCamera.create(this)
+      FlyOnTheWall: FlyOnTheWallCamera.create(this)
     };
   }
 
