@@ -4,10 +4,11 @@ import { Component } from "@flamework/components";
 import { PlayerGui } from "shared/utility/client";
 
 import DestroyableComponent from "shared/base-components/destroyable";
+import type { PageController } from "client/controllers/page";
 
 interface Attributes {
   PageRoute_Destination: string;
-  PageRoute_Exclusive: boolean; // whether or not all other pages should be disabled when destination page is reached
+  PageRoute_Exclusive: boolean;
 }
 
 @Component({
@@ -18,18 +19,15 @@ interface Attributes {
   }
 })
 export class PageRoute extends DestroyableComponent<Attributes, GuiButton> implements OnStart {
-  public onStart(): void {
-    this.janitor.Add(this.instance.MouseButton1Click.Connect(() => {
-      const screen = this.instance.FindFirstAncestorOfClass("ScreenGui")!;
-      const frames = screen.GetChildren().filter((i): i is Frame => i.IsA("Frame"));
-      const destination = <Frame>screen.WaitForChild(this.attributes.PageRoute_Destination);
-      if (this.attributes.PageRoute_Exclusive)
-        for (const frame of frames) {
-          if (frame === destination) continue;
-          frame.Visible = false;
-        }
+  public constructor(
+    private readonly page: PageController
+  ) { super(); }
 
-      destination.Visible = true;
-    }));
+  public onStart(): void {
+    this.janitor.Add(this.instance.MouseButton1Click.Connect(() => this.page.set(
+      this.attributes.PageRoute_Destination,
+      this.attributes.PageRoute_Exclusive,
+      this.instance.FindFirstAncestorOfClass("ScreenGui")!
+    )));
   }
 }
