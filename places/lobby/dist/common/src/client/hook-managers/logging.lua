@@ -32,7 +32,7 @@ do
 	end
 end
 -- (Flamework) LoggingController decorators
-Reflect.decorate(LoggingController, "@flamework/core:out/flamework@Controller", Controller, {})
+Reflect.decorate(LoggingController, "$:flamework@Controller", Controller, {})
 return {
 	LoggingController = LoggingController,
 }

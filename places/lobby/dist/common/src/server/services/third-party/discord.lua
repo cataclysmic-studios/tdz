@@ -56,7 +56,7 @@ do
 	end
 end
 -- (Flamework) DiscordService decorators
-Reflect.decorate(DiscordService, "@flamework/core:out/flamework@Service", Service, {})
+Reflect.decorate(DiscordService, "$:flamework@Service", Service, {})
 return {
 	DiscordService = DiscordService,
 }

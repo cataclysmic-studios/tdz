@@ -77,7 +77,7 @@ do
 	end
 end
 -- (Flamework) CharacterAddService decorators
-Reflect.decorate(CharacterAddService, "@flamework/core:out/flamework@Service", Service, { {
+Reflect.decorate(CharacterAddService, "$:flamework@Service", Service, { {
 	loadOrder = 0,
 } })
 return {

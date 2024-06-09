@@ -106,7 +106,7 @@ do
 	end
 end
 -- (Flamework) GitHubInfoService decorators
-Reflect.decorate(GitHubInfoService, "@flamework/core:out/flamework@Service", Service, {})
+Reflect.decorate(GitHubInfoService, "$:flamework@Service", Service, {})
 return {
 	GitHubInfoService = GitHubInfoService,
 }

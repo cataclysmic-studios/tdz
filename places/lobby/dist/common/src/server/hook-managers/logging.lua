@@ -32,7 +32,7 @@ do
 	end
 end
 -- (Flamework) LoggingService decorators
-Reflect.decorate(LoggingService, "@flamework/core:out/flamework@Service", Service, { {
+Reflect.decorate(LoggingService, "$:flamework@Service", Service, { {
 	loadOrder = 0,
 } })
 return {

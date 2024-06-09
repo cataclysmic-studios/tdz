@@ -69,7 +69,7 @@ do
 	end
 end
 -- (Flamework) PageController decorators
-Reflect.decorate(PageController, "@flamework/core:out/flamework@Controller", Controller, {})
+Reflect.decorate(PageController, "$:flamework@Controller", Controller, {})
 return {
 	PageController = PageController,
 }

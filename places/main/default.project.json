@@ -1,11 +1,11 @@
 {
-	"name": "OVERHEAT Main",
+	"name": "TDZ Main",
 	"tree": {
 		"$className": "DataModel",
 		"ServerScriptService": {
 			"$className": "ServerScriptService",
 			"TS": {
-				"$path": "dist/places/lobby/src/server"
+				"$path": "dist/places/main/src/server"
 			}
 		},
 		"ReplicatedStorage": {
@@ -23,7 +23,7 @@
 				}
 			},
 			"shared": {
-				"$path": "dist/places/lobby/src/shared"
+				"$path": "dist/places/main/src/shared"
 			},
 			"common": {
 				"$path": "dist/common/src"
@@ -34,7 +34,7 @@
 			"StarterPlayerScripts": {
 				"$className": "StarterPlayerScripts",
 				"TS": {
-					"$path": "dist/places/lobby/src/client"
+					"$path": "dist/places/main/src/client"
 				}
 			}
 		},

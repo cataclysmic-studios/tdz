@@ -7,12 +7,8 @@ local _string_utils = TS.import(script, game:GetService("ReplicatedStorage"), "r
 local endsWith = _string_utils.endsWith
 local slice = _string_utils.slice
 local Object = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@rbxts", "object-utils")
-local MissingEnvValueException = TS.import(script, game:GetService("ReplicatedStorage"), "common", "shared", "exceptions").MissingEnvValueException
 local Log = TS.import(script, game:GetService("ReplicatedStorage"), "common", "shared", "logger").default
 local DB_URL = "https://rbx-tdz-default-rtdb.firebaseio.com/"
-if DB_URL == nil then
-	error(MissingEnvValueException.new("FIREBASE_URL"))
-end
 local Firebase
 do
 	Firebase = setmetatable({}, {

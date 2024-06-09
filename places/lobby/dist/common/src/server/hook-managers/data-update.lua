@@ -48,7 +48,7 @@ do
 	end
 end
 -- (Flamework) DataUpdateService decorators
-Reflect.decorate(DataUpdateService, "@flamework/core:out/flamework@Service", Service, {})
+Reflect.decorate(DataUpdateService, "$:flamework@Service", Service, {})
 return {
 	DataUpdateService = DataUpdateService,
 }

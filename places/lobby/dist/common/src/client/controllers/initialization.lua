@@ -30,7 +30,7 @@ do
 	end
 end
 -- (Flamework) InitializationController decorators
-Reflect.decorate(InitializationController, "@flamework/core:out/flamework@Controller", Controller, { {
+Reflect.decorate(InitializationController, "$:flamework@Controller", Controller, { {
 	loadOrder = 1000,
 } })
 return {

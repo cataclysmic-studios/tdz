@@ -105,16 +105,24 @@ export class DatabaseService implements OnInit, OnStart, OnPlayerLeave, LogStart
 	}
 
 	private setup(player: Player): void {
-		const data = this.db.get<PlayerData>(`playerData/${player.UserId}`, table.clone(INITIAL_DATA));
-		this.playerData[tostring(player.UserId)] = data;
-		this.initialize(player, "coins", 0);
-		this.initialize(player, "ownedTowers", []);
-		this.initialize(player, "lastLogin", 0);
-		this.initialize(player, "loginStreak", 0);
-		this.initialize(player, "claimedDaily", false);
-		this.initializeSettings(player);
+		task.spawn(() => {
+			while (this.db === undefined)
+				task.wait(0.1);
 
-		this.loaded.Fire(player);
+			const data = this.db.get<PlayerData>(`playerData/${player.UserId}`, table.clone(INITIAL_DATA));
+			this.playerData[tostring(player.UserId)] = data;
+			this.initialize(player, "coins", 0);
+			this.initialize(player, "level", 1);
+			this.initialize(player, "xp", 0);
+			this.initialize(player, "ownedTowers", []);
+			this.initialize(player, "lastLogin", 0);
+			this.initialize(player, "loginStreak", 0);
+			this.initialize(player, "claimedDaily", false);
+			this.initialize(player, "modesWon", {});
+			this.initializeSettings(player);
+
+			this.loaded.Fire(player);
+		});
 	}
 
 	private initializeSettings(player: Player): void {

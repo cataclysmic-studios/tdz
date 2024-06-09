@@ -70,7 +70,7 @@ do
 	end
 end
 -- (Flamework) CharacterAddController decorators
-Reflect.decorate(CharacterAddController, "@flamework/core:out/flamework@Controller", Controller, { {
+Reflect.decorate(CharacterAddController, "$:flamework@Controller", Controller, { {
 	loadOrder = 0,
 } })
 return {

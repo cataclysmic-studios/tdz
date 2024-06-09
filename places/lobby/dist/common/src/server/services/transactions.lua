@@ -62,7 +62,7 @@ do
 	end
 end
 -- (Flamework) TransactionsService decorators
-Reflect.decorate(TransactionsService, "@flamework/core:out/flamework@Service", Service, {})
+Reflect.decorate(TransactionsService, "$:flamework@Service", Service, {})
 return {
 	TransactionsService = TransactionsService,
 }

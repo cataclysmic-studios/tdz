@@ -74,7 +74,7 @@ do
 	end
 end
 -- (Flamework) UIEffectsController decorators
-Reflect.decorate(UIEffectsController, "@flamework/core:out/flamework@Controller", Controller, {})
+Reflect.decorate(UIEffectsController, "$:flamework@Controller", Controller, {})
 return {
 	UIEffectsController = UIEffectsController,
 }

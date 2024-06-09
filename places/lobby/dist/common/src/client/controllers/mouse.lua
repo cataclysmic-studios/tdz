@@ -157,7 +157,7 @@ do
 	end
 end
 -- (Flamework) MouseController decorators
-Reflect.decorate(MouseController, "@flamework/core:out/flamework@Controller", Controller, {})
+Reflect.decorate(MouseController, "$:flamework@Controller", Controller, {})
 return {
 	MouseController = MouseController,
 }

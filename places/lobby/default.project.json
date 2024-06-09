@@ -1,5 +1,5 @@
 {
-	"name": "OVERHEAT Main",
+	"name": "TDZ Lobby",
 	"tree": {
 		"$className": "DataModel",
 		"ServerScriptService": {

@@ -177,7 +177,7 @@ do
 	end
 end
 -- (Flamework) ControlPanelController decorators
-Reflect.decorate(ControlPanelController, "@flamework/core:out/flamework@Controller", Controller, {})
+Reflect.decorate(ControlPanelController, "$:flamework@Controller", Controller, {})
 return {
 	ControlPanelController = ControlPanelController,
 }

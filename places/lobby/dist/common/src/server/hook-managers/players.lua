@@ -77,7 +77,7 @@ do
 	end
 end
 -- (Flamework) PlayersService decorators
-Reflect.decorate(PlayersService, "@flamework/core:out/flamework@Service", Service, { {
+Reflect.decorate(PlayersService, "$:flamework@Service", Service, { {
 	loadOrder = 1,
 } })
 return {

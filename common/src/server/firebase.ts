@@ -1,14 +1,10 @@
 import { HttpService as HTTP, DataStoreService as DataStore } from "@rbxts/services";
 import { endsWith, slice } from "@rbxts/string-utils";
-import { $env } from "rbxts-transform-env";
 import Object from "@rbxts/object-utils";
 
-import { MissingEnvValueException } from "../shared/exceptions";
 import Log from "../shared/logger";
 
-const DB_URL = $env.string("FIREBASE_URL");
-if (DB_URL === undefined)
-  throw new MissingEnvValueException("FIREBASE_URL");
+const DB_URL = "https://rbx-tdz-default-rtdb.firebaseio.com/";
 
 export default class Firebase {
   private readonly auth = DataStore.GetDataStore("Secrets", "SUCKMEOFF").GetAsync("FIREBASE_AUTH")[0];

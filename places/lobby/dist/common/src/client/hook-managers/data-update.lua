@@ -47,7 +47,7 @@ do
 	end
 end
 -- (Flamework) DataUpdateController decorators
-Reflect.decorate(DataUpdateController, "@flamework/core:out/flamework@Controller", Controller, { {
+Reflect.decorate(DataUpdateController, "$:flamework@Controller", Controller, { {
 	loadOrder = 999,
 } })
 return {

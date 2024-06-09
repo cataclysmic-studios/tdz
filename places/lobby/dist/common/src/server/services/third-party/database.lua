@@ -183,7 +183,7 @@ do
 	end
 end
 -- (Flamework) DatabaseService decorators
-Reflect.decorate(DatabaseService, "@flamework/core:out/flamework@Service", Service, { {
+Reflect.decorate(DatabaseService, "$:flamework@Service", Service, { {
 	loadOrder = 0,
 } })
 return {

@@ -52,7 +52,7 @@ do
 	end
 end
 -- (Flamework) CharacterController decorators
-Reflect.decorate(CharacterController, "@flamework/core:out/flamework@Controller", Controller, {})
+Reflect.decorate(CharacterController, "$:flamework@Controller", Controller, {})
 return {
 	CharacterController = CharacterController,
 }

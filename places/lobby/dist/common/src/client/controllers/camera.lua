@@ -63,7 +63,7 @@ do
 	end
 end
 -- (Flamework) CameraController decorators
-Reflect.decorate(CameraController, "@flamework/core:out/flamework@Controller", Controller, {})
+Reflect.decorate(CameraController, "$:flamework@Controller", Controller, {})
 return {
 	CameraController = CameraController,
 }

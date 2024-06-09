@@ -48,7 +48,7 @@ do
 	end
 end
 -- (Flamework) DailyRewardService decorators
-Reflect.decorate(DailyRewardService, "@flamework/core:out/flamework@Service", Service, {})
+Reflect.decorate(DailyRewardService, "$:flamework@Service", Service, {})
 return {
 	DailyRewardService = DailyRewardService,
 }
