@@ -1,3 +1,4 @@
+import { Difficulty } from "../structs/difficulty";
 
 export const INITIAL_DATA = {
   coins: 0,
@@ -5,6 +6,7 @@ export const INITIAL_DATA = {
   lastLogin: 0,
   loginStreak: 0,
   claimedDaily: false,
+  difficultiesWon: <Record<string, Difficulty[]>>{},
   settings: {
     general: {
       autoskip: false

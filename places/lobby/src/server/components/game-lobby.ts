@@ -2,7 +2,8 @@ import type { OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
 import { Players } from "@rbxts/services";
 
-import { getInstancePath } from "common/shared/utility/instances";
+import { Events } from "server/network";
+import { Assets, getInstancePath } from "common/shared/utility/instances";
 import Log from "common/shared/logger";
 
 interface GameLobbyModel extends Model {
@@ -13,7 +14,7 @@ interface Attributes {
   readonly GameLobby_Size: number;
 }
 
-let lobbyID = 0;
+let lobbyID = 1;
 
 @Component({
   tag: "GameLobby",
@@ -22,10 +23,19 @@ let lobbyID = 0;
   }
 })
 export class GameLobby extends BaseComponent<Attributes, GameLobbyModel> implements OnStart {
-  private readonly players: Player[] = [];
+  private readonly players = new Set<Player>;
+  private readonly id = lobbyID++;
+  private ui!: typeof Assets.UI.GameLobbyUI;
 
   public onStart(): void {
-    lobbyID++;
+    this.ui = Assets.UI.GameLobbyUI.Clone();
+    this.ui.Parent = this.instance.Entrance;
+
+    Events.leaveLobby.connect((player, id) => {
+      if (this.id !== id) return;
+      this.leave(player);
+    });
+
     this.instance.Entrance.Touched.Connect(hit => {
       const character = hit.FindFirstAncestorOfClass("Model");
       const humanoid = character?.FindFirstChildOfClass("Humanoid");
@@ -45,13 +55,32 @@ export class GameLobby extends BaseComponent<Attributes, GameLobbyModel> impleme
       if (seat === undefined)
         return Log.warning(`Attempted to seat player in ${seatName} (${getInstancePath(this.instance)})`);
 
-      this.players.push(player);
-      humanoid.JumpHeight = 0;
+      this.players.add(player);
+      humanoid.JumpPower = 0;
       seat.Sit(humanoid);
+      Events.toggleLeaveButton(player, true, this.id);
+      this.updatePlayerCount();
     });
   }
 
   public leave(player: Player): void {
+    this.players.delete(player);
 
+    const character = player.Character;
+    const root = <Maybe<BasePart>>character?.FindFirstChild("HumanoidRootPart")
+    const humanoid = character?.FindFirstChildOfClass("Humanoid");
+    if (humanoid === undefined || root === undefined) return;
+
+    humanoid.JumpPower = 50;
+    humanoid.Jump = true;
+    do task.wait(0.1); while (humanoid.Jump); // wait until jump is finished otherwise seat teleports lol
+
+    root.CFrame = this.instance.Entrance.CFrame.add(this.instance.Entrance.CFrame.LookVector.mul(8)).sub(new Vector3(0, 4, 0));
+    Events.toggleLeaveButton(player, false, this.id);
+    this.updatePlayerCount();
+  }
+
+  private updatePlayerCount(): void {
+    this.ui.PlayerCount.Text = `${this.players.size()}/${this.attributes.GameLobby_Size}`;
   }
 }

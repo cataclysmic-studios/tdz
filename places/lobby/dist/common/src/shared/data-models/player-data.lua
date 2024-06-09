@@ -5,6 +5,7 @@ local INITIAL_DATA = {
 	lastLogin = 0,
 	loginStreak = 0,
 	claimedDaily = false,
+	difficultiesWon = {},
 	settings = {
 		general = {
 			autoskip = false,

@@ -150,15 +150,23 @@ do
 		CommonEvents.data.updated(player, fullDirectory, value)
 	end
 	function DatabaseService:setup(player)
-		local data = self.db:get(`playerData/{player.UserId}`, table.clone(INITIAL_DATA))
-		self.playerData[tostring(player.UserId)] = data
-		self:initialize(player, "coins", 0)
-		self:initialize(player, "ownedTowers", {})
-		self:initialize(player, "lastLogin", 0)
-		self:initialize(player, "loginStreak", 0)
-		self:initialize(player, "claimedDaily", false)
-		self:initializeSettings(player)
-		self.loaded:Fire(player)
+		task.spawn(function()
+			while self.db == nil do
+				task.wait(0.1)
+			end
+			local data = self.db:get(`playerData/{player.UserId}`, table.clone(INITIAL_DATA))
+			self.playerData[tostring(player.UserId)] = data
+			self:initialize(player, "coins", 0)
+			self:initialize(player, "level", 1)
+			self:initialize(player, "xp", 0)
+			self:initialize(player, "ownedTowers", {})
+			self:initialize(player, "lastLogin", 0)
+			self:initialize(player, "loginStreak", 0)
+			self:initialize(player, "claimedDaily", false)
+			self:initialize(player, "modesWon", {})
+			self:initializeSettings(player)
+			self.loaded:Fire(player)
+		end)
 	end
 	function DatabaseService:initializeSettings(player)
 		self:initialize(player, "settings/general/autoskip", false)

@@ -1,8 +1,12 @@
 import { Networking } from "@flamework/networking";
 
-interface ServerEvents { }
+interface ServerEvents {
+  leaveLobby(id: number): void;
+}
 
-interface ClientEvents { }
+interface ClientEvents {
+  toggleLeaveButton(on: boolean, id: number): void;
+}
 
 interface ServerFunctions { }
 
