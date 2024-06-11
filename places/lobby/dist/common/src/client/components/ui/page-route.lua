@@ -25,7 +25,7 @@ do
 	end
 	function PageRoute:onStart()
 		self.janitor:Add(self.instance.MouseButton1Click:Connect(function()
-			return self.page:set(self.attributes.PageRoute_Destination, self.attributes.PageRoute_Exclusive, self.instance:FindFirstAncestorOfClass("ScreenGui"))
+			return self.page:set(self.attributes.PageRoute_Destination, self.instance:FindFirstAncestorOfClass("ScreenGui"), self.attributes.PageRoute_Exclusive, self.attributes.PageRoute_Blur)
 		end))
 	end
 	do
@@ -41,10 +41,12 @@ Reflect.decorate(PageRoute, "$c:components@Component", Component, { {
 	ancestorWhitelist = { PlayerGui },
 	defaults = {
 		PageRoute_Exclusive = true,
+		PageRoute_Blur = false,
 	},
 	attributes = {
 		PageRoute_Destination = t.string,
 		PageRoute_Exclusive = t.boolean,
+		PageRoute_Blur = t.boolean,
 	},
 	instanceGuard = t.instanceIsA("GuiButton"),
 } })

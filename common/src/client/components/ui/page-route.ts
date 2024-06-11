@@ -9,13 +9,15 @@ import type { PageController } from "../../controllers/page";
 interface Attributes {
   PageRoute_Destination: string;
   PageRoute_Exclusive: boolean;
+  PageRoute_Blur: boolean;
 }
 
 @Component({
   tag: "PageRoute",
   ancestorWhitelist: [PlayerGui],
   defaults: {
-    PageRoute_Exclusive: true
+    PageRoute_Exclusive: true,
+    PageRoute_Blur: false
   }
 })
 export class PageRoute extends DestroyableComponent<Attributes, GuiButton> implements OnStart {
@@ -26,8 +28,9 @@ export class PageRoute extends DestroyableComponent<Attributes, GuiButton> imple
   public onStart(): void {
     this.janitor.Add(this.instance.MouseButton1Click.Connect(() => this.page.set(
       this.attributes.PageRoute_Destination,
+      this.instance.FindFirstAncestorOfClass("ScreenGui")!,
       this.attributes.PageRoute_Exclusive,
-      this.instance.FindFirstAncestorOfClass("ScreenGui")!
+      this.attributes.PageRoute_Blur
     )));
   }
 }

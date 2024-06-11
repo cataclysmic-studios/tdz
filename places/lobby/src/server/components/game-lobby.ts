@@ -58,9 +58,13 @@ export class GameLobby extends BaseComponent<Attributes, GameLobbyModel> impleme
       this.players.add(player);
       humanoid.JumpPower = 0;
       seat.Sit(humanoid);
-      Events.toggleLeaveButton(player, true, this.id);
+      this.toggleLeaveButton(player, true);
       this.updatePlayerCount();
     });
+  }
+
+  private toggleLeaveButton(player: Player, on: boolean) {
+    Events.toggleLeaveButton(player, on, this.id);
   }
 
   public leave(player: Player): void {
@@ -76,7 +80,7 @@ export class GameLobby extends BaseComponent<Attributes, GameLobbyModel> impleme
     do task.wait(0.1); while (humanoid.Jump); // wait until jump is finished otherwise seat teleports lol
 
     root.CFrame = this.instance.Entrance.CFrame.add(this.instance.Entrance.CFrame.LookVector.mul(8)).sub(new Vector3(0, 4, 0));
-    Events.toggleLeaveButton(player, false, this.id);
+    this.toggleLeaveButton(player, false);
     this.updatePlayerCount();
   }
 

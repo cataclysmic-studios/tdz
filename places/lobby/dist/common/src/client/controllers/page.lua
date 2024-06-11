@@ -2,6 +2,7 @@
 local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
 local Reflect = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@flamework", "core", "out").Reflect
 local Controller = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@flamework", "core", "out").Controller
+local Lighting = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@rbxts", "services").Lighting
 local PageController
 do
 	PageController = setmetatable({}, {
@@ -15,13 +16,17 @@ do
 		return self:constructor(...) or self
 	end
 	function PageController:constructor()
+		self.blur = Instance.new("BlurEffect", Lighting)
 	end
-	function PageController:set(destination, exclusive, screen)
+	function PageController:onInit()
+		self.blur.Enabled = false
+	end
+	function PageController:set(destination, screen, exclusive, blur)
 		local _exp = screen:GetChildren()
 		-- ▼ ReadonlyArray.filter ▼
 		local _newValue = {}
 		local _callback = function(i)
-			return i:IsA("Frame")
+			return i:IsA("GuiObject") and not i:IsA("GuiButton")
 		end
 		local _length = 0
 		for _k, _v in _exp do
@@ -41,6 +46,7 @@ do
 				frame.Visible = false
 			end
 		end
+		self.blur.Enabled = blur
 		destinationFrame.Visible = true
 	end
 	function PageController:toggleAll(screen, on)
@@ -48,7 +54,7 @@ do
 		-- ▼ ReadonlyArray.filter ▼
 		local _newValue = {}
 		local _callback = function(i)
-			return i:IsA("Frame")
+			return i:IsA("GuiObject") and not i:IsA("GuiButton")
 		end
 		local _length = 0
 		for _k, _v in _exp do
@@ -66,6 +72,7 @@ do
 	do
 		-- (Flamework) PageController metadata
 		Reflect.defineMetadata(PageController, "identifier", "common/src/client/controllers/page@PageController")
+		Reflect.defineMetadata(PageController, "flamework:implements", { "$:flamework@OnInit" })
 	end
 end
 -- (Flamework) PageController decorators
