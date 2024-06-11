@@ -1,7 +1,7 @@
 -- Compiled with roblox-ts v2.3.0
 local INITIAL_DATA = {
 	coins = 0,
-	ownedTowers = {},
+	ownedTowers = { "Rifleman" },
 	lastLogin = 0,
 	loginStreak = 0,
 	claimedDaily = false,
