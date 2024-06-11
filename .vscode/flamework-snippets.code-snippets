@@ -53,7 +53,7 @@
 		"body": [
 			"import type { OnStart } from \"@flamework/core\";",
 			"",
-			"import { Singleton } from \"shared/dependencies\";",
+			"import { Singleton } from \"common/shared/dependencies\";",
 			"",
 			"@Singleton()",
 			"export class ${TM_FILENAME_BASE/(.*)/${1:/pascalcase}/g} implements OnStart {",
@@ -71,7 +71,7 @@
 			"import type { OnStart } from \"@flamework/core\";",
 			"import { Component, BaseComponent } from \"@flamework/components\";",
 			"",
-			"import { PlayerGui } from \"shared/utility/client\";",
+			"import { PlayerGui } from \"common/shared/utility/client\";",
 			"",
 			"@Component({",
 			"\ttag: \"${TM_FILENAME_BASE/(.*)/${0:/pascalcase}/g}\",",
@@ -89,7 +89,7 @@
 		"prefix":[ "bitf, bitfield" ],
 		"description": "Create a Bitfield",
 		"body": [
-			"import Bitfield from \"shared/classes/bitfield\";",
+			"import Bitfield from \"common/shared/classes/bitfield\";",
 			"",
 			"export const enum ${TM_FILENAME_BASE/(.*)/${0:/pascalcase}/g}Masks {"
 			"\t"
