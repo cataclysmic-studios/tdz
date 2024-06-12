@@ -1,6 +1,8 @@
 import { Networking } from "@flamework/networking";
 
-interface ServerEvents { }
+interface ServerEvents {
+  placeTower(towerName: TowerName, cframe: CFrame): void;
+}
 
 interface ClientEvents { }
 

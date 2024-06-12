@@ -3,6 +3,7 @@ type KeyName = CastsToEnum<Enum.KeyCode>;
 
 interface CharacterModel extends Model {
   Head: BasePart;
+  HumanoidRootPart: BasePart;
   Humanoid: Humanoid & {
     Animator: Animator;
   };

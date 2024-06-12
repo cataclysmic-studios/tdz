@@ -47,6 +47,10 @@ export class CameraController implements OnInit, OnRender, LogStart {
       this.get(otherCameraName).toggle(cameraName === otherCameraName);
   }
 
+  public getCurrent<T extends CameraControllerComponent>(): T {
+    return this.get(this.currentName);
+  }
+
   public get<T extends CameraControllerComponent>(cameraName: keyof typeof this.cameras = this.currentName): T {
     return <T>this.cameras[cameraName];
   }

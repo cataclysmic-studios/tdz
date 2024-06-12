@@ -83,15 +83,15 @@ export class MouseController implements OnInit, OnRender {
     return UIS.GetMouseLocation();
   }
 
-  public getWorldPosition(distance = MOUSE_RAY_DISTANCE): Vector3 {
+  public getWorldPosition(distance = MOUSE_RAY_DISTANCE, filter?: Instance[]): Vector3 {
     const { X, Y } = UIS.GetMouseLocation();
     const { Origin, Direction } = World.CurrentCamera!.ViewportPointToRay(X, Y);
-    const raycastResult = this.createRay(distance);
+    const raycastResult = this.createRay(distance, filter);
     return raycastResult !== undefined ? raycastResult.Position : Origin.add(Direction.mul(distance));
   }
 
-  public target(distance = MOUSE_RAY_DISTANCE): Maybe<BasePart> {
-    return this.createRay(distance)?.Instance;
+  public getTarget(distance = MOUSE_RAY_DISTANCE, filter?: Instance[]): Maybe<BasePart> {
+    return this.createRay(distance, filter)?.Instance;
   }
 
   public getDelta(): Vector2 {
