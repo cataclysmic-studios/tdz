@@ -1,8 +1,8 @@
 import type { OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
 
-import { PlayerGui } from "common/shared/utility/client";
 import { Events } from "client/network";
+import { PlayerGui } from "common/shared/utility/client";
 
 interface Attributes {
   LeaveButton_ID?: number;

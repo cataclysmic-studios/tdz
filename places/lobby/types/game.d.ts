@@ -1,5 +1,7 @@
 interface CharacterModel extends Model {
-  Humanoid: Humanoid;
+  Humanoid: Humanoid & {
+    Animator: Animator;
+  };
   Head: Part;
 }
 

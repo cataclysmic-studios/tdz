@@ -85,5 +85,47 @@ interface PlayerGui extends BasePlayerGui {
         UIListLayout: UIListLayout;
       };
     };
-  }
+  };
+  Shop: ImageLabel & {
+    List: ScrollingFrame & {
+      UIPadding: UIPadding;
+      UIListLayout: UIListLayout;
+    };
+    Buttons: Frame & {
+      UIListLayout: UIListLayout;
+      Towers: ImageButton & {
+        UICorner: UICorner;
+        UIStroke: UIStroke;
+        Title: TextLabel & {
+          UIStroke: UIStroke;
+        };
+        UIAspectRatioConstraint: UIAspectRatioConstraint;
+      };
+      Crates: ImageButton & {
+        UICorner: UICorner;
+        UIStroke: UIStroke;
+        Title: TextLabel & {
+          UIStroke: UIStroke;
+        };
+        UIAspectRatioConstraint: UIAspectRatioConstraint;
+      };
+      Emotes: ImageButton & {
+        UICorner: UICorner;
+        UIStroke: UIStroke;
+        Title: TextLabel & {
+          UIStroke: UIStroke;
+        };
+        UIAspectRatioConstraint: UIAspectRatioConstraint;
+      };
+    };
+    UICorner: UICorner;
+    UIStroke: UIStroke;
+    UIAspectRatioConstraint: UIAspectRatioConstraint;
+    Close: ImageButton & {
+      UICorner: UICorner;
+      UIStroke: UIStroke;
+      UIAspectRatioConstraint: UIAspectRatioConstraint;
+      Icon: ImageLabel;
+    };
+  };
 }

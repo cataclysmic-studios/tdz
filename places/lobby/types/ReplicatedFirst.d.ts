@@ -1,3 +1,7 @@
+interface TowerPreviewModel extends CharacterModel {
+  Idle: Animation;
+}
+
 interface ReplicatedFirst extends Instance {
   Assets: Folder & {
     UI: Folder & {
@@ -12,6 +16,13 @@ interface ReplicatedFirst extends Instance {
         UIPadding: UIPadding;
         PlayerCount: TextLabel;
       };
+      ShopButton: ImageButton & {
+        Viewport: ViewportFrame;
+        Price: TextLabel;
+      };
+    };
+    Towers: Folder & {
+      Rifleman: TowerPreviewModel;
     };
   };
 }
