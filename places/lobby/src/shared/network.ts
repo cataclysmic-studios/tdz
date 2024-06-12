@@ -2,10 +2,11 @@ import { Networking } from "@flamework/networking";
 
 interface ServerEvents {
   leaveLobby(id: number): void;
+  startGame(id: number): void;
 }
 
 interface ClientEvents {
-  toggleLeaveButton(on: boolean, id: number): void;
+  toggleInLobbyButtons(on: boolean, lobbyLeader: boolean, id: number): void;
 }
 
 interface ServerFunctions { }

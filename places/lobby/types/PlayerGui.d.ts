@@ -1,6 +1,9 @@
 interface PlayerGui extends BasePlayerGui {
   Main: ScreenGui & {
-    LeaveLobby: TextButton;
+    LobbyButtons: Frame & {
+      LeaveLobby: ImageButton;
+      StartGame: ImageButton;
+    };
     Main: Frame & {
       Towers: Frame & {
         UIListLayout: UIListLayout;

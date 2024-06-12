@@ -1,6 +1,6 @@
 import type { OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
-import { Players } from "@rbxts/services";
+import { TeleportService, Players } from "@rbxts/services";
 
 import { Events } from "server/network";
 import { Assets, getInstancePath } from "common/shared/utility/instances";
@@ -23,7 +23,7 @@ let lobbyID = 1;
   }
 })
 export class GameLobby extends BaseComponent<Attributes, GameLobbyModel> implements OnStart {
-  private readonly players = new Set<Player>;
+  private readonly players: Player[] = [];
   private readonly id = lobbyID++;
   private ui!: typeof Assets.UI.GameLobbyUI;
 
@@ -34,6 +34,10 @@ export class GameLobby extends BaseComponent<Attributes, GameLobbyModel> impleme
     Events.leaveLobby.connect((player, id) => {
       if (this.id !== id) return;
       this.leave(player);
+    });
+    Events.startGame.connect((_, id) => {
+      if (this.id !== id) return;
+      this.start();
     });
 
     this.instance.Entrance.Touched.Connect(hit => {
@@ -55,20 +59,26 @@ export class GameLobby extends BaseComponent<Attributes, GameLobbyModel> impleme
       if (seat === undefined)
         return Log.warning(`Attempted to seat player in ${seatName} (${getInstancePath(this.instance)})`);
 
-      this.players.add(player);
-      humanoid.JumpPower = 0;
-      seat.Sit(humanoid);
-      this.toggleLeaveButton(player, true);
-      this.updatePlayerCount();
+      this.join(player, humanoid, seat);
     });
   }
 
-  private toggleLeaveButton(player: Player, on: boolean) {
-    Events.toggleLeaveButton(player, on, this.id);
+  public start(): void {
+    this.toggleButtons(this.players, false);
+    for (const player of this.players)
+      TeleportService.Teleport(17811035844, player, undefined, Assets.UI.TeleportScreen);
   }
 
-  public leave(player: Player): void {
-    this.players.delete(player);
+  private join(player: Player, humanoid: Humanoid, seat: Seat): void {
+    this.players.push(player);
+    humanoid.JumpPower = 0;
+    seat.Sit(humanoid);
+    this.toggleButtons(player, true);
+    this.updatePlayerCount();
+  }
+
+  private leave(player: Player): void {
+    this.players.remove(this.players.indexOf(player));
 
     const character = player.Character;
     const root = <Maybe<BasePart>>character?.FindFirstChild("HumanoidRootPart")
@@ -80,11 +90,15 @@ export class GameLobby extends BaseComponent<Attributes, GameLobbyModel> impleme
     do task.wait(0.1); while (humanoid.Jump); // wait until jump is finished otherwise seat teleports lol
 
     root.CFrame = this.instance.Entrance.CFrame.add(this.instance.Entrance.CFrame.LookVector.mul(8)).sub(new Vector3(0, 4, 0));
-    this.toggleLeaveButton(player, false);
+    this.toggleButtons(player, false);
     this.updatePlayerCount();
   }
 
   private updatePlayerCount(): void {
     this.ui.PlayerCount.Text = `${this.players.size()}/${this.attributes.GameLobby_Size}`;
+  }
+
+  private toggleButtons(players: Player | Player[], on: boolean): void {
+    Events.toggleInLobbyButtons(players, on, players === this.players[0], this.id);
   }
 }

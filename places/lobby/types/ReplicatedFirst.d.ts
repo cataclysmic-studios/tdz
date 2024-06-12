@@ -5,6 +5,7 @@ interface TowerPreviewModel extends CharacterModel {
 interface ReplicatedFirst extends Instance {
   Assets: Folder & {
     UI: Folder & {
+      TeleportScreen: ScreenGui;
       GameLobbyUI: SurfaceGui & {
         Medals: Frame & {
           Easy: ImageLabel;

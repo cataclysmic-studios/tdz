@@ -15,7 +15,7 @@ interface Attributes {
 export class LeaveButton extends BaseComponent<Attributes, ImageButton> implements OnStart {
   public onStart(): void {
     this.instance.MouseButton1Click.Connect(() => Events.leaveLobby(this.attributes.LeaveButton_ID!));
-    Events.toggleLeaveButton.connect((on, id) => {
+    Events.toggleInLobbyButtons.connect((on, _, id) => {
       this.attributes.LeaveButton_ID = id;
       this.instance.Visible = on;
     });

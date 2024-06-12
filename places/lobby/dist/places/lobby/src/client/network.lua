@@ -5,12 +5,12 @@ local _network = TS.import(script, game:GetService("ReplicatedStorage"), "shared
 local GlobalEvents = _network.GlobalEvents
 local GlobalFunctions = _network.GlobalFunctions
 local Events = GlobalEvents:createClient({}, {
-	incomingIds = { "toggleLeaveButton" },
+	incomingIds = { "toggleInLobbyButtons" },
 	incoming = {
-		toggleLeaveButton = { { t.boolean, t.number }, nil },
+		toggleInLobbyButtons = { { t.boolean, t.boolean, t.number }, nil },
 	},
 	incomingUnreliable = {},
-	outgoingIds = { "leaveLobby" },
+	outgoingIds = { "leaveLobby", "startGame" },
 	outgoingUnreliable = {},
 	namespaceIds = {},
 	namespaces = {},
