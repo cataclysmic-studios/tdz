@@ -37,7 +37,7 @@ export class ShopPage extends BaseComponent<{}, PlayerGui["Main"]["Shop"]> imple
       button.Price.Text = price === 0 ? "FREE" : `$${price}`;
       button.Parent = this.instance.Towers;
       button.Viewport.SetAttribute("TowerViewport_Tower", tower.Name);
-      button.Viewport.AddTag("TowerViewport")
+      button.Viewport.AddTag("TowerViewport");
       this.towerButtons.push(button);
     }
 

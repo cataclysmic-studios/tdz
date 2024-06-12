@@ -5,6 +5,24 @@ interface PlayerGui extends BasePlayerGui {
       Towers: Frame & {
         UIListLayout: UIListLayout;
         UIAspectRatioConstraint: UIAspectRatioConstraint;
+        ["1"]: ImageButton & {
+          Viewport: ViewportFrame;
+        };
+        ["2"]: ImageButton & {
+          Viewport: ViewportFrame;
+        };
+        ["3"]: ImageButton & {
+          Viewport: ViewportFrame;
+        };
+        ["4"]: ImageButton & {
+          Viewport: ViewportFrame;
+        };
+        ["5"]: ImageButton & {
+          Viewport: ViewportFrame;
+        };
+        ["6"]: ImageButton & {
+          Viewport: ViewportFrame;
+        };
       };
       XP: Frame & {
         Level: TextLabel & {
