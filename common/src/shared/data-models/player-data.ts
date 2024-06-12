@@ -3,6 +3,7 @@ import { Difficulty } from "../structs/difficulty";
 export const INITIAL_DATA = {
   coins: 0,
   ownedTowers: <string[]>["Rifleman"],
+  equippedTowers: <string[]>["Rifleman"],
   lastLogin: 0,
   loginStreak: 0,
   claimedDaily: false,

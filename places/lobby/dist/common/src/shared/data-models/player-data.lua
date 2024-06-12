@@ -2,6 +2,7 @@
 local INITIAL_DATA = {
 	coins = 0,
 	ownedTowers = { "Rifleman" },
+	equippedTowers = { "Rifleman" },
 	lastLogin = 0,
 	loginStreak = 0,
 	claimedDaily = false,

@@ -85,47 +85,40 @@ interface PlayerGui extends BasePlayerGui {
         UIListLayout: UIListLayout;
       };
     };
-  };
-  Shop: ImageLabel & {
-    List: ScrollingFrame & {
-      UIPadding: UIPadding;
-      UIListLayout: UIListLayout;
-    };
-    Buttons: Frame & {
-      UIListLayout: UIListLayout;
-      Towers: ImageButton & {
-        UICorner: UICorner;
-        UIStroke: UIStroke;
-        Title: TextLabel & {
-          UIStroke: UIStroke;
+    Shop: ImageLabel & {
+      Buttons: Frame & {
+        UIListLayout: UIListLayout;
+        Towers: ImageButton & {
+          Title: TextLabel & {
+            UIStroke: UIStroke;
+          };
+          UIAspectRatioConstraint: UIAspectRatioConstraint;
         };
-        UIAspectRatioConstraint: UIAspectRatioConstraint;
-      };
-      Crates: ImageButton & {
-        UICorner: UICorner;
-        UIStroke: UIStroke;
-        Title: TextLabel & {
-          UIStroke: UIStroke;
+        Crates: ImageButton & {
+          Title: TextLabel & {
+            UIStroke: UIStroke;
+          };
+          UIAspectRatioConstraint: UIAspectRatioConstraint;
         };
-        UIAspectRatioConstraint: UIAspectRatioConstraint;
-      };
-      Emotes: ImageButton & {
-        UICorner: UICorner;
-        UIStroke: UIStroke;
-        Title: TextLabel & {
-          UIStroke: UIStroke;
+        Emotes: ImageButton & {
+          Title: TextLabel & {
+            UIStroke: UIStroke;
+          };
+          UIAspectRatioConstraint: UIAspectRatioConstraint;
         };
-        UIAspectRatioConstraint: UIAspectRatioConstraint;
       };
-    };
-    UICorner: UICorner;
-    UIStroke: UIStroke;
-    UIAspectRatioConstraint: UIAspectRatioConstraint;
-    Close: ImageButton & {
+      Towers: ScrollingFrame;
+      Crates: ScrollingFrame;
+      Emotes: ScrollingFrame;
       UICorner: UICorner;
       UIStroke: UIStroke;
       UIAspectRatioConstraint: UIAspectRatioConstraint;
-      Icon: ImageLabel;
+      Close: ImageButton & {
+        UICorner: UICorner;
+        UIStroke: UIStroke;
+        UIAspectRatioConstraint: UIAspectRatioConstraint;
+        Icon: ImageLabel;
+      };
     };
   };
 }

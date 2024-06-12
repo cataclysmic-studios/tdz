@@ -160,6 +160,7 @@ do
 			self:initialize(player, "level", 1)
 			self:initialize(player, "xp", 0)
 			self:initialize(player, "ownedTowers", { "Rifleman" })
+			self:initialize(player, "equippedTowers", { "Rifleman" })
 			self:initialize(player, "lastLogin", 0)
 			self:initialize(player, "loginStreak", 0)
 			self:initialize(player, "claimedDaily", false)
