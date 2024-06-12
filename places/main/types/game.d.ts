@@ -1,16 +1,16 @@
-interface CharacterModel extends Model {
-  Humanoid: Humanoid;
-  Head: Part;
+type TowerName = ExtractKeys<ReplicatedFirst["Assets"]["Towers"], TowerFolder>;
+
+interface TowerFolder extends Folder {
+  Level0: TowerModel;
+  Level1: TowerModel;
+  Level2: TowerModel;
+  Level3: TowerModel;
+  Level4: TowerModel;
+  Level5: TowerModel;
 }
 
-interface ToggleSwitchButton extends ImageButton {
-  UIPadding: UIPadding;
-  UICorner: UICorner;
-  UIStroke: UIStroke;
-  UIAspectRatioConstraint: UIAspectRatioConstraint;
-  Node: Frame & {
-    UICorner: UICorner;
-    UIStroke: UIStroke;
-    UIAspectRatioConstraint: UIAspectRatioConstraint;
+interface TowerModel extends CharacterModel {
+  Animations: Folder & {
+    Idle: Animation;
   };
 }

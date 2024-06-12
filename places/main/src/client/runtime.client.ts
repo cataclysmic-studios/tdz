@@ -8,8 +8,8 @@ try {
 	Flamework.addPaths("common/src/client/hook-managers");
 	Flamework.addPaths("common/src/client/components");
 	Flamework.addPaths("common/src/client/controllers");
-	Flamework.addPaths("places/lobby/src/client/components");
-	Flamework.addPaths("places/lobby/src/client/controllers");
+	Flamework.addPaths("places/main/src/client/components");
+	Flamework.addPaths("places/main/src/client/controllers");
 	Flamework.ignite();
 } catch (e) {
 	throw new FlameworkIgnitionException(<string>e);
