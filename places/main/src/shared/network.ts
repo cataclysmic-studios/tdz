@@ -14,7 +14,9 @@ interface ClientEvents {
   loadTowers(allTowers: Partial<Record<TowerName, TowerInfo[]>>): void;
 }
 
-interface ServerFunctions { }
+interface ServerFunctions {
+  makePurchase(price: number): boolean;
+}
 
 interface ClientFunctions { }
 

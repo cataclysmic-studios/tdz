@@ -4,7 +4,7 @@ import { RaycastParamsBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
 import Object from "@rbxts/object-utils";
 
-import { Events } from "client/network";
+import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
 import { createRangePreview, createSizePreview, growIn } from "shared/utility";
@@ -127,13 +127,16 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     towerModel.Humanoid.Animator.LoadAnimation(towerModel.Animations[animationName]).Play(fadeTime);
   }
 
-  private confirmPlacement(): void {
+  private async confirmPlacement(): Promise<void> {
     if (!this.placing) return;
     if (!this.canPlace) return;
     if (this.placementModel === undefined) return;
 
     const towerName = <TowerName>this.placementModel.Name;
     const cframe = this.placementModel.GetPivot();
+    const purchased = await Functions.makePurchase(<number>this.placementModel.GetAttribute("Price"));
+    if (!purchased) return; // make error sound
+
     Events.placeTower(towerName, cframe);
     this.exitPlacement();
   }
