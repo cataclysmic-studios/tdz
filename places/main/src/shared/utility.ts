@@ -28,7 +28,7 @@ export function createRangePreview(range: number): MeshPart {
   return rangePreview;
 }
 
-export function createSizePreview(size: number): typeof Assets.SizePreview {
+export function createSizePreview(size: number, towerID?: number): typeof Assets.SizePreview {
   const sizePreview = Assets.SizePreview.Clone();
   const defaultTowerSize = sizePreview.Size.X;
   const sizeScale = size / defaultTowerSize;
@@ -39,6 +39,7 @@ export function createSizePreview(size: number): typeof Assets.SizePreview {
   sizePreview.Beam2.CurveSize1 *= sizeScale;
   sizePreview.Left.Position = new Vector3(0, 0, sizePreview.Size.X / 2);
   sizePreview.Right.Position = new Vector3(0, 0, -sizePreview.Size.X / 2);
+  sizePreview.SetAttribute("TowerID", towerID);
   sizePreview.Parent = PLACEMENT_STORAGE;
   growIn(sizePreview);
   return sizePreview;

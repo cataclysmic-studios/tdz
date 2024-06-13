@@ -101,15 +101,18 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementSizePreview.Beam2.Color = new ColorSequence(previewColor);
   }
 
-  public place(towerName: TowerName, { ownerID, upgrades, cframe }: TowerInfo): void {
+  public place(towerName: TowerName, { id, ownerID, upgrades, cframe }: TowerInfo): void {
     const myTower = ownerID === Player.UserId;
     const level = math.max(upgrades[0], upgrades[1]);
     const towerModel = createTowerModel(towerName, `Level${level}`, cframe);
+    towerModel.SetAttribute("ID", id);
+
     const size = <number>towerModel.GetAttribute("Size");
-    const sizePreview = createSizePreview(size);
+    const sizePreview = createSizePreview(size, id);
+    setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"])
     sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
 
-    growIn(setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"]));
+    growIn(sizePreview);
     growIn(towerModel);
     Sound.SoundEffects.Place.Play();
   }
@@ -129,11 +132,19 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementSizePreview = this.placementJanitor.Add(createSizePreview(size));
     this.placementJanitor.Add(this.placementSizePreview.Touched.Connect(() => { }));
 
-    for (const towerModel of PLACEMENT_STORAGE.GetChildren().filter((i): i is TowerModel => i.IsA("Model")))
+    const placedShit = PLACEMENT_STORAGE.GetChildren();
+    for (const towerModel of placedShit.filter((i): i is TowerModel => i.IsA("Model") && i !== this.placementModel))
       task.spawn(() => {
-        const sizePreview = this.placementJanitor.Add(createSizePreview(<number>towerModel.GetAttribute("Size")));
-        sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
+        if (towerModel === this.placementModel) return;
+        const sizePreview = placedShit.find((i): i is typeof Assets.SizePreview => i.IsA("MeshPart") && i.Name === "SizePreview" && i.GetAttribute("TowerID") === towerModel.GetAttribute("ID"))!;
+        const originalColor = sizePreview.Beam1.Color;
+        setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS.Selected);
+
         this.placementJanitor.Add(sizePreview.Touched.Connect(() => { }));
+        this.placementJanitor.Add(() => {
+          sizePreview.Beam1.Color = originalColor;
+          sizePreview.Beam2.Color = originalColor;
+        });
       });
   }
 

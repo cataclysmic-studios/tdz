@@ -16,6 +16,7 @@ interface ClientEvents {
 
 interface ServerFunctions {
   makePurchase(price: number): boolean;
+  getTowerInfo(towerModel: TowerModel): TowerInfo;
 }
 
 interface ClientFunctions { }
