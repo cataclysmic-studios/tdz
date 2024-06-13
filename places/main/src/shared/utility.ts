@@ -1,8 +1,8 @@
 import { RunService as Runtime } from "@rbxts/services";
 import { TweenInfoBuilder } from "@rbxts/builders";
 
-import { Assets } from "./utility/instances";
-import { tween } from "./utility/ui";
+import { Assets } from "common/shared/utility/instances";
+import { tween } from "common/shared/utility/ui";
 import { PLACEMENT_STORAGE } from "./constants";
 
 export function createRangePreview(range: number): MeshPart {

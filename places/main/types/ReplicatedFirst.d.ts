@@ -10,5 +10,8 @@ interface ReplicatedFirst extends Instance {
     Towers: Folder & {
       Rifleman: TowerFolder;
     };
+    Maps: Folder & {
+      ["Testing Grounds"]: MapModel;
+    }
   };
 }

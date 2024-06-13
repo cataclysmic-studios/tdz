@@ -1,5 +1,9 @@
-type TowerName = ExtractKeys<ReplicatedFirst["Assets"]["Towers"], TowerFolder>;
+interface MapModel extends Model {
+  EndPoint: Part;
+  StartPoint: Part;
+}
 
+type TowerName = ExtractKeys<ReplicatedFirst["Assets"]["Towers"], TowerFolder>;
 interface TowerFolder extends Folder {
   Level0: TowerModel;
   Level1: TowerModel;

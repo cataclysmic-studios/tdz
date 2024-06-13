@@ -1,12 +1,15 @@
 import { Networking } from "@flamework/networking";
 
+import type { TeleportData } from "./structs";
 import type { TowerInfo } from "./structs";
 
 interface ServerEvents {
   placeTower(towerName: TowerName, cframe: CFrame): void;
+  loadTeleportData(teleportData: TeleportData): void;
 }
 
 interface ClientEvents {
+  updateCashUI(cash: number): void;
   replicateTower(towerName: TowerName, towerInfo: TowerInfo): void;
   loadTowers(allTowers: Partial<Record<TowerName, TowerInfo[]>>): void;
 }
