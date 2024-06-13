@@ -7,7 +7,7 @@ import Object from "@rbxts/object-utils";
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
-import { createRangePreview, createSizePreview, createTowerModel, growIn } from "shared/utility";
+import { createRangePreview, createSizePreview, createTowerModel, growIn, setSizePreviewColor } from "shared/utility";
 import { PLACEMENT_STORAGE } from "shared/constants";
 import type { TowerInfo } from "shared/structs";
 import Spring from "common/shared/classes/spring";
@@ -15,10 +15,17 @@ import SmoothValue from "common/shared/classes/smooth-value";
 
 import { InputInfluenced } from "common/client/classes/input-influenced";
 import type { MouseController } from "common/client/controllers/mouse";
-import type { CharacterController } from "./character";
-import type { CameraController } from "./camera";
+import type { CharacterController } from "common/client/controllers/character";
+import type { CameraController } from "common/client/controllers/camera";
+import { Player } from "common/shared/utility/client";
 
-// TODO: collision groups, show "Press 'Q' to exit placement mode" gui, show size previews on all towers in placement mode
+const SIZE_PREVIEW_COLORS = {
+  MyTowers: Color3.fromRGB(77, 232, 82),
+  NotMyTowers: Color3.fromRGB(255, 255, 115),
+  Selected: Color3.fromRGB(110, 191, 232)
+};
+
+// TODO: collision groups, show "Press 'Q' to exit placement mode" gui
 @Controller()
 export class PlacementController extends InputInfluenced implements OnInit, OnStart, OnRender {
   private readonly placementJanitor = new Janitor;
@@ -87,12 +94,23 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const groundInside = World.Raycast(towerCFrame.Position, new Vector3(0, -1.1, 0), raycastParams);
     const inPlacableLocation = this.mouse.getTarget(undefined, mouseFilter)?.HasTag(isWaterTower ? "PlacableWater" : "PlacableGround") ?? false;
     this.canPlace = inPlacableLocation && groundBelow?.Instance !== undefined && groundInside?.Instance === undefined && !this.placementSizePreview.GetTouchingParts().map(part => part.Name).includes("SizePreview");
-    this.placementRangePreview.Color = this.canPlace ? this.canPlaceColor : this.cannotPlaceColor;
+
+    const previewColor = this.canPlace ? this.canPlaceColor : this.cannotPlaceColor;
+    this.placementRangePreview.Color = previewColor;
+    this.placementSizePreview.Beam1.Color = new ColorSequence(previewColor);
+    this.placementSizePreview.Beam2.Color = new ColorSequence(previewColor);
   }
 
-  public place(towerName: TowerName, { upgrades, cframe }: TowerInfo): void {
+  public place(towerName: TowerName, { ownerID, upgrades, cframe }: TowerInfo): void {
+    const myTower = ownerID === Player.UserId;
     const level = math.max(upgrades[0], upgrades[1]);
-    growIn(createTowerModel(towerName, `Level${level}`, cframe));
+    const towerModel = createTowerModel(towerName, `Level${level}`, cframe);
+    const size = <number>towerModel.GetAttribute("Size");
+    const sizePreview = createSizePreview(size);
+    sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
+
+    growIn(setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"]));
+    growIn(towerModel);
     Sound.SoundEffects.Place.Play();
   }
 

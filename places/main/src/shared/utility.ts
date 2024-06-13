@@ -44,6 +44,12 @@ export function createSizePreview(size: number): typeof Assets.SizePreview {
   return sizePreview;
 }
 
+export function setSizePreviewColor(sizePreview: typeof Assets.SizePreview, color: Color3): typeof Assets.SizePreview {
+  sizePreview.Beam1.Color = new ColorSequence(color);
+  sizePreview.Beam2.Color = new ColorSequence(color);
+  return sizePreview
+}
+
 export function createWeld(part0: BasePart, part1: BasePart): WeldConstraint {
   const weld = new Instance("WeldConstraint", part0);
   weld.Part0 = part0;
