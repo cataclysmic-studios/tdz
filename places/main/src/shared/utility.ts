@@ -40,6 +40,7 @@ export function createSizePreview(size: number): typeof Assets.SizePreview {
   sizePreview.Left.Position = new Vector3(0, 0, sizePreview.Size.X / 2);
   sizePreview.Right.Position = new Vector3(0, 0, -sizePreview.Size.X / 2);
   sizePreview.Parent = PLACEMENT_STORAGE;
+  growIn(sizePreview);
   return sizePreview;
 }
 

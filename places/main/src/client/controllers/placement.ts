@@ -18,7 +18,7 @@ import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "./character";
 import type { CameraController } from "./camera";
 
-// TODO: collision group, show "Press 'Q' to exit placement mode" gui
+// TODO: collision groups, show "Press 'Q' to exit placement mode" gui, show size previews on all towers in placement mode
 @Controller()
 export class PlacementController extends InputInfluenced implements OnInit, OnStart, OnRender {
   private readonly placementJanitor = new Janitor;
@@ -86,7 +86,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const groundBelow = World.Raycast(towerCFrame.Position, new Vector3(0, -1.2, 0), raycastParams);
     const groundInside = World.Raycast(towerCFrame.Position, new Vector3(0, -1.1, 0), raycastParams);
     const inPlacableLocation = this.mouse.getTarget(undefined, mouseFilter)?.HasTag(isWaterTower ? "PlacableWater" : "PlacableGround") ?? false;
-    this.canPlace = inPlacableLocation && groundBelow?.Instance !== undefined && groundInside?.Instance === undefined;
+    this.canPlace = inPlacableLocation && groundBelow?.Instance !== undefined && groundInside?.Instance === undefined && !this.placementSizePreview.GetTouchingParts().map(part => part.Name).includes("SizePreview");
     this.placementRangePreview.Color = this.canPlace ? this.canPlaceColor : this.cannotPlaceColor;
   }
 
@@ -109,6 +109,14 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
 
     const size = <number>this.placementModel.GetAttribute("Size");
     this.placementSizePreview = this.placementJanitor.Add(createSizePreview(size));
+    this.placementJanitor.Add(this.placementSizePreview.Touched.Connect(() => { }));
+
+    for (const towerModel of PLACEMENT_STORAGE.GetChildren().filter((i): i is TowerModel => i.IsA("Model")))
+      task.spawn(() => {
+        const sizePreview = this.placementJanitor.Add(createSizePreview(<number>towerModel.GetAttribute("Size")));
+        sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
+        this.placementJanitor.Add(sizePreview.Touched.Connect(() => { }));
+      });
   }
 
   public exitPlacement(): void {
