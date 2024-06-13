@@ -58,7 +58,7 @@ export function createWeld(part0: BasePart, part1: BasePart): WeldConstraint {
   return weld;
 }
 
-const growInTweenInfo = new TweenInfoBuilder().SetTime(0.15);
+const growInTweenInfo = new TweenInfoBuilder().SetTime(0.1);
 export async function growIn(model: Model | BasePart): Promise<void> {
   const scaleValue = new Instance("NumberValue");
   scaleValue.Value = 0.01;

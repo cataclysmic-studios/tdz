@@ -1,4 +1,5 @@
-import { Controller, OnInit, OnRender, OnStart } from "@flamework/core";
+import { Controller, type OnInit, type OnRender, type OnStart } from "@flamework/core";
+import { Components } from "@flamework/components";
 import { Workspace as World, SoundService as Sound } from "@rbxts/services";
 import { RaycastParamsBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
@@ -6,24 +7,20 @@ import Object from "@rbxts/object-utils";
 
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
+import { Player } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
 import { createRangePreview, createSizePreview, createTowerModel, growIn, setSizePreviewColor } from "shared/utility";
-import { PLACEMENT_STORAGE } from "shared/constants";
+import { PLACEMENT_STORAGE, SIZE_PREVIEW_COLORS } from "shared/constants";
+import { TOWER_STATS } from "common/shared/towers";
 import type { TowerInfo } from "shared/structs";
 import Spring from "common/shared/classes/spring";
 import SmoothValue from "common/shared/classes/smooth-value";
 
 import { InputInfluenced } from "common/client/classes/input-influenced";
+import type { Tower } from "client/components/tower";
 import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "common/client/controllers/character";
 import type { CameraController } from "common/client/controllers/camera";
-import { Player } from "common/shared/utility/client";
-
-const SIZE_PREVIEW_COLORS = {
-  MyTowers: Color3.fromRGB(77, 232, 82),
-  NotMyTowers: Color3.fromRGB(255, 255, 115),
-  Selected: Color3.fromRGB(110, 191, 232)
-};
 
 // TODO: collision groups, show "Press 'Q' to exit placement mode" gui
 @Controller()
@@ -41,17 +38,17 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   private yOrientation = new SmoothValue(0, 8);
 
   public constructor(
+    private readonly components: Components,
     private readonly mouse: MouseController,
     private readonly character: CharacterController,
     private readonly camera: CameraController
   ) { super(); }
 
   public onInit(): void {
-    Events.replicateTower.connect((towerName, towerInfo) => this.place(towerName, towerInfo));
+    Events.replicateTower.connect((id, towerInfo) => this.place(id, towerInfo));
     Events.loadTowers.connect(allTowers => {
-      for (const [towerName, towerInfos] of Object.entries(allTowers))
-        for (const towerInfo of towerInfos)
-          task.spawn(() => this.place(towerName, towerInfo));
+      for (const [id, towerInfo] of Object.entries(allTowers))
+        task.spawn(() => this.place(id, towerInfo));
     });
   }
 
@@ -101,20 +98,23 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementSizePreview.Beam2.Color = new ColorSequence(previewColor);
   }
 
-  public place(towerName: TowerName, { id, ownerID, upgrades, cframe }: TowerInfo): void {
+  public place(id: number, towerInfo: TowerInfo): void {
+    const { name, ownerID, upgrades, cframe } = towerInfo;
     const myTower = ownerID === Player.UserId;
     const level = math.max(upgrades[0], upgrades[1]);
-    const towerModel = createTowerModel(towerName, `Level${level}`, cframe);
+    const towerModel = createTowerModel(name, `Level${level}`, cframe);
     towerModel.SetAttribute("ID", id);
 
     const size = <number>towerModel.GetAttribute("Size");
     const sizePreview = createSizePreview(size, id);
-    setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"])
+    setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"]);
     sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
 
     growIn(sizePreview);
-    growIn(towerModel);
+    growIn(towerModel)
     Sound.SoundEffects.Place.Play();
+
+    towerModel.AddTag("Tower");
   }
 
   public enterPlacement(towerName: TowerName): void {
@@ -125,18 +125,16 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.yOrientation.zeroize();
     this.placementModel = this.placementJanitor.Add(createTowerModel(towerName, "Level0"));
 
-    const range = <number>this.placementModel.GetAttribute("Range");
+    const [{ range }] = TOWER_STATS[towerName];
     this.placementRangePreview = this.placementJanitor.Add(createRangePreview(range));
 
     const size = <number>this.placementModel.GetAttribute("Size");
     this.placementSizePreview = this.placementJanitor.Add(createSizePreview(size));
     this.placementJanitor.Add(this.placementSizePreview.Touched.Connect(() => { }));
 
-    const placedShit = PLACEMENT_STORAGE.GetChildren();
-    for (const towerModel of placedShit.filter((i): i is TowerModel => i.IsA("Model") && i !== this.placementModel))
+    for (const tower of this.components.getAllComponents<Tower>())
       task.spawn(() => {
-        if (towerModel === this.placementModel) return;
-        const sizePreview = placedShit.find((i): i is typeof Assets.SizePreview => i.IsA("MeshPart") && i.Name === "SizePreview" && i.GetAttribute("TowerID") === towerModel.GetAttribute("ID"))!;
+        const sizePreview = tower.getSizePreview();
         const originalColor = sizePreview.Beam1.Color;
         setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS.Selected);
 
@@ -161,7 +159,8 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
 
     const towerName = <TowerName>this.placementModel.Name;
     const cframe = this.placementModel.GetPivot();
-    const purchased = await Functions.makePurchase(<number>this.placementModel.GetAttribute("Price"));
+    const [{ price }] = TOWER_STATS[towerName];
+    const purchased = await Functions.makePurchase(price);
     if (!purchased)
       return Sound.SoundEffects.Error.Play();
 

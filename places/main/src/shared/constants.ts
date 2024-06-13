@@ -3,6 +3,12 @@ import { Workspace as World } from "@rbxts/services";
 import { Difficulty } from "common/shared/structs/difficulty";
 import type { DifficultyInfo, TeleportData } from "./structs";
 
+export const SIZE_PREVIEW_COLORS = {
+  MyTowers: Color3.fromRGB(77, 232, 82),
+  NotMyTowers: Color3.fromRGB(255, 255, 115),
+  Selected: Color3.fromRGB(110, 191, 232)
+};
+
 export const PLACEMENT_STORAGE = <Folder>World.FindFirstChild("PlacementStorage") ?? new Instance("Folder");
 PLACEMENT_STORAGE.Name = "PlacementStorage";
 PLACEMENT_STORAGE.Parent = World;

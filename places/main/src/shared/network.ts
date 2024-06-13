@@ -9,14 +9,15 @@ interface ServerEvents {
 }
 
 interface ClientEvents {
+  towerUpgraded(id: number, newInfo: TowerInfo): void;
   updateCashUI(cash: number): void;
-  replicateTower(towerName: TowerName, towerInfo: TowerInfo): void;
-  loadTowers(allTowers: Partial<Record<TowerName, TowerInfo[]>>): void;
+  replicateTower(id: number, towerInfo: TowerInfo): void;
+  loadTowers(allTowers: Record<number, TowerInfo>): void;
 }
 
 interface ServerFunctions {
   makePurchase(price: number): boolean;
-  getTowerInfo(towerModel: TowerModel): TowerInfo;
+  getTowerInfo(id: number): TowerInfo;
 }
 
 interface ClientFunctions { }
