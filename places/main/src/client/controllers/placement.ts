@@ -11,6 +11,7 @@ import { createRangePreview, createSizePreview, growIn } from "shared/utility";
 import { PLACEMENT_STORAGE } from "shared/constants";
 import type { TowerInfo } from "shared/structs";
 import Spring from "common/shared/classes/spring";
+import SmoothValue from "common/shared/classes/smooth-value";
 
 import { InputInfluenced } from "common/client/classes/input-influenced";
 import type { MouseController } from "common/client/controllers/mouse";
@@ -30,7 +31,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   private lastMousePosition = new Vector2;
   private canPlace = true;
   private placing = false;
-  private yOrientation = 0;
+  private yOrientation = new SmoothValue(0, 8);
 
   public constructor(
     private readonly mouse: MouseController,
@@ -50,6 +51,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   public onStart(): void {
     this.input
       .Bind("Q", () => this.exitPlacement())
+      .Bind("R", () => this.yOrientation.incrementTarget(90))
       .Bind("MouseButton1", () => this.confirmPlacement());
   }
 
@@ -66,7 +68,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.swaySpring.shove(cameraCFrame.VectorToObjectSpace(limitedDelta));
 
     const sway = this.swaySpring.update(dt).div(100);
-    const swayAngles = CFrame.Angles(-sway.Z * 2, math.rad(this.yOrientation), sway.X);
+    const swayAngles = CFrame.Angles(-sway.Z * 2, math.rad(this.yOrientation.update(dt)), sway.X);
     const mouseFilter = [this.character.get()!, PLACEMENT_STORAGE];
     const towerCFrame = new CFrame(this.mouse.getWorldPosition(undefined, mouseFilter))
       .add(new Vector3(0, this.placementModel.GetScale() * 3, 0));
@@ -102,7 +104,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
       this.exitPlacement();
 
     this.placing = true;
-    this.yOrientation = 0;
+    this.yOrientation.zeroize();
     this.placementModel = this.janitor.Add(Assets.Towers[<TowerName>towerName].Level0.Clone());
     this.placementModel.Name = towerName;
     this.placementModel.Parent = PLACEMENT_STORAGE;
