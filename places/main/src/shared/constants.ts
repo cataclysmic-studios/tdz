@@ -3,7 +3,7 @@ import { Workspace as World } from "@rbxts/services";
 import { Difficulty } from "common/shared/structs/difficulty";
 import type { DifficultyInfo, TeleportData } from "./structs";
 
-export const PLACEMENT_STORAGE = new Instance("Folder");
+export const PLACEMENT_STORAGE = <Folder>World.FindFirstChild("PlacementStorage") ?? new Instance("Folder");
 PLACEMENT_STORAGE.Name = "PlacementStorage";
 PLACEMENT_STORAGE.Parent = World;
 

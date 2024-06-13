@@ -24,7 +24,7 @@ export class TowerList extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["To
     private readonly placement: PlacementController
   ) { super(); }
 
-  public onDataUpdate(directory: string, equippedTowers: string[]): void {
+  public onDataUpdate(directory: string, equippedTowers: TowerName[]): void {
     if (!endsWith(directory, "equippedTowers")) return;
 
     for (const button of this.buttons) {

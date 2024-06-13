@@ -1,5 +1,5 @@
 import { Controller, OnInit, OnRender, OnStart } from "@flamework/core";
-import { Workspace as World } from "@rbxts/services";
+import { Workspace as World, SoundService as Sound } from "@rbxts/services";
 import { RaycastParamsBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
 import Object from "@rbxts/object-utils";
@@ -7,7 +7,7 @@ import Object from "@rbxts/object-utils";
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
-import { createRangePreview, createSizePreview, growIn } from "shared/utility";
+import { createRangePreview, createSizePreview, createTowerModel, growIn } from "shared/utility";
 import { PLACEMENT_STORAGE } from "shared/constants";
 import type { TowerInfo } from "shared/structs";
 import Spring from "common/shared/classes/spring";
@@ -18,10 +18,10 @@ import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "./character";
 import type { CameraController } from "./camera";
 
-// TODO: collision group, add 90 to yOrientation on R pressed
+// TODO: collision group, show "Press 'Q' to exit placement mode" gui
 @Controller()
 export class PlacementController extends InputInfluenced implements OnInit, OnStart, OnRender {
-  private readonly janitor = new Janitor;
+  private readonly placementJanitor = new Janitor;
   private readonly swaySpring = new Spring;
   private readonly canPlaceColor = Color3.fromRGB(0, 170, 255);
   private readonly cannotPlaceColor = Color3.fromRGB(255, 65, 65);
@@ -90,43 +90,31 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementRangePreview.Color = this.canPlace ? this.canPlaceColor : this.cannotPlaceColor;
   }
 
-  public place(towerName: TowerName, towerInfo: TowerInfo): void {
-    const level = math.max(towerInfo.upgrades[0], towerInfo.upgrades[1]);
-    const towerModel = <TowerModel>Assets.Towers[<TowerName>towerName].WaitForChild(`Level${level}`).Clone();
-    towerModel.PivotTo(towerInfo.cframe);
-    towerModel.Parent = PLACEMENT_STORAGE;
-    this.animateTower(towerModel, "Idle", 0);
-    growIn(towerModel);
+  public place(towerName: TowerName, { upgrades, cframe }: TowerInfo): void {
+    const level = math.max(upgrades[0], upgrades[1]);
+    growIn(createTowerModel(towerName, `Level${level}`, cframe));
+    Sound.SoundEffects.Place.Play();
   }
 
-  public enterPlacement(towerName: string): void {
+  public enterPlacement(towerName: TowerName): void {
     if (this.placing)
       this.exitPlacement();
 
     this.placing = true;
     this.yOrientation.zeroize();
-    this.placementModel = this.janitor.Add(Assets.Towers[<TowerName>towerName].Level0.Clone());
-    this.placementModel.Name = towerName;
-    this.placementModel.Parent = PLACEMENT_STORAGE;
-    this.animateTower(this.placementModel, "Idle", 0);
-    this.janitor.Add(growIn(this.placementModel), "cancel");
+    this.placementModel = this.placementJanitor.Add(createTowerModel(towerName, "Level0"));
 
     const range = <number>this.placementModel.GetAttribute("Range");
-    this.placementRangePreview = this.janitor.Add(createRangePreview(range));
-    this.janitor.Add(growIn(this.placementRangePreview), "cancel");
+    this.placementRangePreview = this.placementJanitor.Add(createRangePreview(range));
 
     const size = <number>this.placementModel.GetAttribute("Size");
-    this.placementSizePreview = this.janitor.Add(createSizePreview(size));
+    this.placementSizePreview = this.placementJanitor.Add(createSizePreview(size));
   }
 
   public exitPlacement(): void {
-    this.janitor.Cleanup();
+    this.placementJanitor.Cleanup();
     this.placing = false;
     this.placementModel = undefined;
-  }
-
-  private animateTower(towerModel: TowerModel, animationName: ExtractKeys<TowerModel["Animations"], Animation>, fadeTime?: number): void {
-    towerModel.Humanoid.Animator.LoadAnimation(towerModel.Animations[animationName]).Play(fadeTime);
   }
 
   private async confirmPlacement(): Promise<void> {
@@ -137,7 +125,8 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const towerName = <TowerName>this.placementModel.Name;
     const cframe = this.placementModel.GetPivot();
     const purchased = await Functions.makePurchase(<number>this.placementModel.GetAttribute("Price"));
-    if (!purchased) return; // make error sound
+    if (!purchased)
+      return Sound.SoundEffects.Error.Play();
 
     Events.placeTower(towerName, cframe);
     this.exitPlacement();

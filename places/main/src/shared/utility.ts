@@ -5,10 +5,26 @@ import { Assets } from "common/shared/utility/instances";
 import { tween } from "common/shared/utility/ui";
 import { PLACEMENT_STORAGE } from "./constants";
 
+export function createTowerModel(towerName: TowerName, modelName: string, cframe: CFrame = new CFrame): TowerModel {
+  const towerModel = <TowerModel>Assets.Towers[<TowerName>towerName].WaitForChild(modelName).Clone();
+  towerModel.Name = towerName;
+  towerModel.PivotTo(cframe);
+  towerModel.Parent = PLACEMENT_STORAGE;
+
+  animateTower(towerModel, "Idle", 0);
+  growIn(towerModel);
+  return towerModel;
+}
+
+export function animateTower(towerModel: TowerModel, animationName: ExtractKeys<TowerModel["Animations"], Animation>, fadeTime?: number): void {
+  towerModel.Humanoid.Animator.LoadAnimation(towerModel.Animations[animationName]).Play(fadeTime);
+}
+
 export function createRangePreview(range: number): MeshPart {
   const rangePreview = Assets.RangePreview.Clone();
   rangePreview.Size = new Vector3(range, rangePreview.Size.Y, range);
   rangePreview.Parent = PLACEMENT_STORAGE;
+  growIn(rangePreview)
   return rangePreview;
 }
 

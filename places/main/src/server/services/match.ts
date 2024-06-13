@@ -57,7 +57,7 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave {
 
   private setCash(player: Player, cash: number): void {
     this.playerCash[player.UserId] = cash;
-    this.cashChanged.Fire(player, cash);
+    this.cashChanged.Fire(player, cash); // TODO: debounce
   }
 
   private getCash(player: Player): number {
