@@ -34,9 +34,7 @@ export class TowerViewport extends BaseComponent<Attributes, ViewportFrame> impl
     const towerModel = this.towerJanitor.Add(Assets.Towers[towerName].Level0.Clone());
     towerModel.Parent = this.wm;
     towerModel.ScaleTo(1);
-    towerModel.PivotTo(
-      new CFrame(-0.55, 3, 0).mul(CFrame.Angles(0, math.rad(-20), 0))
-    );
+    towerModel.PivotTo(new CFrame(-0.55, 3, 0).mul(CFrame.Angles(0, math.rad(-20), 0)));
 
     this.towerJanitor.Add(towerModel.Humanoid.Animator.LoadAnimation(towerModel.Animations.Idle)).Play(0);
   }

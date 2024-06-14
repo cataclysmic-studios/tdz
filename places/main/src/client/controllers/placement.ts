@@ -98,6 +98,11 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementRangePreview.Color = previewColor;
     this.placementSizePreview.Beam1.Color = new ColorSequence(previewColor);
     this.placementSizePreview.Beam2.Color = new ColorSequence(previewColor);
+
+    for (const tower of this.components.getAllComponents<Tower>()) {
+      const sizePreview = tower.getSizePreview();
+      setSizePreviewColor(sizePreview, previewColor);
+    }
   }
 
   public place(id: number, towerInfo: TowerInfo): void {
@@ -111,11 +116,11 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const sizePreview = createSizePreview(size, id);
     setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"]);
     sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
+    sizePreview.Touched.Connect(() => { }) // for touch interest
 
     growIn(sizePreview);
     growIn(towerModel)
     Sound.SoundEffects.Place.Play();
-
     towerModel.AddTag("Tower");
   }
 
@@ -139,8 +144,6 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
       task.spawn(() => {
         const sizePreview = tower.getSizePreview();
         const originalColor = sizePreview.Beam1.Color;
-        setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS.Selected);
-
         this.placementJanitor.Add(sizePreview.Touched.Connect(() => { }));
         this.placementJanitor.Add(() => {
           sizePreview.Beam1.Color = originalColor;
