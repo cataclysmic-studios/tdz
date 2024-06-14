@@ -21,6 +21,7 @@ import type { Tower } from "client/components/tower";
 import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "common/client/controllers/character";
 import type { CameraController } from "common/client/controllers/camera";
+import type { SelectionController } from "./selection";
 
 // TODO: collision groups, show "Press 'Q' to exit placement mode" gui
 @Controller()
@@ -41,7 +42,8 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     private readonly components: Components,
     private readonly mouse: MouseController,
     private readonly character: CharacterController,
-    private readonly camera: CameraController
+    private readonly camera: CameraController,
+    private readonly selection: SelectionController
   ) { super(); }
 
   public onInit(): void {
@@ -121,6 +123,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     if (this.placing)
       this.exitPlacement();
 
+    this.selection.deselect();
     this.placing = true;
     this.yOrientation.zeroize();
     this.placementModel = this.placementJanitor.Add(createTowerModel(towerName, "Level0"));
