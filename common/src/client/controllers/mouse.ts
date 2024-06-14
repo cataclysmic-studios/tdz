@@ -19,6 +19,7 @@ export class MouseController implements OnInit, OnRender {
   public readonly lmbDown = new Signal<() => void>;
   public readonly rmbDown = new Signal<() => void>;
   public readonly mmbDown = new Signal<() => void>;
+  public readonly moved = new Signal<(position: Vector2, delta: Vector2) => void>;
   public readonly scrolled = new Signal<(delta: number) => void>;
 
   public isLmbDown = false;
@@ -30,6 +31,7 @@ export class MouseController implements OnInit, OnRender {
   private readonly clickAction = new Union(["MouseButton1", "Touch"]);
   private readonly rightClickAction = new Action("MouseButton2");
   private readonly middleClickAction = new Action("MouseButton3");
+  private readonly moveAction = new Axis("MouseMovement");
   private readonly scrollAction = new Axis("MouseWheel");
   private readonly input = new InputContext({
     ActionGhosting: 0,
@@ -66,6 +68,8 @@ export class MouseController implements OnInit, OnRender {
       .BindEvent("onMmbRelease", this.middleClickAction.Released, () => {
         this.isMmbDown = false
       });
+
+    this.input.Bind(this.moveAction, () => this.moved.Fire(this.getPosition(), this.getDelta()))
 
     // Touch controls
     UIS.TouchPinch.Connect((_, scale) => this.scrolled.Fire((scale < 1 ? 1 : -1) * abs(scale - 2)));

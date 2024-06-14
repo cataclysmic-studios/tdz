@@ -27,14 +27,25 @@ export class SelectionController implements OnInit {
 
   public onInit(): void {
     this.mouse.lmbDown.Connect(() => {
-      const target = this.mouse.getTarget();
-      const model = target?.FindFirstAncestorOfClass("Model");
-      if (model === undefined || !model.HasTag("Tower"))
+      const tower = this.getHoveredTower();
+      if (tower === undefined)
         return this.deselect();
 
-      const tower = this.components.getComponent<Tower>(model)!;
       this.select(tower);
       tower.setSizePreviewColor(SIZE_PREVIEW_COLORS.Selected);
+    });
+
+    let lastTowerHovered: Maybe<Tower>;
+    this.mouse.moved.Connect(() => {
+      const tower = this.getHoveredTower();
+      if (tower === undefined) {
+        lastTowerHovered?.toggleHoverHighlight(false);
+        lastTowerHovered = undefined;
+        return;
+      }
+
+      tower.toggleHoverHighlight(true);
+      lastTowerHovered = tower;
     });
   }
 
@@ -42,6 +53,8 @@ export class SelectionController implements OnInit {
     if (tower === this.selectedTower) return;
     this.deselect();
     this.selectedTower = tower;
+    this.selectedTower.toggleHoverHighlight(false);
+    this.selectedTower.toggleSelectionHighlight(true);
 
     const sizePreview = tower.getSizePreview();
     const difference = this.selectedSizePreviewHeight - this.defaultSizePreviewHeight;
@@ -64,6 +77,8 @@ export class SelectionController implements OnInit {
   public deselect(): void {
     if (this.selectedTower === undefined) return;
     this.selectionJanitor.Cleanup();
+    this.selectedTower.toggleHoverHighlight(false);
+    this.selectedTower.toggleSelectionHighlight(false);
 
     this.selectedTower.setSizePreviewColor(SIZE_PREVIEW_COLORS[this.selectedTower.isMine() ? "MyTowers" : "NotMyTowers"]);
     const sizePreview = this.selectedTower.getSizePreview();
@@ -79,5 +94,13 @@ export class SelectionController implements OnInit {
     this.selectionJanitor.Add(tween(sizePreview.Right, this.sizePreviewTweenInfo, { Position: this.defaultRightAttachmentPosition }));
 
     this.selectedTower = undefined;
+  }
+
+  private getHoveredTower(): Maybe<Tower> {
+    const target = this.mouse.getTarget();
+    const model = target?.FindFirstAncestorOfClass("Model");
+    if (model === undefined || !model.HasTag("Tower")) return;
+
+    return this.components.getComponent<Tower>(model);
   }
 }
