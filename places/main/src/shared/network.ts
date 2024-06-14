@@ -4,7 +4,7 @@ import type { TeleportData } from "./structs";
 import type { TowerInfo } from "./structs";
 
 interface ServerEvents {
-  placeTower(towerName: TowerName, cframe: CFrame): void;
+  placeTower(towerName: TowerName, cframe: CFrame, price: number): void;
   loadTeleportData(teleportData: TeleportData): void;
 }
 

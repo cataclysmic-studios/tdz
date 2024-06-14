@@ -164,7 +164,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     if (!purchased)
       return Sound.SoundEffects.Error.Play();
 
-    Events.placeTower(towerName, cframe);
+    Events.placeTower(towerName, cframe, price);
     this.exitPlacement();
   }
 }

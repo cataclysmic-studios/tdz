@@ -5,9 +5,11 @@ import type { TowerStats } from "common/shared/towers";
 export type Path = 1 | 2;
 export type PathLevel = 0 | 1 | 2 | 3 | 4 | 5;
 export type UpgradeLevel = [PathLevel, PathLevel];
+export type PathStats = readonly [Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>];
 
 export interface TowerInfo {
   readonly name: TowerName;
+  readonly worth: number;
   readonly cframe: CFrame;
   readonly ownerID: number;
   readonly upgrades: UpgradeLevel;

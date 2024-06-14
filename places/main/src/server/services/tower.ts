@@ -2,7 +2,8 @@ import { Service, type OnInit } from "@flamework/core";
 
 import type { OnPlayerJoin } from "../hooks";
 import { Events, Functions } from "server/network";
-import { TOWER_STATS, TowerStats } from "common/shared/towers";
+import { getTowerStats } from "shared/utility";
+import { TOWER_STATS, type TowerStats } from "common/shared/towers";
 import type { Path, TowerInfo } from "shared/structs";
 
 @Service()
@@ -11,14 +12,15 @@ export class TowerService implements OnInit, OnPlayerJoin {
   private cumulativeID = 1;
 
   public onInit(): void {
-    Events.placeTower.connect((player, towerName, cframe) => {
+    Events.placeTower.connect((player, towerName, cframe, price) => {
       const id = this.cumulativeID++;
       const info: TowerInfo = {
         name: towerName,
         cframe,
+        worth: price,
         ownerID: player.UserId,
         upgrades: [0, 0],
-        stats: TOWER_STATS[towerName][0]
+        stats: getTowerStats(towerName, [0, 0]),
       };
 
       this.towers[id] = info;

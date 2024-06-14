@@ -1,9 +1,36 @@
 import { RunService as Runtime } from "@rbxts/services";
 import { TweenInfoBuilder } from "@rbxts/builders";
+import Object from "@rbxts/object-utils";
 
 import { Assets } from "common/shared/utility/instances";
 import { tween } from "common/shared/utility/ui";
 import { PLACEMENT_STORAGE } from "./constants";
+import { TOWER_STATS, type TowerStats } from "./towers";
+import type { PathStats, UpgradeLevel } from "./structs";
+
+export function getTowerStats(towerName: TowerName, upgrades: UpgradeLevel): TowerStats {
+  const [path1Level, path2Level] = upgrades;
+  const allStats = TOWER_STATS[towerName];
+  const [baseStats, path1Stats, path2Stats] = allStats;
+  if (path1Level === 0 && path2Level === 0)
+    return table.clone(baseStats);
+
+  const upradedStats = table.clone(baseStats);
+  applyUpgradePathStats(upradedStats, path1Level, <PathStats><unknown>path1Stats);
+  applyUpgradePathStats(upradedStats, path2Level, <PathStats><unknown>path2Stats);
+  return upradedStats;
+}
+
+function applyUpgradePathStats(baseStats: TowerStats, pathLevel: number, pathStats: PathStats): void {
+  for (let i = 0; i < pathLevel; i++) {
+    const statsAddition = pathStats[i];
+    for (const [name, value] of Object.entries(statsAddition))
+      if (typeOf(value) === "number" && name !== "price")
+        (<ExtractMembers<TowerStats, Maybe<number>>>baseStats)[name] += value;
+      else
+        baseStats[name] = value;
+  }
+}
 
 export function createTowerModel(towerName: TowerName, modelName: string, cframe: CFrame = new CFrame): TowerModel {
   const towerModel = <TowerModel>Assets.Towers[<TowerName>towerName].WaitForChild(modelName).Clone();
