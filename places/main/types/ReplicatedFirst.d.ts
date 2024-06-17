@@ -7,6 +7,9 @@ interface ReplicatedFirst extends Instance {
       Beam1: Beam;
       Beam2: Beam;
     };
+    Enemies: Folder & {
+      Zombie: CharacterModel;
+    };
     Towers: Folder & {
       Rifleman: TowerFolder;
     };

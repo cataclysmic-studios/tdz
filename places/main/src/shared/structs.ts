@@ -7,6 +7,23 @@ export type PathLevel = 0 | 1 | 2 | 3 | 4 | 5;
 export type UpgradeLevel = [PathLevel, PathLevel];
 export type PathStats = readonly [Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>];
 
+export interface EnemyInfo {
+  readonly name: EnemyName;
+  readonly health: number;
+  readonly cframe: CFrame;
+  readonly traits: EnemyTrait[];
+}
+
+export const enum EnemyTraitType {
+  Armored = "Armored",
+  NoCash = "No Cash",
+}
+
+export interface EnemyTrait<T extends EnemyTraitType = EnemyTraitType> {
+  readonly type: T;
+  readonly effectiveness?: number;
+}
+
 export interface TowerInfo {
   readonly name: TowerName;
   readonly worth: number;

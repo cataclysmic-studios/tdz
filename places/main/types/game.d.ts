@@ -4,6 +4,7 @@ interface MapModel extends Model {
 }
 
 type TowerName = ExtractKeys<ReplicatedFirst["Assets"]["Towers"], TowerFolder>;
+type EnemyName = ExtractKeys<ReplicatedFirst["Assets"]["Enemies"], CharacterModel>;
 interface TowerFolder extends Folder {
   Level0: TowerModel;
   Level1: TowerModel;
