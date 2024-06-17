@@ -36,6 +36,84 @@ interface PlayerGui extends BasePlayerGui {
           UIGradient: UIGradient;
         };
       };
+      TowerUpgrades: ImageLabel & {
+        Info: Frame & {
+          Worth: Frame & {
+            UIListLayout: UIListLayout;
+            Icon: ImageLabel & {
+              UIAspectRatioConstraint: UIAspectRatioConstraint;
+            };
+            Title: TextLabel & {
+              UIStroke: UIStroke;
+            };
+          };
+          UIListLayout: UIListLayout;
+          Damage: Frame & {
+            UIListLayout: UIListLayout;
+            Icon: ImageLabel & {
+              UIAspectRatioConstraint: UIAspectRatioConstraint;
+            };
+            Title: TextLabel & {
+              UIStroke: UIStroke;
+            };
+          };
+        };
+        UIPadding: UIPadding;
+        Upgrades: Frame & {
+          UIListLayout: UIListLayout;
+          Path2: Frame & {
+            UpgradeName: TextLabel & {
+              UIStroke: UIStroke;
+            };
+            Close: ImageButton & {
+              UICorner: UICorner;
+              UIStroke: UIStroke;
+              UIAspectRatioConstraint: UIAspectRatioConstraint;
+              Icon: ImageLabel;
+            };
+            Price: TextLabel & {
+              UIStroke: UIStroke;
+            };
+            Icon: ImageLabel & {
+              UIAspectRatioConstraint: UIAspectRatioConstraint;
+            };
+            LevelIndicator: Frame & {
+              UIListLayout: UIListLayout;
+              UIPadding: UIPadding;
+            };
+          };
+          Path1: Frame & {
+            UpgradeName: TextLabel & {
+              UIStroke: UIStroke;
+            };
+            Close: ImageButton & {
+              UICorner: UICorner;
+              UIStroke: UIStroke;
+              UIAspectRatioConstraint: UIAspectRatioConstraint;
+              Icon: ImageLabel;
+            };
+            Price: TextLabel & {
+              UIStroke: UIStroke;
+            };
+            Icon: ImageLabel & {
+              UIAspectRatioConstraint: UIAspectRatioConstraint;
+            };
+            LevelIndicator: Frame & {
+              UIListLayout: UIListLayout;
+              UIPadding: UIPadding;
+            };
+          };
+        };
+        UICorner: UICorner;
+        UIStroke: UIStroke;
+        UIAspectRatioConstraint: UIAspectRatioConstraint;
+        Viewport: ViewportFrame & {
+          UIAspectRatioConstraint: UIAspectRatioConstraint;
+          Title: TextLabel & {
+            UIStroke: UIStroke;
+          };
+        };
+      };
     };
   };
 }

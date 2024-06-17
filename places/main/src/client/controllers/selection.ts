@@ -9,6 +9,7 @@ import { tween } from "common/shared/utility/ui";
 
 import type { Tower } from "client/components/tower";
 import type { MouseController } from "./mouse";
+import { PlayerGui } from "common/shared/utility/client";
 
 @Controller()
 export class SelectionController implements OnInit {
@@ -56,6 +57,13 @@ export class SelectionController implements OnInit {
     this.selectedTower.toggleHoverHighlight(false);
     this.selectedTower.toggleSelectionHighlight(true);
 
+    const upgradesUI = PlayerGui.Main.Main.TowerUpgrades;
+    upgradesUI.Viewport.Title.Text = tower.name;
+    upgradesUI.Viewport.SetAttribute("TowerViewport_Tower", tower.name);
+    if (!upgradesUI.Viewport.HasTag("TowerViewport"))
+      upgradesUI.Viewport.AddTag("TowerViewport");
+    upgradesUI.Visible = true;
+
     const sizePreview = tower.getSizePreview();
     const difference = this.selectedSizePreviewHeight - this.defaultSizePreviewHeight;
     this.selectionJanitor.Add(tween(sizePreview.Beam1, this.sizePreviewTweenInfo, {
@@ -79,9 +87,10 @@ export class SelectionController implements OnInit {
     this.selectionJanitor.Cleanup();
     this.selectedTower.toggleHoverHighlight(false);
     this.selectedTower.toggleSelectionHighlight(false);
+    PlayerGui.Main.Main.TowerUpgrades.Visible = false;
 
-    this.selectedTower.setSizePreviewColor(SIZE_PREVIEW_COLORS[this.selectedTower.isMine() ? "MyTowers" : "NotMyTowers"]);
     const sizePreview = this.selectedTower.getSizePreview();
+    this.selectedTower.setSizePreviewColor(SIZE_PREVIEW_COLORS[this.selectedTower.isMine() ? "MyTowers" : "NotMyTowers"]);
     this.selectionJanitor.Add(tween(sizePreview.Beam1, this.sizePreviewTweenInfo, {
       Width0: this.defaultSizePreviewHeight,
       Width1: this.defaultSizePreviewHeight

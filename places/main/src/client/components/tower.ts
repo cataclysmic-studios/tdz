@@ -1,5 +1,5 @@
 import type { OnStart } from "@flamework/core";
-import { Component, BaseComponent } from "@flamework/components";
+import { Component } from "@flamework/components";
 
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
@@ -9,14 +9,18 @@ import { PLACEMENT_STORAGE } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/structs";
 
+import DestroyableComponent from "common/shared/base-components/destroyable";
+
 interface Attributes {
   ID: number;
   Size: number;
 }
 
 @Component({ tag: "Tower" })
-export class Tower extends BaseComponent<Attributes, TowerModel> implements OnStart {
-  private readonly highlight = new Instance("Highlight", this.instance);
+export class Tower extends DestroyableComponent<Attributes, TowerModel> implements OnStart {
+  public readonly name = this.instance.Name;
+
+  private readonly highlight = this.janitor.Add(new Instance("Highlight", this.instance));
   private readonly selectionFillTransparency = 0.75;
   private info!: TowerInfo;
 
@@ -27,13 +31,15 @@ export class Tower extends BaseComponent<Attributes, TowerModel> implements OnSt
     this.highlight.FillColor = new Color3(1, 1, 1);
     this.highlight.OutlineColor = new Color3(1, 1, 1);
 
-    Events.towerUpgraded.connect((id, newInfo) => {
+    this.janitor.LinkToInstance(this.instance, true);
+    this.janitor.Add(this.instance);
+    this.janitor.Add(Events.towerUpgraded.connect((id, newInfo) => {
       if (id !== this.attributes.ID) return;
       this.info = newInfo;
-    });
+    }));
   }
 
-  public isHightlightEnabled(): boolean {
+  public isHighlightEnabled(): boolean {
     return this.highlight.Enabled;
   }
 
@@ -66,6 +72,6 @@ export class Tower extends BaseComponent<Attributes, TowerModel> implements OnSt
   }
 
   public isMine(): boolean {
-    return this.getInfo().ownerID === Player.UserId
+    return this.getInfo().ownerID === Player.UserId;
   }
 }
