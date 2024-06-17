@@ -17,6 +17,7 @@ export class TowerService implements OnInit, OnPlayerJoin {
       const info: TowerInfo = {
         name: towerName,
         cframe,
+        totalDamage: 0,
         worth: price,
         ownerID: player.UserId,
         upgrades: [0, 0],

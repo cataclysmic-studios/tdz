@@ -1,5 +1,6 @@
 import type { OnStart } from "@flamework/core";
 import { Component } from "@flamework/components";
+import Signal from "@rbxts/signal";
 
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
@@ -19,6 +20,7 @@ interface Attributes {
 @Component({ tag: "Tower" })
 export class Tower extends DestroyableComponent<Attributes, TowerModel> implements OnStart {
   public readonly name = this.instance.Name;
+  public readonly infoUpdated = new Signal<(newInfo: TowerInfo) => void>;
 
   private readonly highlight = this.janitor.Add(new Instance("Highlight", this.instance));
   private readonly selectionFillTransparency = 0.75;

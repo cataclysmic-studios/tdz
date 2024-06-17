@@ -10,6 +10,7 @@ import { tween } from "common/shared/utility/ui";
 import type { Tower } from "client/components/tower";
 import type { MouseController } from "./mouse";
 import { PlayerGui } from "common/shared/utility/client";
+import { Upgrades } from "client/components/ui/upgrades";
 
 @Controller()
 export class SelectionController implements OnInit {
@@ -62,6 +63,10 @@ export class SelectionController implements OnInit {
     upgradesUI.Viewport.SetAttribute("TowerViewport_Tower", tower.name);
     if (!upgradesUI.Viewport.HasTag("TowerViewport"))
       upgradesUI.Viewport.AddTag("TowerViewport");
+
+    const [upgrades] = this.components.getAllComponents<Upgrades>();
+    upgrades.updateInfo(tower.getInfo());
+    this.selectionJanitor.Add(tower.infoUpdated.Connect(info => upgrades.updateInfo(info)));
     upgradesUI.Visible = true;
 
     const sizePreview = tower.getSizePreview();

@@ -10,6 +10,7 @@ export type PathStats = readonly [Partial<TowerStats>, Partial<TowerStats>, Part
 export interface TowerInfo {
   readonly name: TowerName;
   readonly worth: number;
+  readonly totalDamage: number;
   readonly cframe: CFrame;
   readonly ownerID: number;
   readonly upgrades: UpgradeLevel;
