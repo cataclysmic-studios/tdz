@@ -11,6 +11,7 @@ interface ServerEvents {
 interface ClientEvents {
   towerUpgraded(id: number, newInfo: TowerInfo): void;
   updateCashUI(cash: number): void;
+  updateHealthUI(health: number, maxHealth: number): void;
   replicateTower(id: number, towerInfo: TowerInfo): void;
   loadTowers(allTowers: Record<number, TowerInfo>): void;
 }

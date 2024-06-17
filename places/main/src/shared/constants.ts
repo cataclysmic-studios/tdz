@@ -15,28 +15,33 @@ PLACEMENT_STORAGE.Parent = World;
 
 export const TEST_TP_DATA: TeleportData = {
   difficulty: Difficulty.Easy,
-  map: "Testing Grounds"
+  map: "Pleasant Island"
 };
 
 export const DIFFICULTY_INFO: Record<Difficulty, DifficultyInfo> = {
   [Difficulty.Easy]: {
     waves: 20,
+    startingHealth: 300,
     startingCash: 600
   },
   [Difficulty.Intermediate]: {
     waves: 28,
+    startingHealth: 275,
     startingCash: 750
   },
   [Difficulty.Tough]: {
     waves: 35,
+    startingHealth: 200,
     startingCash: 850
   },
   [Difficulty.Expert]: {
     waves: 42,
+    startingHealth: 175,
     startingCash: 950
   },
   [Difficulty.Nightmare]: {
     waves: 50,
+    startingHealth: 125,
     startingCash: 1100
   }
 }

@@ -8,6 +8,13 @@ import { PLACEMENT_STORAGE } from "./constants";
 import { TOWER_STATS, type TowerStats } from "./towers";
 import type { PathStats, UpgradeLevel } from "./structs";
 
+export function teleportPlayers(cframe: CFrame, ...players: Player[]): void {
+  for (const player of players) {
+    if (player.Character === undefined) continue;
+    (<CharacterModel>player.Character).HumanoidRootPart.CFrame = (cframe.add(new Vector3(0, 3, 0)));
+  }
+}
+
 export function getTowerStats(towerName: TowerName, upgrades: UpgradeLevel): TowerStats {
   const [path1Level, path2Level] = upgrades;
   const allStats = TOWER_STATS[towerName];

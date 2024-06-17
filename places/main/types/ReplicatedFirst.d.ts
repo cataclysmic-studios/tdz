@@ -12,6 +12,7 @@ interface ReplicatedFirst extends Instance {
     };
     Maps: Folder & {
       ["Testing Grounds"]: MapModel;
+      ["Pleasant Island"]: MapModel;
     }
   };
 }

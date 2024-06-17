@@ -20,6 +20,7 @@ export interface TowerInfo {
 export interface DifficultyInfo {
   readonly waves: number;
   readonly startingCash: number;
+  readonly startingHealth: number;
 }
 
 export interface TeleportData {
