@@ -122,19 +122,45 @@ export function createWeld(part0: BasePart, part1: BasePart): WeldConstraint {
   return weld;
 }
 
+// TODO: fade out model function
+
 const growInTweenInfo = new TweenInfoBuilder().SetTime(0.1);
-export async function growIn(model: Model | BasePart): Promise<void> {
+/**
+ * Smoothly scale a model/part to its original size from nothing
+ * @param model Model or part to scale
+ * @param point The point of the model to scale from
+ */
+export async function growIn(model: Model | BasePart, point?: Vector3): Promise<void> {
   const scaleValue = new Instance("NumberValue");
   scaleValue.Value = 0.01;
 
   const defaultSize = model.IsA("BasePart") ? model.Size : undefined;
-  const t = tween(scaleValue, growInTweenInfo, { Value: <number>model.GetAttribute("DefaultScale") ?? 1 });
+  const defaultPosition = model.IsA("BasePart") ? model.Position : undefined;
+  const defaultScale = <number>model.GetAttribute("DefaultScale") ?? 1;
+  const t = tween(scaleValue, growInTweenInfo, { Value: defaultScale });
+
   return new Promise(resolve => {
     while (t.PlaybackState === Enum.PlaybackState.Playing) {
-      if (model.IsA("Model"))
+      if (model.IsA("Model")) {
+        const root = model.PrimaryPart;
+        if (root === undefined) return
+
+        point ??= root.Position;
+        const offset = point.sub(root.Position);
+        const scaledOffset = offset.mul(scaleValue.Value / defaultScale);
+        const newPosition = point.sub(scaledOffset);
         model.ScaleTo(scaleValue.Value);
-      else
+
+        const positionOffset = newPosition.sub(root.Position);
+        model.PivotTo(root.CFrame.mul(new CFrame(positionOffset)));
+      } else if (model.IsA("BasePart")) {
+        point ??= model.Position;
+        const offset = point.sub(defaultPosition!);
+        const scaledOffset = offset.mul(scaleValue.Value / defaultScale);
+        const newPosition = point.sub(scaledOffset);
         model.Size = defaultSize!.mul(scaleValue.Value);
+        model.Position = newPosition;
+      }
 
       const event = Runtime.IsClient() ? Runtime.RenderStepped : Runtime.Stepped;
       event.Wait();
