@@ -9,7 +9,7 @@ import { TOWER_STATS, type TowerStats } from "./towers";
 import type { PathStats, UpgradeLevel } from "./structs";
 
 const BEZIER_COEFFICIENT1 = 3;
-const BEZIER_COEFFICIENT2 = 1.8;
+const BEZIER_COEFFICIENT2 = 0.6;
 
 // disgusting math
 export function bezierPoint(t: number, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3): Vector3 {
