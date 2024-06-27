@@ -66,8 +66,15 @@ export class EnemyService implements OnInit, OnTick {
         const spawnCFrame = map.StartPoint.CFrame.add(new Vector3(0, (size.Y / 2) - (map.StartPoint.Size.Y / 2), 0));
         enemyModel.HumanoidRootPart.CFrame = spawnCFrame;
         enemyModel.Parent = ENEMY_STORAGE;
-        growIn(enemyModel)
-          .then(() => enemyModel.Humanoid.Animator.LoadAnimation(enemyModel.Animations.Walk).Play()); // TODO: set animation speed
+        growIn(enemyModel);
+
+        const walk = enemyModel.Animations.Walk;
+        const embeddedWalkSpeed = <number>walk.GetAttribute("EmbeddedWalkSpeed") ?? 16;
+        const walkSpeed = enemyModel.Humanoid.WalkSpeed / 0.01;
+
+        const walkAnimation = enemyModel.Humanoid.Animator.LoadAnimation(walk);
+        walkAnimation.Play()
+        walkAnimation.AdjustSpeed(1 / (embeddedWalkSpeed / walkSpeed));
 
         const enemy = this.matter.world.spawn(
           EnemyInfo({
