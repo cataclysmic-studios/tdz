@@ -13,12 +13,14 @@ interface ClientEvents {
   updateCashUI: Networking.Unreliable<(cash: number) => void>;
   updateHealthUI(health: number, maxHealth: number): void;
   updateWaveUI(wave: number): void;
+  timeScaleUpdated(timeScale: number): void;
   towerUpgraded(id: number, newInfo: TowerInfo): void;
   replicateTower(id: number, towerInfo: TowerInfo): void;
   loadTowers(allTowers: Record<number, TowerInfo>): void;
 }
 
 interface ServerFunctions {
+  getTimeScale(): number;
   makePurchase(price: number): boolean;
   getTowerInfo(id: number): TowerInfo;
 }

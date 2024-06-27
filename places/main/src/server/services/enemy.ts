@@ -37,13 +37,12 @@ export class EnemyService implements OnInit, OnTick {
   }
 
   public onTick(dt: number): void {
-    // TODO: check if mouse.getTarget() is any enemy model
+    // TODO: check if mouse.getTarget() is any enemy model (ON CLIENT, NOT IN THIS SERVICE)
 
     const map = this.match.getMap();
     for (const [enemy, info] of this.matter.world.query(EnemyInfo)) {
       const root = info.model.HumanoidRootPart;
-      const humanoid = info.model.Humanoid;
-      const speed = humanoid.WalkSpeed * this.match.timeScale;
+      const speed = <number>info.model.GetAttribute("Speed") * <number>info.model.GetAttribute("DefaultScale") * this.match.timeScale;
       this.matter.world.insert(enemy, info.patch({ distance: info.distance + speed * dt }));
 
       const cframe = this.path.getCFrameAtDistance(info.distance);
@@ -68,14 +67,7 @@ export class EnemyService implements OnInit, OnTick {
         enemyModel.Parent = ENEMY_STORAGE;
         growIn(enemyModel);
 
-        const walk = enemyModel.Animations.Walk;
-        const embeddedWalkSpeed = <number>walk.GetAttribute("EmbeddedWalkSpeed") ?? 16;
-        const walkSpeed = enemyModel.Humanoid.WalkSpeed / 0.01;
-
-        const walkAnimation = enemyModel.Humanoid.Animator.LoadAnimation(walk);
-        walkAnimation.Play()
-        walkAnimation.AdjustSpeed(1 / (embeddedWalkSpeed / walkSpeed));
-
+        enemyModel.AddTag("Enemy");
         const enemy = this.matter.world.spawn(
           EnemyInfo({
             distance: 0,

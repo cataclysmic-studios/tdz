@@ -36,7 +36,9 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave {
     Events.toggleDoubleSpeed.connect((_, on) => {
       if (Players.GetPlayers().size() > 1) return; // TODO: vote for 2x
       this.timeScale = on ? 2 : 1;
+      Events.timeScaleUpdated.broadcast(this.timeScale);
     });
+    Functions.getTimeScale.setCallback(() => this.timeScale);
     Functions.makePurchase.setCallback((player, price) => {
       if (this.getCash(player) < price) return false;
       this.decrementCash(player, price);
