@@ -47,7 +47,7 @@ export class EnemyService implements OnInit, OnTick {
       this.matter.world.insert(enemy, info.patch({ distance: info.distance + speed * dt }));
 
       const cframe = this.path.getCFrameAtDistance(info.distance);
-      info.model.PivotTo(cframe);
+      root.CFrame = root.CFrame.Lerp(cframe, 0.2);
 
       if (cframe.Position.FuzzyEq(map.EndPoint.Position)) {
         // TODO: inflict damage
@@ -66,8 +66,8 @@ export class EnemyService implements OnInit, OnTick {
         const spawnCFrame = map.StartPoint.CFrame.add(new Vector3(0, (size.Y / 2) - (map.StartPoint.Size.Y / 2), 0));
         enemyModel.HumanoidRootPart.CFrame = spawnCFrame;
         enemyModel.Parent = ENEMY_STORAGE;
-        growIn(enemyModel) // TODO: set animation speed
-        // .then(() => enemyModel.Humanoid.Animator.LoadAnimation(enemyModel.Animations.Walk).Play()); // fucking bugged rn
+        growIn(enemyModel)
+          .then(() => enemyModel.Humanoid.Animator.LoadAnimation(enemyModel.Animations.Walk).Play()); // TODO: set animation speed
 
         const enemy = this.matter.world.spawn(
           EnemyInfo({

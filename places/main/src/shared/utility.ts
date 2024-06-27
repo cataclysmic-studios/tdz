@@ -8,6 +8,9 @@ import { PLACEMENT_STORAGE } from "./constants";
 import { TOWER_STATS, type TowerStats } from "./towers";
 import type { PathStats, UpgradeLevel } from "./structs";
 
+const BEZIER_COEFFICIENT1 = 3;
+const BEZIER_COEFFICIENT2 = 1.8;
+
 // disgusting math
 export function bezierPoint(t: number, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3): Vector3 {
   const oneMinusT = 1 - t;
@@ -17,8 +20,8 @@ export function bezierPoint(t: number, p0: Vector3, p1: Vector3, p2: Vector3, p3
   const tCubed = tSquared * t;
 
   return p0.mul(oneMinusTCubed) // first term
-    .add(p1.mul(3 * oneMinusTSquared * t)) // second, etc.
-    .add(p2.mul(3 * oneMinusT * tSquared))
+    .add(p1.mul(BEZIER_COEFFICIENT1 * oneMinusTSquared * t)) // second, etc.
+    .add(p2.mul(BEZIER_COEFFICIENT1 * oneMinusT * tSquared))
     .add(p3.mul(tCubed));
 }
 
@@ -28,10 +31,10 @@ export function bezierTangent(t: number, p0: Vector3, p1: Vector3, p2: Vector3, 
   const tSquared = t * t;
   const oneMinusTSquared = oneMinusT * oneMinusT;
 
-  return p0.mul(-3 * oneMinusTSquared) // first term
-    .add(p1.mul(3 * oneMinusTSquared - 6 * oneMinusT * t)) // second, etc.
-    .add(p2.mul(6 * t * oneMinusT - 3 * tSquared))
-    .add(p3.mul(3 * tSquared))
+  return p0.mul(-BEZIER_COEFFICIENT1 * oneMinusTSquared) // first term
+    .add(p1.mul(BEZIER_COEFFICIENT1 * oneMinusTSquared - BEZIER_COEFFICIENT2 * oneMinusT * t)) // second, etc.
+    .add(p2.mul(BEZIER_COEFFICIENT2 * t * oneMinusT - BEZIER_COEFFICIENT1 * tSquared))
+    .add(p3.mul(BEZIER_COEFFICIENT1 * tSquared))
     .Unit;
 }
 

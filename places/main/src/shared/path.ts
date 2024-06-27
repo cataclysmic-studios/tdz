@@ -1,5 +1,7 @@
 import { bezierPoint, bezierTangent } from "./utility";
 
+const CURVE_SIZE = 8;
+
 export const enum EndOfPathInstruction {
   Stop
 }
@@ -40,21 +42,22 @@ export class Path {
 
       const segmentDistance = this.segmentLengths[i] - this.segmentLengths[i - 1];
       const t = (distance - this.segmentLengths[i - 1]) / segmentDistance;
+      print(t);
       const node0 = nodes[i - 1];
-      const node3 = nodes[i];
+      const node1 = nodes[i];
       const p0 = node0.Position;
-      const p3 = node3.Position;
+      const p3 = node1.Position;
       const direction0 = node0.CFrame.LookVector;
-      const direction1 = node3.CFrame.LookVector;
+      const direction1 = node1.CFrame.LookVector;
 
       let position: Vector3;
       let tangent: Vector3;
-      if (this.isAligned(direction0, direction1)) {
+      if (this.isFacingSameDirection(direction0, direction1)) {
         position = p0.add(p3.sub(p0).mul(t));
         tangent = p3.sub(p0).Unit;
       } else {
-        const p1 = p0.add(direction0.mul(5));
-        const p2 = p3.sub(direction1.mul(5));
+        const p1 = p0.add(direction0.mul(CURVE_SIZE));
+        const p2 = p3.sub(direction1.mul(CURVE_SIZE));
         position = bezierPoint(t, p0, p1, p2, p3);
         tangent = bezierTangent(t, p0, p1, p2, p3);
       }
@@ -73,18 +76,18 @@ export class Path {
     const nodes = this.getNodes();
     for (const i of $range(1, nodes.size() - 1)) {
       const node0 = nodes[i - 1];
-      const node3 = nodes[i];
+      const node1 = nodes[i];
       const p0 = node0.Position;
-      const p3 = node3.Position;
+      const p3 = node1.Position;
       const direction0 = node0.CFrame.LookVector;
-      const direction1 = node3.CFrame.LookVector;
+      const direction1 = node1.CFrame.LookVector;
 
       let segmentLength = 0;
-      if (this.isAligned(direction0, direction1))
+      if (this.isFacingSameDirection(direction0, direction1))
         segmentLength = p3.sub(p0).Magnitude;
       else {
-        const p1 = p0.add(direction0.mul(5)); // control point one
-        const p2 = p3.sub(direction1.mul(5)); // control point two
+        const p1 = p0.add(direction0.mul(CURVE_SIZE)); // control point one
+        const p2 = p3.sub(direction1.mul(CURVE_SIZE)); // control point two
         const segmentsPerBezier = this.getSegmentsPerBezier();
         for (const j of $range(1, segmentsPerBezier)) {
           const t1 = (j - 1) / segmentsPerBezier;
@@ -110,11 +113,11 @@ export class Path {
     return points;
   }
 
-  private isAligned(direction1: Vector3, direction2: Vector3): boolean {
+  private isFacingSameDirection(direction1: Vector3, direction2: Vector3): boolean {
     return direction1.Dot(direction2) > 0.99;
   }
 
   private getSegmentsPerBezier(): number {
-    return <number>this.map.GetAttribute("SegmentsPerBezier") ?? 30;
+    return <number>this.map.GetAttribute("SegmentsPerBezier") ?? 10;
   }
 }
