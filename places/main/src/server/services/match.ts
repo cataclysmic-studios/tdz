@@ -3,6 +3,7 @@ import { Workspace as World, Players } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
 import Signal from "@rbxts/signal";
 
+import type { LogStart } from "common/shared/hooks";
 import type { OnPlayerJoin, OnPlayerLeave } from "common/server/hooks";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
@@ -14,7 +15,7 @@ import type { Difficulty } from "common/shared/structs/difficulty";
 // TODO: handle timers here
 
 @Service()
-export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave {
+export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogStart {
   public readonly intermissionFinished = new Signal<(difficulty: Difficulty) => void>;
   public timeScale = 1;
 

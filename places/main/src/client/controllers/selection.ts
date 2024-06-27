@@ -3,17 +3,18 @@ import { Components } from "@flamework/components";
 import { TweenInfoBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
 
+import type { LogStart } from "common/shared/hooks";
 import { Assets } from "common/shared/utility/instances";
+import { PlayerGui } from "common/shared/utility/client";
 import { SIZE_PREVIEW_COLORS } from "shared/constants";
 import { tween } from "common/shared/utility/ui";
 
 import type { Tower } from "client/components/tower";
+import type { Upgrades } from "client/components/ui/upgrades";
 import type { MouseController } from "./mouse";
-import { PlayerGui } from "common/shared/utility/client";
-import { Upgrades } from "client/components/ui/upgrades";
 
 @Controller()
-export class SelectionController implements OnInit {
+export class SelectionController implements OnInit, LogStart {
   private readonly defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
   private readonly selectedSizePreviewHeight = 0.75;
   private readonly defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;

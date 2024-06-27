@@ -1,6 +1,7 @@
 import { OnInit, OnTick, Service } from "@flamework/core";
 import type { Entity } from "@rbxts/matter";
 
+import type { LogStart } from "common/shared/hooks";
 import { Assets } from "common/shared/utility/instances";
 import { toSeconds } from "common/shared/utility/time";
 import { growIn } from "shared/utility";
@@ -16,7 +17,7 @@ import type { MatchService } from "./match";
 type EnemyEntity = Entity<[EnemyInfo]>;
 
 @Service()
-export class EnemyService implements OnInit, OnTick {
+export class EnemyService implements OnInit, OnTick, LogStart {
   private readonly enemies: EnemyEntity[] = [];
   private path!: Path
 

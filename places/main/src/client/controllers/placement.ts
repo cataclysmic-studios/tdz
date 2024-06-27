@@ -5,6 +5,7 @@ import { RaycastParamsBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
 import Object from "@rbxts/object-utils";
 
+import type { LogStart } from "common/shared/hooks";
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player } from "common/shared/utility/client";
@@ -25,7 +26,7 @@ import type { SelectionController } from "./selection";
 
 // TODO: collision groups, show "Press 'Q' to exit placement mode" gui
 @Controller()
-export class PlacementController extends InputInfluenced implements OnInit, OnStart, OnRender {
+export class PlacementController extends InputInfluenced implements OnInit, OnStart, OnRender, LogStart {
   private readonly placementJanitor = new Janitor;
   private readonly swaySpring = new Spring;
   private readonly canPlaceColor = Color3.fromRGB(0, 170, 255);
