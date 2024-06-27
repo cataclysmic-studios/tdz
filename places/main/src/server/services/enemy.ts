@@ -49,9 +49,9 @@ export class EnemyService implements OnInit, OnTick {
       root.CFrame = root.CFrame.Lerp(cframe, 0.2);
 
       if (cframe.Position.FuzzyEq(map.EndPoint.Position)) {
-        // TODO: inflict damage
-        info.model.Destroy();
         this.matter.world.despawn(enemy);
+        this.match.decrementHealth(info.health);
+        info.model.Destroy();
       }
     }
   }
