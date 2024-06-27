@@ -1,10 +1,17 @@
+interface EnemyModel extends CharacterModel {
+  Animations: Folder & {
+    Walk: Animation;
+  }
+}
+
 interface MapModel extends Model {
+  PathNodes: Folder & Record<string, Part>;
   EndPoint: Part;
   StartPoint: Part;
 }
 
 type TowerName = ExtractKeys<ReplicatedFirst["Assets"]["Towers"], TowerFolder>;
-type EnemyName = ExtractKeys<ReplicatedFirst["Assets"]["Enemies"], CharacterModel>;
+type EnemyName = ExtractKeys<ReplicatedFirst["Assets"]["Enemies"], EnemyModel>;
 interface TowerFolder extends Folder {
   Level0: TowerModel;
   Level1: TowerModel;

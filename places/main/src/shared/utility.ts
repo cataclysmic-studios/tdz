@@ -8,6 +8,33 @@ import { PLACEMENT_STORAGE } from "./constants";
 import { TOWER_STATS, type TowerStats } from "./towers";
 import type { PathStats, UpgradeLevel } from "./structs";
 
+// disgusting math
+export function bezierPoint(t: number, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3): Vector3 {
+  const oneMinusT = 1 - t;
+  const tSquared = t * t;
+  const oneMinusTSquared = oneMinusT * oneMinusT;
+  const oneMinusTCubed = oneMinusTSquared * oneMinusT;
+  const tCubed = tSquared * t;
+
+  return p0.mul(oneMinusTCubed) // first term
+    .add(p1.mul(3 * oneMinusTSquared * t)) // second, etc.
+    .add(p2.mul(3 * oneMinusT * tSquared))
+    .add(p3.mul(tCubed));
+}
+
+// even more disgusting math
+export function bezierTangent(t: number, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3): Vector3 {
+  const oneMinusT = 1 - t;
+  const tSquared = t * t;
+  const oneMinusTSquared = oneMinusT * oneMinusT;
+
+  return p0.mul(-3 * oneMinusTSquared) // first term
+    .add(p1.mul(3 * oneMinusTSquared - 6 * oneMinusT * t)) // second, etc.
+    .add(p2.mul(6 * t * oneMinusT - 3 * tSquared))
+    .add(p3.mul(3 * tSquared))
+    .Unit;
+}
+
 export function teleportPlayers(cframe: CFrame, ...players: Player[]): void {
   for (const player of players) {
     if (player.Character === undefined) continue;
@@ -106,7 +133,8 @@ export async function growIn(model: Model | BasePart): Promise<void> {
       else
         model.Size = defaultSize!.mul(scaleValue.Value);
 
-      Runtime.RenderStepped.Wait();
+      const event = Runtime.IsClient() ? Runtime.RenderStepped : Runtime.Stepped;
+      event.Wait();
     }
 
     scaleValue.Destroy();

@@ -8,13 +8,12 @@ interface ReplicatedFirst extends Instance {
       Beam2: Beam;
     };
     Enemies: Folder & {
-      Zombie: CharacterModel;
+      Zombie: EnemyModel;
     };
     Towers: Folder & {
       Rifleman: TowerFolder;
     };
     Maps: Folder & {
-      ["Testing Grounds"]: MapModel;
       ["Pleasant Island"]: MapModel;
     }
   };

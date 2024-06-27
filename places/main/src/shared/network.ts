@@ -6,12 +6,14 @@ import type { TowerInfo } from "./structs";
 interface ServerEvents {
   placeTower(towerName: TowerName, cframe: CFrame, price: number): void;
   loadTeleportData(teleportData: TeleportData): void;
+  toggleDoubleSpeed(on: boolean): void;
 }
 
 interface ClientEvents {
-  towerUpgraded(id: number, newInfo: TowerInfo): void;
-  updateCashUI(cash: number): void;
+  updateCashUI: Networking.Unreliable<(cash: number) => void>;
   updateHealthUI(health: number, maxHealth: number): void;
+  updateWaveUI(wave: number): void;
+  towerUpgraded(id: number, newInfo: TowerInfo): void;
   replicateTower(id: number, towerInfo: TowerInfo): void;
   loadTowers(allTowers: Record<number, TowerInfo>): void;
 }

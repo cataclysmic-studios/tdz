@@ -4,7 +4,7 @@ import type { OnPlayerJoin } from "../hooks";
 import { Events, Functions } from "server/network";
 import { getTowerStats } from "shared/utility";
 import { TOWER_STATS, type TowerStats } from "common/shared/towers";
-import type { Path, TowerInfo } from "shared/structs";
+import type { UpgradePath, TowerInfo } from "shared/structs";
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin {
@@ -34,7 +34,7 @@ export class TowerService implements OnInit, OnPlayerJoin {
     Events.loadTowers(player, this.towers);
   }
 
-  public upgrade(id: number, path: Path): void {
+  public upgrade(id: number, path: UpgradePath): void {
     const towerName = this.towers[id].name;
     const upgradeStats = TOWER_STATS[towerName][path];
     this.towers[id].upgrades[path - 1]++;

@@ -11,9 +11,12 @@ import type Wave from "common/shared/classes/wave";
 
 import type { CameraController } from "./camera";
 import type { MouseController } from "./mouse";
+import { Events } from "client/network";
 
 @Controller()
 export class ControlPanelController implements OnStart {
+  private doubleSpeedEnabled = false;
+
   private readonly input = new InputContext({
     ActionGhosting: 0,
     Process: false,
@@ -49,9 +52,22 @@ export class ControlPanelController implements OnStart {
       Iris.Window(["Control Panel"], { size: Iris.State(windowSize) });
 
       this.renderCameraTab();
+      this.renderAdminTab();
 
       Iris.End();
     });
+  }
+
+  private renderAdminTab(): void {
+    Iris.Tree(["Admin"]);
+
+    const doubleSpeed = Iris.Button([(this.doubleSpeedEnabled ? "1" : "2") + "x Speed"]);
+    if (doubleSpeed.clicked()) {
+      this.doubleSpeedEnabled = !this.doubleSpeedEnabled;
+      Events.toggleDoubleSpeed(this.doubleSpeedEnabled);
+    }
+
+    Iris.End();
   }
 
   private renderCameraTab(): void {

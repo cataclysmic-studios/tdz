@@ -1,17 +1,23 @@
 import { OnInit, Service } from "@flamework/core";
-import { Workspace as World } from "@rbxts/services";
+import { Workspace as World, Players } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
 import Signal from "@rbxts/signal";
 
 import type { OnPlayerJoin, OnPlayerLeave } from "common/server/hooks";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
+import { teleportPlayers } from "shared/utility";
 import { DIFFICULTY_INFO } from "shared/constants";
 import type { TeleportData } from "shared/structs";
-import { teleportPlayers } from "shared/utility";
+import type { Difficulty } from "common/shared/structs/difficulty";
+
+// TODO: handle timers here
 
 @Service()
 export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave {
+  public readonly intermissionFinished = new Signal<(difficulty: Difficulty) => void>;
+  public timeScale = 1;
+
   private readonly cashChanged = new Signal<(player: Player, newCash: number) => void>;
   private readonly playerCash: Record<number, number> = {};
   private readonly playerJanitors: Partial<Record<number, Janitor>> = {};
@@ -25,9 +31,11 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave {
       this.teleportData = teleportData;
       this.mapModel = Assets.Maps[teleportData.map].Clone();
       this.mapModel.Parent = World;
-
-      const difficultyInfo = DIFFICULTY_INFO[teleportData.difficulty];
-      this.setHealth(difficultyInfo.startingHealth);
+      this.initialize(teleportData.difficulty);
+    });
+    Events.toggleDoubleSpeed.connect((_, on) => {
+      if (Players.GetPlayers().size() > 1) return; // TODO: vote for 2x
+      this.timeScale = on ? 2 : 1;
     });
     Functions.makePurchase.setCallback((player, price) => {
       if (this.getCash(player) < price) return false;
@@ -58,7 +66,11 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave {
     this.playerJanitors[player.UserId] = undefined;
   }
 
-  private decrementHealth(amount: number): void {
+  public getMap(): MapModel {
+    return this.mapModel;
+  }
+
+  public decrementHealth(amount: number): void {
     this.incrementHealth(-amount);
   }
 
@@ -91,5 +103,14 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave {
 
   private getCash(player: Player): number {
     return this.playerCash[player.UserId];
+  }
+
+  private initialize(difficulty: Difficulty) {
+    task.spawn(() => {
+      const { startingHealth } = DIFFICULTY_INFO[difficulty];
+      this.setHealth(startingHealth);
+      task.wait(8 / this.timeScale); // TODO: implement timer
+      this.intermissionFinished.Fire(difficulty);
+    });
   }
 }
