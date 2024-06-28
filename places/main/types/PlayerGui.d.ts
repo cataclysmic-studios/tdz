@@ -1,6 +1,27 @@
 interface PlayerGui extends BasePlayerGui {
   Main: ScreenGui & {
     Main: Frame & {
+      EnemyInfo: Frame & {
+        Main: ImageLabel & {
+          UIStroke: UIStroke;
+          EnemyName: TextLabel & {
+            UIStroke: UIStroke;
+          };
+          UIPadding: UIPadding;
+          Health: Frame & {
+            Amount: TextLabel & {
+              UIStroke: UIStroke;
+            };
+            UIStroke: UIStroke;
+            UIGradient: UIGradient;
+            Bar: Frame & {
+              UIGradient: UIGradient;
+            };
+          };
+        };
+        UIAspectRatioConstraint: UIAspectRatioConstraint;
+        Traits: Frame;
+      };
       Towers: Frame & {
         UIListLayout: UIListLayout;
         UIAspectRatioConstraint: UIAspectRatioConstraint;

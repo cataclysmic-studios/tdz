@@ -86,7 +86,8 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
       .SetIgnoreWater(true)
       .Build();
 
-    const groundBelow = World.Raycast(towerCFrame.Position, new Vector3(0, -1.2, 0), raycastParams);
+    const towerScale = this.placementModel.GetScale();
+    const groundBelow = World.Raycast(towerCFrame.Position, new Vector3(0, -3.1 * towerScale, 0), raycastParams);
     const groundInside = World.Raycast(towerCFrame.Position, new Vector3(0, -1.1, 0), raycastParams);
     const inPlacableLocation = this.mouse.getTarget(undefined, mouseFilter)?.HasTag(isWaterTower ? "PlacableWater" : "PlacableGround") ?? false;
     const partsTouchingSizePreview = this.placementSizePreview.GetTouchingParts();
