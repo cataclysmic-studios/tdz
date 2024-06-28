@@ -1,4 +1,4 @@
-import { Controller, type OnInit } from "@flamework/core";
+import { Controller, type OnInit, type OnTick } from "@flamework/core";
 import { Components } from "@flamework/components";
 import { TweenInfoBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
@@ -14,7 +14,7 @@ import type { Upgrades } from "client/components/ui/upgrades";
 import type { MouseController } from "./mouse";
 
 @Controller()
-export class SelectionController implements OnInit, LogStart {
+export class SelectionController implements OnInit, OnTick, LogStart {
   private readonly defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
   private readonly selectedSizePreviewHeight = 0.75;
   private readonly defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;
@@ -22,6 +22,7 @@ export class SelectionController implements OnInit, LogStart {
   private readonly sizePreviewTweenInfo = new TweenInfoBuilder().SetTime(0.08);
   private readonly selectionJanitor = new Janitor;
   private selectedTower?: Tower;
+  private lastTowerHovered?: Tower;
 
   public constructor(
     private readonly components: Components,
@@ -37,19 +38,17 @@ export class SelectionController implements OnInit, LogStart {
       this.select(tower);
       tower.setSizePreviewColor(SIZE_PREVIEW_COLORS.Selected);
     });
+  }
 
-    let lastTowerHovered: Maybe<Tower>;
-    this.mouse.moved.Connect(() => {
-      const tower = this.getHoveredTower();
-      if (tower === undefined) {
-        lastTowerHovered?.toggleHoverHighlight(false);
-        lastTowerHovered = undefined;
-        return;
-      }
+  public onTick(dt: number): void {
+    const tower = this.getHoveredTower();
+    if (this.lastTowerHovered !== undefined && this.lastTowerHovered !== tower) {
+      this.lastTowerHovered.toggleHoverHighlight(false);
+      this.lastTowerHovered = undefined;
+    }
 
-      tower.toggleHoverHighlight(true);
-      lastTowerHovered = tower;
-    });
+    tower?.toggleHoverHighlight(true);
+    this.lastTowerHovered = tower;
   }
 
   public select(tower: Tower): void {
