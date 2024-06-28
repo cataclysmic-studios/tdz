@@ -94,6 +94,10 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
     this.incrementHealth(-amount);
   }
 
+  public incrementCash(player: Player, amount: number): void {
+    this.setCash(player, math.max(this.getCash(player) + amount, 0));
+  }
+
   public startTimer(length: number): Timer {
     this.currentTimer = this.timerJanitor.Add(new Timer(this, length), "destroy");
     this.timerJanitor.Add(this.currentTimer.counted.Connect(remainingTime => Events.updateTimerUI.broadcast(remainingTime)));
@@ -121,10 +125,6 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
 
   private decrementCash(player: Player, amount: number): void {
     this.incrementCash(player, -amount);
-  }
-
-  private incrementCash(player: Player, amount: number): void {
-    this.setCash(player, math.max(this.getCash(player) + amount, 0));
   }
 
   private setCash(player: Player, cash: number): void {
