@@ -3,10 +3,10 @@ import { Service, type OnInit } from "@flamework/core";
 import type { LogStart } from "common/shared/hooks";
 import type { OnPlayerJoin } from "../hooks";
 import { Events, Functions } from "server/network";
+import { Assets } from "common/shared/utility/instances";
 import { getTowerStats } from "shared/utility";
 import { TOWER_STATS, type TowerStats } from "common/shared/towers";
 import type { UpgradePath, TowerInfo } from "shared/structs";
-import { Assets } from "common/shared/utility/instances";
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {

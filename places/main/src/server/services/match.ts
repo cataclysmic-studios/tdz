@@ -48,7 +48,12 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
     });
 
     Functions.getTimeScale.setCallback(() => this.timeScale);
-    Functions.makePurchase.setCallback((player, price) => {
+    Functions.spendCash.setCallback((player, price) => {
+      if (price < 0) { // attempting to add cash
+        player.Kick("stop it asshole");
+        return false;
+      }
+
       if (this.getCash(player) < price) return false;
       this.decrementCash(player, price);
       return true;

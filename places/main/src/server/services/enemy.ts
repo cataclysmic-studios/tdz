@@ -65,21 +65,15 @@ export class EnemyService implements OnInit, OnTick, LogStart {
         growIn(enemyModel);
 
         enemyModel.AddTag("Enemy");
-        const enemy = this.matter.world.spawn(
+        this.enemies.push(this.matter.world.spawn(
           EnemyInfo({
             distance: 0,
             health: <number>enemyModel.GetAttribute("Health"),
             model: enemyModel,
           })
-        );
-
-        this.enemies.push(enemy);
+        ));
       });
       task.wait(interval / this.match.timeScale);
     }
-  }
-
-  private startWaves(waves: WaveData[]): void {
-
   }
 }

@@ -163,7 +163,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const towerName = <TowerName>this.placementModel.Name;
     const cframe = this.placementModel.GetPivot();
     const [{ price }] = TOWER_STATS[towerName];
-    const purchased = await Functions.makePurchase(price);
+    const purchased = await Functions.spendCash(price);
     if (!purchased)
       return Sound.SoundEffects.Error.Play();
 

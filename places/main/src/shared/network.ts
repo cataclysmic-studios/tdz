@@ -22,7 +22,7 @@ interface ClientEvents {
 
 interface ServerFunctions {
   getTimeScale(): number;
-  makePurchase(price: number): boolean;
+  spendCash(price: number): boolean;
   getTowerInfo(id: number): TowerInfo;
 }
 
