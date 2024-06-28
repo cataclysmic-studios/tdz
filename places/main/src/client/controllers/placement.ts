@@ -111,10 +111,10 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const sizePreview = createSizePreview(size, id);
     setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"]);
     sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
-    sizePreview.Touched.Connect(() => { }) // for touch interest
+    sizePreview.Touched.Connect(() => { }); // for touch interest
 
     growIn(sizePreview);
-    growIn(towerModel)
+    growIn(towerModel);
     Sound.SoundEffects.Place.Play();
     towerModel.AddTag("Tower");
   }
@@ -133,7 +133,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
 
     const size = <number>this.placementModel.GetAttribute("Size");
     this.placementSizePreview = this.placementJanitor.Add(createSizePreview(size));
-    this.placementJanitor.Add(this.placementSizePreview.Touched.Connect(() => { }));
+    this.placementJanitor.Add(this.placementSizePreview.Touched.Connect(() => { })); // for touch interest
 
     for (const tower of this.components.getAllComponents<Tower>())
       task.spawn(() => {

@@ -130,40 +130,20 @@ const growInTweenInfo = new TweenInfoBuilder().SetTime(0.1);
  * @param model Model or part to scale
  * @param point The point of the model to scale from
  */
-export async function growIn(model: Model | BasePart, point?: Vector3): Promise<void> {
+export async function growIn(model: Model | BasePart): Promise<void> {
   const scaleValue = new Instance("NumberValue");
   scaleValue.Value = 0.01;
 
   const defaultSize = model.IsA("BasePart") ? model.Size : undefined;
-  const defaultPosition = model.IsA("BasePart") ? model.Position : undefined;
-  const defaultScale = <number>model.GetAttribute("DefaultScale") ?? 1;
-  const t = tween(scaleValue, growInTweenInfo, { Value: defaultScale });
-
+  const t = tween(scaleValue, growInTweenInfo, { Value: <number>model.GetAttribute("DefaultScale") ?? 1 });
   return new Promise(resolve => {
     while (t.PlaybackState === Enum.PlaybackState.Playing) {
-      if (model.IsA("Model")) {
-        const root = model.PrimaryPart;
-        if (root === undefined) return
-
-        point ??= root.Position;
-        const offset = point.sub(root.Position);
-        const scaledOffset = offset.mul(scaleValue.Value / defaultScale);
-        const newPosition = point.sub(scaledOffset);
+      if (model.IsA("Model"))
         model.ScaleTo(scaleValue.Value);
-
-        const positionOffset = newPosition.sub(root.Position);
-        model.PivotTo(root.CFrame.mul(new CFrame(positionOffset)));
-      } else if (model.IsA("BasePart")) {
-        point ??= model.Position;
-        const offset = point.sub(defaultPosition!);
-        const scaledOffset = offset.mul(scaleValue.Value / defaultScale);
-        const newPosition = point.sub(scaledOffset);
+      else
         model.Size = defaultSize!.mul(scaleValue.Value);
-        model.Position = newPosition;
-      }
 
-      const event = Runtime.IsClient() ? Runtime.RenderStepped : Runtime.Stepped;
-      event.Wait();
+      Runtime.Stepped.Wait();
     }
 
     scaleValue.Destroy();
