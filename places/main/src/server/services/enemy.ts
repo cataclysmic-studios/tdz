@@ -1,4 +1,5 @@
 import { OnInit, OnTick, Service } from "@flamework/core";
+import { SoundService as Sound } from "@rbxts/services";
 import type { Entity } from "@rbxts/matter";
 
 import type { LogStart } from "common/shared/hooks";
@@ -45,6 +46,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
         this.matter.world.despawn(enemy);
         this.match.decrementHealth(info.health);
         info.model.Destroy();
+        Sound.SoundEffects.Damaged.Play();
       }
     }
   }

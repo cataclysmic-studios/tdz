@@ -5,5 +5,6 @@ interface SoundService extends Instance {
     PageClose: Sound;
     Error: Sound;
     Place: Sound;
+    Damaged: Sound;
   };
 }
