@@ -73,7 +73,7 @@ export class ControlPanelController implements OnStart {
   private renderCameraTab(): void {
     Iris.Tree(["Camera"]);
 
-    const currentCamera = this.camera.get().instance;
+    const currentCamera = this.camera.getCurrent().instance;
     const fov = Iris.SliderNum(["FOV", 0.25, 1, 120], { number: Iris.State(currentCamera.FieldOfView) });
     if (fov.numberChanged())
       currentCamera.FieldOfView = fov.state.number.get();

@@ -34,7 +34,7 @@ export class CameraController implements OnInit, OnRender, LogStart {
   }
 
   public onRender(dt: number): void {
-    const camera = this.get();
+    const camera = this.getCurrent();
     if (camera !== undefined && "onRender" in camera && typeOf(camera.onRender) === "function") {
       const update = <(camera: CameraControllerComponent, dt: number) => void>camera.onRender;
       update(camera, dt);
@@ -51,7 +51,7 @@ export class CameraController implements OnInit, OnRender, LogStart {
     return this.get(this.currentName);
   }
 
-  public get<T extends CameraControllerComponent>(cameraName: keyof typeof this.cameras = this.currentName): T {
+  public get<T extends CameraControllerComponent>(cameraName: keyof typeof this.cameras): T {
     return <T>this.cameras[cameraName];
   }
 }
