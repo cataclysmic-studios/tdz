@@ -6,8 +6,9 @@ import { Janitor } from "@rbxts/janitor";
 import type { LogStart } from "common/shared/hooks";
 import { Assets } from "common/shared/utility/instances";
 import { PlayerGui } from "common/shared/utility/client";
-import { SIZE_PREVIEW_COLORS } from "shared/constants";
 import { tween } from "common/shared/utility/ui";
+import { createRangePreview } from "shared/utility";
+import { RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 
 import type { Tower } from "client/components/tower";
 import type { Upgrades } from "client/components/ui/upgrades";
@@ -57,6 +58,10 @@ export class SelectionController implements OnInit, OnTick, LogStart {
     this.selectedTower = tower;
     this.selectedTower.toggleHoverHighlight(false);
     this.selectedTower.toggleSelectionHighlight(true);
+
+    const rangePreview = this.selectionJanitor.Add(createRangePreview(tower.getStats().range));
+    rangePreview.Color = RANGE_PREVIEW_COLORS.CanPlace;
+    rangePreview.CFrame = tower.instance.GetPivot().sub(new Vector3(0, 0.8, 0));
 
     const upgradesUI = PlayerGui.Main.Main.TowerUpgrades;
     upgradesUI.Viewport.Title.Text = tower.name;

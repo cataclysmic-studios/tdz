@@ -3,6 +3,11 @@ import { Workspace as World } from "@rbxts/services";
 import { Difficulty } from "common/shared/structs/difficulty";
 import type { DifficultyInfo, TeleportData } from "./structs";
 
+export const RANGE_PREVIEW_COLORS = {
+  CanPlace: Color3.fromRGB(0, 170, 255),
+  CanNotPlace: Color3.fromRGB(255, 65, 65)
+};
+
 export const SIZE_PREVIEW_COLORS = {
   MyTowers: Color3.fromRGB(77, 232, 82),
   NotMyTowers: Color3.fromRGB(255, 255, 115),

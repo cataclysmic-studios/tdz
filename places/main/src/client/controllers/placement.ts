@@ -12,7 +12,7 @@ import { Player } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
 import { removeVectorY } from "common/shared/utility/3D";
 import { createRangePreview, createSizePreview, createTowerModel, growIn, setSizePreviewColor } from "shared/utility";
-import { PLACEMENT_STORAGE, SIZE_PREVIEW_COLORS } from "shared/constants";
+import { PLACEMENT_STORAGE, RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 import { TOWER_STATS } from "common/shared/towers";
 import type { TowerInfo } from "shared/structs";
 import Spring from "common/shared/classes/spring";
@@ -30,8 +30,6 @@ import type { SelectionController } from "./selection";
 export class PlacementController extends InputInfluenced implements OnInit, OnStart, OnRender, LogStart {
   private readonly placementJanitor = new Janitor;
   private readonly swaySpring = new Spring;
-  private readonly canPlaceColor = Color3.fromRGB(0, 170, 255);
-  private readonly cannotPlaceColor = Color3.fromRGB(255, 65, 65);
   private placementModel?: TowerModel;
   private placementRangePreview?: MeshPart;
   private placementSizePreview?: typeof Assets.SizePreview;
@@ -94,7 +92,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const partsTouchingSizePreview = this.placementSizePreview.GetTouchingParts();
     this.canPlace = inPlacableLocation && groundBelow?.Instance !== undefined && groundInside?.Instance === undefined && !partsTouchingSizePreview.map(part => part.Name).includes("SizePreview");
 
-    const previewColor = this.canPlace ? this.canPlaceColor : this.cannotPlaceColor;
+    const previewColor = RANGE_PREVIEW_COLORS[this.canPlace ? "CanPlace" : "CanNotPlace"];
     this.placementRangePreview.Color = previewColor;
     this.placementSizePreview.Beam1.Color = new ColorSequence(previewColor);
     this.placementSizePreview.Beam2.Color = new ColorSequence(previewColor);
