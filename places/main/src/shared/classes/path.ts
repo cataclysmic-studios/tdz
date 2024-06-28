@@ -1,4 +1,4 @@
-import { bezierPoint, bezierTangent } from "./utility";
+import { Bezier } from "./bezier";
 
 export const enum EndOfPathInstruction {
   Stop
@@ -56,8 +56,9 @@ export class Path {
         const curveSize = p3.sub(p0).Magnitude / 2;
         const p1 = p0.add(direction0.mul(curveSize));
         const p2 = p3.sub(direction1.mul(curveSize));
-        position = bezierPoint(t, p0, p1, p2, p3);
-        tangent = bezierTangent(t, p0, p1, p2, p3);
+        const bezier = new Bezier(p0, p1, p2, p3);
+        position = bezier.getPoint(t);
+        tangent = bezier.getTangent(t);
       }
 
       return new CFrame(position, position.add(tangent));
@@ -91,8 +92,9 @@ export class Path {
         for (const j of $range(1, segmentsPerBezier)) {
           const t1 = (j - 1) / segmentsPerBezier;
           const t2 = j / segmentsPerBezier;
-          const bezierP1 = bezierPoint(t1, p0, p1, p2, p3);
-          const bezierP2 = bezierPoint(t2, p0, p1, p2, p3);
+          const bezier = new Bezier(p0, p1, p2, p3);
+          const bezierP1 = bezier.getPoint(t1);
+          const bezierP2 = bezier.getPoint(t2);
           segmentLength += bezierP2.sub(bezierP1).Magnitude;
         }
       }

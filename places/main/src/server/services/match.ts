@@ -8,7 +8,7 @@ import type { OnPlayerJoin, OnPlayerLeave } from "common/server/hooks";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
 import { teleportPlayers } from "shared/utility";
-import { Path } from "shared/path";
+import { Path } from "shared/classes/path";
 import { Timer } from "server/timer";
 import { DIFFICULTY_INFO } from "shared/constants";
 import type { TeleportData } from "shared/structs";

@@ -8,36 +8,6 @@ import { PLACEMENT_STORAGE } from "./constants";
 import { TOWER_STATS, type TowerStats } from "./towers";
 import type { PathStats, UpgradeLevel } from "./structs";
 
-const BEZIER_COEFFICIENT1 = 3;
-const BEZIER_COEFFICIENT2 = 0.6;
-
-// disgusting math
-export function bezierPoint(t: number, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3): Vector3 {
-  const oneMinusT = 1 - t;
-  const tSquared = t * t;
-  const oneMinusTSquared = oneMinusT * oneMinusT;
-  const oneMinusTCubed = oneMinusTSquared * oneMinusT;
-  const tCubed = tSquared * t;
-
-  return p0.mul(oneMinusTCubed) // first term
-    .add(p1.mul(BEZIER_COEFFICIENT1 * oneMinusTSquared * t)) // second, etc.
-    .add(p2.mul(BEZIER_COEFFICIENT1 * oneMinusT * tSquared))
-    .add(p3.mul(tCubed));
-}
-
-// even more disgusting math
-export function bezierTangent(t: number, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3): Vector3 {
-  const oneMinusT = 1 - t;
-  const tSquared = t * t;
-  const oneMinusTSquared = oneMinusT * oneMinusT;
-
-  return p0.mul(-BEZIER_COEFFICIENT1 * oneMinusTSquared) // first term
-    .add(p1.mul(BEZIER_COEFFICIENT1 * oneMinusTSquared - BEZIER_COEFFICIENT2 * oneMinusT * t)) // second, etc.
-    .add(p2.mul(BEZIER_COEFFICIENT2 * t * oneMinusT - BEZIER_COEFFICIENT1 * tSquared))
-    .add(p3.mul(BEZIER_COEFFICIENT1 * tSquared))
-    .Unit;
-}
-
 export function teleportPlayers(cframe: CFrame, ...players: Player[]): void {
   for (const player of players) {
     if (player.Character === undefined) continue;
