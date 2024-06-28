@@ -116,6 +116,11 @@ export async function growIn(model: Model | BasePart): Promise<void> {
       Runtime.Stepped.Wait();
     }
 
+    if (model.IsA("Model"))
+      model.ScaleTo(scaleValue.Value);
+    else
+      model.Size = defaultSize!.mul(scaleValue.Value);
+
     scaleValue.Destroy();
     resolve();
   });

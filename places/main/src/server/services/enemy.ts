@@ -7,7 +7,7 @@ import { Assets } from "common/shared/utility/instances";
 import { growIn } from "shared/utility";
 import { EnemyInfo } from "shared/entity-components";
 import { ENEMY_STORAGE } from "shared/constants";
-import type { EnemySummonInfo, WaveData } from "shared/structs";
+import type { EnemySummonInfo } from "shared/structs";
 
 import type { MatterService } from "server/services/matter";
 import type { MatchService } from "./match";
