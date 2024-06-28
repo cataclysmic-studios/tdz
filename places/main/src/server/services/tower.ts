@@ -6,6 +6,7 @@ import { Events, Functions } from "server/network";
 import { getTowerStats } from "shared/utility";
 import { TOWER_STATS, type TowerStats } from "common/shared/towers";
 import type { UpgradePath, TowerInfo } from "shared/structs";
+import { Assets } from "common/shared/utility/instances";
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {
@@ -13,6 +14,10 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
   private cumulativeID = 1;
 
   public onInit(): void {
+    for (const towerFolder of <TowerFolder[]>Assets.Towers.GetChildren())
+      for (const part of towerFolder.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart")))
+        part.CollisionGroup = "plrs";
+
     Events.placeTower.connect((player, towerName, cframe, price) => {
       const id = this.cumulativeID++;
       const info: TowerInfo = {

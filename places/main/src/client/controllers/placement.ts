@@ -10,6 +10,7 @@ import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
+import { removeVectorY } from "common/shared/utility/3D";
 import { createRangePreview, createSizePreview, createTowerModel, growIn, setSizePreviewColor } from "shared/utility";
 import { PLACEMENT_STORAGE, SIZE_PREVIEW_COLORS } from "shared/constants";
 import { TOWER_STATS } from "common/shared/towers";
@@ -34,7 +35,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   private placementModel?: TowerModel;
   private placementRangePreview?: MeshPart;
   private placementSizePreview?: typeof Assets.SizePreview;
-  private lastMousePosition = new Vector2;
+  private lastMouseWorldPosition = new Vector3;
   private canPlace = true;
   private placing = false;
   private yOrientation = new SmoothValue(0, 8);
@@ -67,12 +68,9 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     if (this.placementRangePreview === undefined) return;
     if (this.placementSizePreview === undefined) return;
 
-    const delta = this.mouse.getPosition().sub(this.lastMousePosition);
-    const cameraCFrame = this.camera.getCurrent().instance.CFrame;
-    this.lastMousePosition = this.mouse.getPosition();
-
-    const limitedDelta = new Vector3(doubleSidedLimit(delta.X, 4), 0, doubleSidedLimit(delta.Y, 4));
-    this.swaySpring.shove(cameraCFrame.VectorToObjectSpace(limitedDelta));
+    const delta = this.mouse.getWorldPosition().sub(this.lastMouseWorldPosition).mul(12);
+    this.lastMouseWorldPosition = this.mouse.getWorldPosition();
+    this.swaySpring.shove(new Vector3(doubleSidedLimit(delta.X, 30), 0, doubleSidedLimit(delta.Z, 30)));
 
     const sway = this.swaySpring.update(dt).div(100);
     const swayAngles = CFrame.Angles(-sway.Z * 2, math.rad(this.yOrientation.update(dt)), sway.X);
