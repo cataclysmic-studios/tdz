@@ -25,11 +25,12 @@ export class WavesService implements OnInit {
       const waveNumber = waves.indexOf(wave) + 1;
       Events.updateWaveUI.broadcast(waveNumber);
 
-      for (const summonInfo of wave.enemies) {
+      const timer = this.match.startTimer(toSeconds(wave.length));
+      for (const summonInfo of wave.enemies)
         this.enemy.summon(summonInfo);
-        task.wait(toSeconds(wave.length)); // TODO: implement timer with toSeconds(wave.length), end when all enemies are dead
-        while (this.enemy.areEnemiesAlive()) task.wait(0.2);
-      }
+
+      timer.ended.Wait();
+      while (this.enemy.areEnemiesAlive()) task.wait(0.2);
     }
   }
 }

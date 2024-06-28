@@ -9,9 +9,12 @@ import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
 import { teleportPlayers } from "shared/utility";
 import { Path } from "shared/path";
+import { Timer } from "server/timer";
 import { DIFFICULTY_INFO } from "shared/constants";
 import type { TeleportData } from "shared/structs";
 import type { Difficulty } from "common/shared/structs/difficulty";
+
+const INTERMISSION_LENGTH = 8;
 
 @Service()
 export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogStart {
@@ -22,11 +25,13 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
   private readonly cashChanged = new Signal<(player: Player, newCash: number) => void>;
   private readonly playerCash: Record<number, number> = {};
   private readonly playerJanitors: Partial<Record<number, Janitor>> = {};
-  private maxHealth = 0;
-  private health = 0;
   private teleportData!: TeleportData;
   private mapModel!: MapModel;
   private path!: Path;
+  private currentTimer?: Timer;
+  private timerJanitor = new Janitor;
+  private maxHealth = 0;
+  private health = 0;
 
   public onInit(): void {
     Events.loadTeleportData.connect((_, teleportData) => {
@@ -84,6 +89,17 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
     this.incrementHealth(-amount);
   }
 
+  public startTimer(length: number): Timer {
+    this.currentTimer = this.timerJanitor.Add(new Timer(this, length), "destroy");
+    this.timerJanitor.Add(this.currentTimer.counted.Connect(remainingTime => Events.updateTimerUI.broadcast(remainingTime)));
+    this.timerJanitor.Add(this.currentTimer.ended.Once(() => {
+      this.timerJanitor.Cleanup();
+      this.currentTimer = undefined;
+    }));
+
+    return this.currentTimer;
+  }
+
   private incrementHealth(amount: number): void {
     this.setHealth(math.max(this.getHealth() + amount, 0));
   }
@@ -119,8 +135,8 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
     task.spawn(() => {
       const { startingHealth } = DIFFICULTY_INFO[difficulty];
       this.setHealth(startingHealth);
-      task.wait(8 / this.timeScale); // TODO: implement timer
-      this.intermissionFinished.Fire(difficulty);
+      this.startTimer(INTERMISSION_LENGTH)
+        .ended.Once(() => this.intermissionFinished.Fire(difficulty));
     });
   }
 }

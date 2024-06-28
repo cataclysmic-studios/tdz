@@ -9,6 +9,7 @@ export default class DestroyableComponent<A extends {} = {}, I extends Instance 
   ) { super(); }
 
   public destroy(): void {
+    if (this.janitor === undefined || !("Destroy" in this.janitor)) return;
     this.multipleUses ? this.janitor.Cleanup() : this.janitor.Destroy();
   }
 }
