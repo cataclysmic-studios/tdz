@@ -1,10 +1,13 @@
 import type { OnStart } from "@flamework/core";
 import { Component } from "@flamework/components";
+import { TweenInfoBuilder } from "@rbxts/builders";
+import { Janitor } from "@rbxts/janitor";
 import Signal from "@rbxts/signal";
 
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player } from "common/shared/utility/client";
+import { tween } from "common/shared/utility/ui";
 import { setSizePreviewColor } from "shared/utility";
 import { PLACEMENT_STORAGE } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
@@ -14,8 +17,8 @@ import DestroyableComponent from "common/shared/base-components/destroyable";
 import type { TimeScaleController } from "client/controllers/time-scale";
 
 interface Attributes {
-  ID: number;
-  Size: number;
+  readonly ID: number;
+  readonly Size: number;
 }
 
 @Component({ tag: "Tower" })
@@ -24,6 +27,10 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   public readonly infoUpdated = new Signal<(newInfo: TowerInfo) => void>;
 
   private readonly highlight = this.janitor.Add(new Instance("Highlight", this.instance));
+  private readonly sizePreviewTweenInfo = new TweenInfoBuilder().SetTime(0.08);
+  private readonly defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
+  private readonly defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;
+  private readonly defaultRightAttachmentPosition = Assets.SizePreview.Right.Position;
   private readonly selectionFillTransparency = 0.75;
   private info!: TowerInfo;
 
@@ -65,6 +72,35 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
   public getSizePreview(): typeof Assets.SizePreview {
     return PLACEMENT_STORAGE.GetChildren().find((i): i is typeof Assets.SizePreview => i.IsA("MeshPart") && i.Name === "SizePreview" && i.GetAttribute("TowerID") === this.attributes.ID)!;
+  }
+
+  public resetSizePreviewHeight(): Janitor {
+    return this.setSizePreviewHeight(this.defaultSizePreviewHeight);
+  }
+
+  /**
+   * @param height Height to set the size preview to
+   * @returns Janitor containing all tweens
+   */
+  public setSizePreviewHeight(height: number): Janitor {
+    const tweenJanitor = new Janitor;
+    const sizePreview = this.getSizePreview();
+    const difference = height - this.defaultSizePreviewHeight;
+
+    tweenJanitor.Add(tween(sizePreview.Beam1, this.sizePreviewTweenInfo, {
+      Width0: height, Width1: height
+    }), "Cancel");
+    tweenJanitor.Add(tween(sizePreview.Beam2, this.sizePreviewTweenInfo, {
+      Width0: height, Width1: height
+    }), "Cancel");
+    tweenJanitor.Add(tween(sizePreview.Left, this.sizePreviewTweenInfo, {
+      Position: this.defaultLeftAttachmentPosition.add(new Vector3(0, difference / 2, 0))
+    }), "Cancel");
+    tweenJanitor.Add(tween(sizePreview.Right, this.sizePreviewTweenInfo, {
+      Position: this.defaultRightAttachmentPosition.add(new Vector3(0, difference / 2, 0))
+    }), "Cancel");
+
+    return tweenJanitor;
   }
 
   public setSizePreviewColor(color: Color3): void {
