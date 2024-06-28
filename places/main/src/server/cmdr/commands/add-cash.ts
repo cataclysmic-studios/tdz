@@ -9,7 +9,7 @@ export = identity<CommandDefinition>({
     {
       Type: "number",
       Name: "Amount",
-      Description: "The amount of cash to add",
+      Description: "The amount of cash to add"
     }
   ],
 });

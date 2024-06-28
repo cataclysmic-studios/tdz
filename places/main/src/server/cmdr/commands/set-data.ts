@@ -9,12 +9,11 @@ export = identity<CommandDefinition>({
     {
       Type: "string",
       Name: "Directory",
-      Description: "Directory of the data being set",
-    },
-    {
+      Description: "Directory of the data being set"
+    }, {
       Type: "any",
       Name: "Value",
-      Description: "The value to set the data at the given directory to",
+      Description: "The value to set the data at the given directory to"
     }
   ],
 });
