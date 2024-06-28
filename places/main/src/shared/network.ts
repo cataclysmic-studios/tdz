@@ -11,6 +11,7 @@ interface ServerEvents {
 
 interface ClientEvents {
   updateCashUI: Networking.Unreliable<(cash: number) => void>;
+  updateTimerUI: Networking.Unreliable<(remainingTime: number) => void>;
   updateHealthUI(health: number, maxHealth: number): void;
   updateWaveUI(wave: number): void;
   timeScaleUpdated(timeScale: number): void;
