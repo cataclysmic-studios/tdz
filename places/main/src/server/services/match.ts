@@ -8,15 +8,15 @@ import type { OnPlayerJoin, OnPlayerLeave } from "common/server/hooks";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
 import { teleportPlayers } from "shared/utility";
+import { Path } from "shared/path";
 import { DIFFICULTY_INFO } from "shared/constants";
 import type { TeleportData } from "shared/structs";
 import type { Difficulty } from "common/shared/structs/difficulty";
 
-// TODO: handle timers here
-
 @Service()
 export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogStart {
   public readonly intermissionFinished = new Signal<(difficulty: Difficulty) => void>;
+  public readonly timeScaleChanged = new Signal<(timeScale: number) => void>;
   public timeScale = 1;
 
   private readonly cashChanged = new Signal<(player: Player, newCash: number) => void>;
@@ -26,12 +26,14 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
   private health = 0;
   private teleportData!: TeleportData;
   private mapModel!: MapModel;
+  private path!: Path;
 
   public onInit(): void {
     Events.loadTeleportData.connect((_, teleportData) => {
       this.teleportData = teleportData;
       this.mapModel = Assets.Maps[teleportData.map].Clone();
       this.mapModel.Parent = World;
+      this.path = new Path(this.mapModel);
       this.initialize(teleportData.difficulty);
     });
     Events.toggleDoubleSpeed.connect((_, on) => {
@@ -39,6 +41,7 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
       this.timeScale = on ? 2 : 1;
       Events.timeScaleUpdated.broadcast(this.timeScale);
     });
+
     Functions.getTimeScale.setCallback(() => this.timeScale);
     Functions.makePurchase.setCallback((player, price) => {
       if (this.getCash(player) < price) return false;
@@ -67,6 +70,10 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
   public onPlayerLeave(player: Player): void {
     this.playerJanitors[player.UserId]?.Destroy();
     this.playerJanitors[player.UserId] = undefined;
+  }
+
+  public getPath(): Path {
+    return this.path;
   }
 
   public getMap(): MapModel {

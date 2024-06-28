@@ -3,13 +3,10 @@ import type { Entity } from "@rbxts/matter";
 
 import type { LogStart } from "common/shared/hooks";
 import { Assets } from "common/shared/utility/instances";
-import { toSeconds } from "common/shared/utility/time";
 import { growIn } from "shared/utility";
 import { EnemyInfo } from "shared/entity-components";
-import { Path } from "shared/path";
 import { ENEMY_STORAGE } from "shared/constants";
 import type { EnemySummonInfo, WaveData } from "shared/structs";
-import WAVES from "shared/waves";
 
 import type { MatterService } from "server/services/matter";
 import type { MatchService } from "./match";
@@ -19,7 +16,6 @@ type EnemyEntity = Entity<[EnemyInfo]>;
 @Service()
 export class EnemyService implements OnInit, OnTick, LogStart {
   private readonly enemies: EnemyEntity[] = [];
-  private path!: Path
 
   public constructor(
     private readonly matter: MatterService,
@@ -27,11 +23,6 @@ export class EnemyService implements OnInit, OnTick, LogStart {
   ) { }
 
   public onInit(): void {
-    this.match.intermissionFinished.Once(difficulty => {
-      this.path = new Path(this.match.getMap());
-      task.spawn(() => this.startWaves(WAVES[difficulty]));
-    });
-
     for (const enemyModel of <EnemyModel[]>Assets.Enemies.GetChildren())
       for (const part of enemyModel.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart")))
         part.CollisionGroup = "plrs";
@@ -46,7 +37,8 @@ export class EnemyService implements OnInit, OnTick, LogStart {
       const speed = <number>info.model.GetAttribute("Speed") * <number>info.model.GetAttribute("DefaultScale") * this.match.timeScale;
       this.matter.world.insert(enemy, info.patch({ distance: info.distance + speed * dt }));
 
-      const cframe = this.path.getCFrameAtDistance(info.distance);
+      const path = this.match.getPath();
+      const cframe = path.getCFrameAtDistance(info.distance);
       root.CFrame = root.CFrame.Lerp(cframe, 0.2);
 
       if (cframe.Position.FuzzyEq(map.EndPoint.Position)) {
@@ -55,6 +47,10 @@ export class EnemyService implements OnInit, OnTick, LogStart {
         info.model.Destroy();
       }
     }
+  }
+
+  public areEnemiesAlive(): boolean {
+    return this.enemies.size() > 0;
   }
 
   public summon({ enemyName, amount, interval }: EnemySummonInfo): void {
@@ -84,10 +80,6 @@ export class EnemyService implements OnInit, OnTick, LogStart {
   }
 
   private startWaves(waves: WaveData[]): void {
-    for (const wave of waves)
-      for (const summonInfo of wave.enemies) {
-        this.summon(summonInfo);
-        task.wait(toSeconds(wave.length) / this.match.timeScale); // TODO: implement timer, end when all enemies are dead
-      }
+
   }
 }

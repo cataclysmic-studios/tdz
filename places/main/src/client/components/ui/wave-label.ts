@@ -11,6 +11,7 @@ import { commaFormat } from "common/shared/utility/numbers";
 })
 export class WaveLabel extends BaseComponent<{}, TextLabel> implements OnStart {
   public onStart(): void {
+    this.instance.Text = "INTERMISSION";
     Events.updateWaveUI.connect(wave => this.instance.Text = `WAVE ${commaFormat(wave)}`);
   }
 }
