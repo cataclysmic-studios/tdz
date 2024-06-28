@@ -28,6 +28,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
   }
 
   private adjustWalkAnimationSpeed(): void {
+    // TODO: call when enemy speed is updated
     const embeddedWalkSpeed = <number>this.instance.Animations.Walk.GetAttribute("EmbeddedWalkSpeed") ?? 16;
     this.walkAnimation.AdjustSpeed(1 / (embeddedWalkSpeed / this.attributes.Speed) * this.timeScale.get());
   }

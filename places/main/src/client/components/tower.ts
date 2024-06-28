@@ -11,6 +11,7 @@ import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/structs";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
+import type { TimeScaleController } from "client/controllers/time-scale";
 
 interface Attributes {
   ID: number;
@@ -26,6 +27,10 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   private readonly selectionFillTransparency = 0.75;
   private info!: TowerInfo;
 
+  public constructor(
+    private readonly timeScale: TimeScaleController
+  ) { super(); }
+
   public async onStart(): Promise<void> {
     this.info = await Functions.getTowerInfo(this.attributes.ID);
     this.highlight.Enabled = false;
@@ -35,6 +40,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(this.instance);
+    this.janitor.Add(this.timeScale.changed.Connect(() => this.adjustAnimationSpeeds()));
     this.janitor.Add(Events.towerUpgraded.connect((id, newInfo) => {
       if (id !== this.attributes.ID) return;
       this.info = newInfo;
@@ -75,5 +81,10 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
   public isMine(): boolean {
     return this.getInfo().ownerID === Player.UserId;
+  }
+
+  private adjustAnimationSpeeds(): void {
+    for (const track of this.instance.Humanoid.Animator.GetPlayingAnimationTracks())
+      track.AdjustSpeed(this.timeScale.get());
   }
 }
