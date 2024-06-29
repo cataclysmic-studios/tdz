@@ -31,7 +31,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
         return player.Kick("wtf r u doing bruh, not even fun to do that");
 
       for (const enemy of this.enemies)
-        task.spawn(() => this.kill(player, enemy));
+        task.spawn(() => this.kill(enemy));
     });
 
     for (const enemyModel of <EnemyModel[]>Assets.Enemies.GetChildren())
@@ -47,6 +47,8 @@ export class EnemyService implements OnInit, OnTick, LogStart {
       const root = info.model.HumanoidRootPart;
       const speed = <number>info.model.GetAttribute("Speed") * <number>info.model.GetAttribute("DefaultScale") * this.match.timeScale;
       this.matter.world.insert(enemy, info.patch({ distance: info.distance + speed * dt }));
+
+      info.model.SetAttribute("Health", info.health);
 
       const path = this.match.getPath();
       const cframe = path.getCFrameAtDistance(info.distance);
@@ -83,7 +85,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
         this.enemies.push(this.matter.world.spawn(
           EnemyInfo({
             distance: 0,
-            health: <number>enemyModel.GetAttribute("Health"),
+            health: <number>enemyModel.GetAttribute("MaxHealth"),
             model: enemyModel,
           })
         ));
@@ -92,16 +94,16 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     }
   }
 
-  public kill(attacker: Player, enemy: EnemyEntity): void {
+  public kill(enemy: EnemyEntity): void {
     if (!this.matter.world.contains(enemy)) return;
     const info = this.matter.world.get(enemy, EnemyInfo)!;
-    this.damage(attacker, enemy, info.health);
+    this.damage(enemy, info.health);
   }
 
-  public damage(attacker: Player, enemy: EnemyEntity, amount: number): void {
-    if (!this.matter.world.contains(enemy)) return;
+  public damage(enemy: EnemyEntity, amount: number): number {
+    if (!this.matter.world.contains(enemy)) return 0;
     const info = this.matter.world.get(enemy, EnemyInfo)!;
-    const maxHealth = <number>info.model.GetAttribute("Health");
+    const maxHealth = <number>info.model.GetAttribute("MaxHealth");
     const healthBeforeDamage = info.health;
     const newHealth = math.clamp(info.health - amount, 0, maxHealth);
     this.matter.world.insert(enemy, info.patch({ health: newHealth }));
@@ -109,14 +111,15 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     const damageDealt = healthBeforeDamage - newHealth;
     if (damageDealt > 0) {
       // TODO: check for things like "no cash" traits, maybe some gamemodes earn less cash per damage, etc.
-      this.match.incrementCash(attacker, damageDealt);
+      this.match.incrementAllCash(damageDealt);
     }
+    return damageDealt
   }
 
   private heal(enemy: EnemyEntity, amount: number): void {
     if (!this.matter.world.contains(enemy)) return;
     const info = this.matter.world.get(enemy, EnemyInfo)!;
-    const maxHealth = <number>info.model.GetAttribute("Health");
+    const maxHealth = <number>info.model.GetAttribute("MaxHealth");
     this.matter.world.insert(enemy, info.patch({ health: math.clamp(info.health + amount, 0, maxHealth) }));
   }
 

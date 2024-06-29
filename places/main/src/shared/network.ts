@@ -20,6 +20,7 @@ interface ClientEvents {
   updateWaveUI(wave: number): void;
   timeScaleUpdated(timeScale: number): void;
   towerUpgraded(id: number, newInfo: Omit<TowerInfo, "patch">): void;
+  towerAttacked(id: number, enemyPosition: Vector3): void;
   replicateTower(id: number, towerInfo: Omit<TowerInfo, "patch">): void;
   loadTowers(allTowers: Record<number, TowerInfo>): void;
 }

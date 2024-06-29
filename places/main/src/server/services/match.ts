@@ -13,6 +13,7 @@ import { Timer } from "server/timer";
 import { DIFFICULTY_INFO } from "shared/constants";
 import type { TeleportData } from "shared/structs";
 import type { Difficulty } from "common/shared/structs/difficulty";
+import Object from "@rbxts/object-utils";
 
 const INTERMISSION_LENGTH = 8;
 
@@ -93,6 +94,11 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
 
   public decrementHealth(amount: number): void {
     this.incrementHealth(-amount);
+  }
+
+  public incrementAllCash(amount: number): void {
+    for (const [id, cash] of Object.entries(this.playerCash))
+      this.playerCash[id] = math.max(cash + amount, 0);
   }
 
   public incrementCash(player: Player, amount: number): void {

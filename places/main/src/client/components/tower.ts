@@ -52,6 +52,13 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       if (id !== this.attributes.ID) return;
       this.info = newInfo;
     }));
+    this.janitor.Add(Events.towerAttacked.connect((id, enemyPosition) => {
+      if (id !== this.attributes.ID) return;
+
+      // TODO: create vfx
+      const towerPosition = this.instance.GetPivot().Position;
+      this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyPosition.X, towerPosition.Y, enemyPosition.Z)));
+    }));
   }
 
   public isHighlightEnabled(): boolean {

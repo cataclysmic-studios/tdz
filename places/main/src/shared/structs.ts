@@ -1,6 +1,15 @@
 import type { Difficulty } from "common/shared/structs/difficulty";
 import type { Assets } from "common/shared/utility/instances";
 
+export const enum TargettingType {
+  First,
+  Last,
+  Close,
+  Strong,
+  Weak,
+  Random
+}
+
 export interface WaveData {
   readonly length: string;
   readonly enemies: EnemySummonInfo[];
