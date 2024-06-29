@@ -52,12 +52,13 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
       return;
     }
 
+    // TODO: fade in/out info frame?
     if (targetModel !== this.instance) return;
     const { X, Y } = this.mouse.getPosition();
     enemyInfo.Position = UDim2.fromOffset(X, Y); // TODO: add traits frames
     enemyInfo.Main.EnemyName.Text = this.instance.Name.upper();
     enemyInfo.Main.Health.Amount.Text = `${toSuffixedNumber(this.health)}/${toSuffixedNumber(this.attributes.Health)} HP`;
-    enemyInfo.Main.Health.Bar.Size = enemyInfo.Main.Health.Bar.Size.Lerp(UDim2.fromScale(this.health / this.attributes.Health, 1), 0.2);
+    enemyInfo.Main.Health.Bar.Size = enemyInfo.Main.Health.Bar.Size.Lerp(UDim2.fromScale(this.health / this.attributes.Health, 1), 0.2); // this needs to be changed if calling function on tap
     if (enemyInfo.Visible === false)
       enemyInfo.Visible = true;
   }

@@ -1,6 +1,7 @@
 import { Bezier } from "./bezier";
 
 export const enum EndOfPathInstruction {
+  /** Stop at the final node */
   Stop
 }
 
@@ -12,17 +13,24 @@ export class Path {
   public constructor(
     private readonly map: MapModel
   ) {
-    this.calculateLengths();
+    this.calculateLengths(); // initialize segment lengths & total length
   }
 
+  /** Alias for `Path.getCFrameAtDistance(...).LookVector` */
   public getDirectionAtDistance(distance: number, endInstruction = EndOfPathInstruction.Stop): Vector3 {
     return this.getCFrameAtDistance(distance, endInstruction).LookVector;
   }
 
+  /** Alias for `Path.getCFrameAtDistance(...).Position` */
   public getPositionAtDistance(distance: number, endInstruction = EndOfPathInstruction.Stop): Vector3 {
     return this.getCFrameAtDistance(distance, endInstruction).Position;
   }
 
+  /**
+   * @param distance Total distance travelled along the path
+   * @param endInstruction Defines the behavior of what should happen if the end of the path is reached
+   * @returns The CFrame of the point on the path that is `distance` units away from the start point
+   */
   public getCFrameAtDistance(distance: number, endInstruction = EndOfPathInstruction.Stop): CFrame {
     const nodes = this.getNodes();
     if (distance <= 0)
@@ -67,6 +75,11 @@ export class Path {
     return nodes[nodes.size() - 1].CFrame; // fallback in case of precision errors
   }
 
+  /**
+   * Calculate the length of every segment in the path as well as the total path length
+   *
+   * Initializes `totalLength` and all values in `segmentLengths`
+   */
   private calculateLengths(): void {
     this.totalLength = 0; // in case of re-calculation for any wild reason
     this.segmentLengths.clear();
