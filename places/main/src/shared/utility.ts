@@ -5,8 +5,8 @@ import Object from "@rbxts/object-utils";
 import { Assets } from "common/shared/utility/instances";
 import { tween } from "common/shared/utility/ui";
 import { PLACEMENT_STORAGE } from "./constants";
-import { TOWER_STATS, type TowerStats } from "./towers";
-import type { PathStats, UpgradeLevel } from "./structs";
+import { TOWER_STATS } from "./towers";
+import type { TowerStats, PathStats, UpgradeLevel } from "./towers";
 
 export function teleportPlayers(cframe: CFrame, ...players: Player[]): void {
   for (const player of players) {

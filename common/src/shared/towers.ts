@@ -1,3 +1,8 @@
+export type UpgradePath = 1 | 2;
+export type PathLevel = 0 | 1 | 2 | 3 | 4 | 5;
+export type UpgradeLevel = [PathLevel, PathLevel];
+export type PathStats = readonly [Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>];
+
 export const enum DamageType {
   Bullet,
   Laser,

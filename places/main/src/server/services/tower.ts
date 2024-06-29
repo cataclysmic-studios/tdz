@@ -1,17 +1,26 @@
 import { Service, type OnInit } from "@flamework/core";
+import { Entity } from "@rbxts/matter";
+import Object from "@rbxts/object-utils";
 
 import type { LogStart } from "common/shared/hooks";
-import type { OnPlayerJoin } from "../hooks";
+import type { OnPlayerJoin } from "common/server/hooks";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
 import { getTowerStats } from "shared/utility";
-import { TOWER_STATS, type TowerStats } from "common/shared/towers";
-import type { UpgradePath, TowerInfo } from "shared/structs";
+import { TowerInfo } from "shared/entity-components";
+import type { UpgradeLevel, UpgradePath } from "common/shared/towers";
+
+import type { MatterService } from "./matter";
+
+type TowerEntity = Entity<[TowerInfo]>;
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {
-  private readonly towers: Record<number, TowerInfo> = {};
-  private cumulativeID = 1;
+  private readonly towers: TowerEntity[] = [];
+
+  public constructor(
+    private readonly matter: MatterService
+  ) { }
 
   public onInit(): void {
     for (const towerFolder of <TowerFolder[]>Assets.Towers.GetChildren())
@@ -19,36 +28,38 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
         part.CollisionGroup = "plrs";
 
     Events.placeTower.connect((player, towerName, cframe, price) => {
-      const id = this.cumulativeID++;
-      const info: TowerInfo = {
+      const towerInfo = TowerInfo({
         name: towerName,
+        ownerID: player.UserId,
         cframe,
         totalDamage: 0,
         worth: price,
-        ownerID: player.UserId,
         upgrades: [0, 0],
         stats: getTowerStats(towerName, [0, 0]),
-      };
+      });
 
-      this.towers[id] = info;
-      Events.replicateTower.broadcast(id, info);
+      const tower = this.matter.world.spawn(towerInfo);
+      this.towers.push(tower);
+      Events.replicateTower.broadcast(tower, towerInfo);
     });
-    Functions.getTowerInfo.setCallback((_, id) => this.towers[id]);
+    Functions.getTowerInfo.setCallback((_, id) => this.matter.world.get(this.towers.find(tower => tower === id)!, TowerInfo)!); // such a hack lol
   }
 
   public onPlayerJoin(player: Player): void {
-    Events.loadTowers(player, this.towers);
+    Events.loadTowers(player, Object.fromEntries(this.towers.map(tower => [tower, this.matter.world.get(tower, TowerInfo)!]))); // such a hack lol
   }
 
-  public upgrade(id: number, path: UpgradePath): void {
-    const towerName = this.towers[id].name;
-    const upgradeStats = TOWER_STATS[towerName][path];
-    this.towers[id].upgrades[path - 1]++;
-    this.towers[id] = {
-      ...this.towers[id],
-      stats: (<readonly TowerStats[]>upgradeStats)[this.towers[id].upgrades[path - 1]]
-    };
+  public upgrade(tower: TowerEntity, path: UpgradePath): void {
+    if (!this.matter.world.contains(tower)) return;
+    const info = this.matter.world.get(tower, TowerInfo)!;
+    const newUpgrades = table.clone<UpgradeLevel>(info.upgrades);
+    newUpgrades[path - 1]++;
 
-    Events.towerUpgraded.broadcast(id, this.towers[id]);
+    this.matter.world.insert(tower, info.patch({
+      upgrades: newUpgrades,
+      stats: getTowerStats(info.name, newUpgrades)
+    }));
+
+    Events.towerUpgraded.broadcast(tower, info);
   }
 }

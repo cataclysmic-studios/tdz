@@ -10,11 +10,10 @@ import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
-import { removeVectorY } from "common/shared/utility/3D";
 import { createRangePreview, createSizePreview, createTowerModel, growIn, setSizePreviewColor } from "shared/utility";
 import { PLACEMENT_STORAGE, RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 import { TOWER_STATS } from "common/shared/towers";
-import type { TowerInfo } from "shared/structs";
+import type { TowerInfo } from "shared/entity-components";
 import Spring from "common/shared/classes/spring";
 import SmoothValue from "common/shared/classes/smooth-value";
 
@@ -42,7 +41,6 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     private readonly components: Components,
     private readonly mouse: MouseController,
     private readonly character: CharacterController,
-    private readonly camera: CameraController,
     private readonly selection: SelectionController
   ) { super(); }
 
@@ -99,7 +97,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementSizePreview.Beam2.Color = new ColorSequence(previewColor);
   }
 
-  public place(id: number, towerInfo: TowerInfo): void {
+  public place(id: number, towerInfo: Omit<TowerInfo, "patch">): void {
     const { name, ownerID, upgrades, cframe } = towerInfo;
     const myTower = ownerID === Player.UserId;
     const level = math.max(upgrades[0], upgrades[1]);

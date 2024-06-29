@@ -11,7 +11,7 @@ import { tween } from "common/shared/utility/ui";
 import { setSizePreviewColor } from "shared/utility";
 import { PLACEMENT_STORAGE } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
-import type { TowerInfo } from "shared/structs";
+import type { TowerInfo } from "shared/entity-components";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
 import type { TimeScaleController } from "client/controllers/time-scale";
@@ -32,7 +32,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   private readonly defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;
   private readonly defaultRightAttachmentPosition = Assets.SizePreview.Right.Position;
   private readonly selectionFillTransparency = 0.75;
-  private info!: TowerInfo;
+  private info!: Omit<TowerInfo, "patch">;
 
   public constructor(
     private readonly timeScale: TimeScaleController
@@ -107,7 +107,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     setSizePreviewColor(this.getSizePreview(), color);
   }
 
-  public getInfo(): TowerInfo {
+  public getInfo(): Omit<TowerInfo, "patch"> {
     return this.info;
   }
 
