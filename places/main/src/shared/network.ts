@@ -7,6 +7,10 @@ interface ServerEvents {
   placeTower(towerName: TowerName, cframe: CFrame, price: number): void;
   loadTeleportData(teleportData: TeleportData): void;
   toggleDoubleSpeed(on: boolean): void;
+  skipWave(): void;
+  admin: {
+    killAllEnemies(): void;
+  }
 }
 
 interface ClientEvents {

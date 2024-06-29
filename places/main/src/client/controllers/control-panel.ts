@@ -51,8 +51,8 @@ export class ControlPanelController implements OnStart {
       if (!open) return;
       Iris.Window(["Control Panel"], { size: Iris.State(windowSize) });
 
-      this.renderCameraTab();
       this.renderAdminTab();
+      this.renderCameraTab();
 
       Iris.End();
     });
@@ -61,11 +61,16 @@ export class ControlPanelController implements OnStart {
   private renderAdminTab(): void {
     Iris.Tree(["Admin"]);
 
+    Iris.SeparatorText(["Note: You should not spam these because most of them send requests to the server."]);
     const doubleSpeed = Iris.Button([(this.doubleSpeedEnabled ? "1" : "2") + "x Speed"]);
     if (doubleSpeed.clicked()) {
       this.doubleSpeedEnabled = !this.doubleSpeedEnabled;
       Events.toggleDoubleSpeed(this.doubleSpeedEnabled);
     }
+
+    const killAllEnemies = Iris.Button(["Kill All Enemies"]);
+    if (killAllEnemies.clicked())
+      Events.admin.killAllEnemies();
 
     Iris.End();
   }
