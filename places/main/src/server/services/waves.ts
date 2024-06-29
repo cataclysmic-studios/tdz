@@ -26,7 +26,6 @@ export class WavesService implements OnInit {
   public begin(difficulty: Difficulty): void {
     const waves = WAVES[difficulty];
     for (const wave of waves) {
-      print("cleaning up wave...")
       this.waveJanitor.Cleanup();
       const waveNumber = waves.indexOf(wave) + 1;
       Events.updateWaveUI.broadcast(waveNumber);
