@@ -10,6 +10,15 @@ const EASY_WAVES: WaveData[] = [
         interval: 1.2
       }
     ]
+  }, {
+    length: "1 minute",
+    enemies: [
+      {
+        enemyName: "Zombie",
+        amount: 12,
+        interval: 1
+      }
+    ]
   }
 ];
 
