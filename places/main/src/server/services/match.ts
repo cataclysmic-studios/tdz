@@ -45,6 +45,7 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
       if (Players.GetPlayers().size() > 1) return; // TODO: vote for 2x
       this.timeScale = on ? 2 : 1;
       Events.timeScaleUpdated.broadcast(this.timeScale);
+      this.timeScaleChanged.Fire(this.timeScale);
     });
 
     Functions.getTimeScale.setCallback(() => this.timeScale);
@@ -101,12 +102,17 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
   public startTimer(length: number): Timer {
     this.currentTimer = this.timerJanitor.Add(new Timer(this, length), "destroy");
     this.timerJanitor.Add(this.currentTimer.counted.Connect(remainingTime => Events.updateTimerUI.broadcast(remainingTime)));
-    this.timerJanitor.Add(this.currentTimer.ended.Once(() => {
-      this.timerJanitor.Cleanup();
-      this.currentTimer = undefined;
-    }));
-
+    this.timerJanitor.Add(this.currentTimer.ended.Once(() => this.destroyCurrentTimer()));
     return this.currentTimer;
+  }
+
+  public destroyCurrentTimer(): void {
+    this.timerJanitor.Cleanup();
+    this.currentTimer = undefined;
+  }
+
+  public hasActiveTimer(): boolean {
+    return this.currentTimer !== undefined;
   }
 
   private incrementHealth(amount: number): void {

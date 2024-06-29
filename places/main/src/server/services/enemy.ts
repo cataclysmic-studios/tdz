@@ -122,6 +122,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
 
   private despawn(enemy: EnemyEntity): void {
     if (!this.matter.world.contains(enemy)) return;
+    this.enemies.remove(this.enemies.indexOf(enemy));
     const info = this.matter.world.get(enemy, EnemyInfo)!;
     this.matter.world.despawn(enemy);
     info.model.Destroy();

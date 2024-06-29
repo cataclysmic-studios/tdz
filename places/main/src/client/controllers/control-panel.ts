@@ -61,7 +61,7 @@ export class ControlPanelController implements OnStart {
   private renderAdminTab(): void {
     Iris.Tree(["Admin"]);
 
-    Iris.SeparatorText(["Note: You should not spam these because most of them send requests to the server."]);
+    Iris.SeparatorText(["Note: Do not spam these."]);
     const doubleSpeed = Iris.Button([(this.doubleSpeedEnabled ? "1" : "2") + "x Speed"]);
     if (doubleSpeed.clicked()) {
       this.doubleSpeedEnabled = !this.doubleSpeedEnabled;
