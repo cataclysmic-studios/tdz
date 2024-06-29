@@ -7,7 +7,7 @@ export class Bezier {
     public point1: Vector3,
     public point2: Vector3,
     public point3: Vector3,
-    public bezierCoeffiecient2 = 0.6
+    public coeffiecient2 = 0.6
   ) { }
 
   public getPoint(t: number): Vector3 {
@@ -29,8 +29,8 @@ export class Bezier {
     const oneMinusTSquared = oneMinusT * oneMinusT;
 
     return this.point0.mul(-BEZIER_COEFFICIENT * oneMinusTSquared) // first term
-      .add(this.point1.mul(BEZIER_COEFFICIENT * oneMinusTSquared - this.bezierCoeffiecient2 * oneMinusT * t)) // second, etc.
-      .add(this.point2.mul(this.bezierCoeffiecient2 * t * oneMinusT - BEZIER_COEFFICIENT * tSquared))
+      .add(this.point1.mul(BEZIER_COEFFICIENT * oneMinusTSquared - this.coeffiecient2 * oneMinusT * t)) // second, etc.
+      .add(this.point2.mul(this.coeffiecient2 * t * oneMinusT - BEZIER_COEFFICIENT * tSquared))
       .add(this.point3.mul(BEZIER_COEFFICIENT * tSquared))
       .Unit;
   }
