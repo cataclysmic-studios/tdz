@@ -21,11 +21,14 @@ interface Attributes {
   readonly Size: number;
 }
 
+type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
+
 @Component({ tag: "Tower" })
 export class Tower extends DestroyableComponent<Attributes, TowerModel> implements OnStart {
   public readonly name = this.instance.Name;
   public readonly infoUpdated = new Signal<(newInfo: TowerInfo) => void>;
 
+  private readonly loadedAnimations: Partial<Record<AnimationName, AnimationTrack>> = {};
   private readonly highlight = this.janitor.Add(new Instance("Highlight", this.instance));
   private readonly sizePreviewTweenInfo = new TweenInfoBuilder().SetTime(0.08);
   private readonly defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
@@ -55,10 +58,16 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.janitor.Add(Events.towerAttacked.connect((id, enemyPosition) => {
       if (id !== this.attributes.ID) return;
 
-      // TODO: create vfx
+      // TODO: create vfx, play sound
       const towerPosition = this.instance.GetPivot().Position;
       this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyPosition.X, towerPosition.Y, enemyPosition.Z)));
+      this.playAnimation("Attack");
     }));
+
+    for (const animation of <Animation[]>this.instance.Animations.GetChildren()) {
+      const name = <AnimationName>animation.Name;
+      this.loadedAnimations[name] = this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations[name]);
+    }
   }
 
   public isHighlightEnabled(): boolean {
@@ -124,6 +133,13 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
   public isMine(): boolean {
     return this.getInfo().ownerID === Player.UserId;
+  }
+
+  private playAnimation(name: AnimationName): AnimationTrack {
+    const track = this.loadedAnimations[name]!;
+    track.Play();
+    this.adjustAnimationSpeeds();
+    return track;
   }
 
   private adjustAnimationSpeeds(): void {

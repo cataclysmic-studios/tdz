@@ -24,5 +24,6 @@ interface TowerFolder extends Folder {
 interface TowerModel extends CharacterModel {
   Animations: Folder & {
     Idle: Animation;
+    Attack: Animation;
   };
 }
