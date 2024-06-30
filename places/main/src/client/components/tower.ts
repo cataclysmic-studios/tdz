@@ -15,15 +15,50 @@ import type { TowerInfo } from "shared/entity-components";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
 import type { TimeScaleController } from "client/controllers/time-scale";
-
-interface Attributes {
-  readonly ID: number;
-  readonly Size: number;
-}
+import Log from "common/shared/logger";
 
 type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
 
-@Component({ tag: "Tower" })
+const enum AttackVfxType {
+  Muzzle = "Muzzle",
+  OnImpact = "OnImpact"
+}
+
+const enum ProjectileImpactVfxType {
+  Explosion = "Explosion"
+}
+
+const enum ProjectileType {
+  Bullet = "Bullet",
+  Laser = "Laser",
+  Explosive = "Explosive"
+}
+
+interface BaseAttributes {
+  readonly ID: number;
+  readonly Size: number;
+  readonly Melee: boolean;
+  readonly WeaponName: string;
+}
+
+type Attributes = BaseAttributes & ({
+  readonly Melee: true;
+  readonly AttackVfxType: Maybe<AttackVfxType.OnImpact>;
+  readonly ProjectileImpactVfxType: never;
+  readonly ProjectileType: never;
+} | {
+  readonly Melee: false;
+  readonly AttackVfxType?: AttackVfxType;
+  readonly ProjectileImpactVfxType?: ProjectileImpactVfxType;
+  readonly ProjectileType: ProjectileType;
+});
+
+@Component({
+  tag: "Tower",
+  defaults: {
+    WeaponName: "Weapon"
+  }
+})
 export class Tower extends DestroyableComponent<Attributes, TowerModel> implements OnStart {
   public readonly name = this.instance.Name;
   public readonly infoUpdated = new Signal<(newInfo: TowerInfo) => void>;
@@ -62,6 +97,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       const towerPosition = this.instance.GetPivot().Position;
       this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyPosition.X, towerPosition.Y, enemyPosition.Z)));
       this.playAnimation("Attack");
+      this.createAttackVFX();
     }));
 
     for (const animation of <Animation[]>this.instance.Animations.GetChildren()) {
@@ -133,6 +169,39 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
   public isMine(): boolean {
     return this.getInfo().ownerID === Player.UserId;
+  }
+
+  private createProjectile(): void {
+    // check if AttackVfxType is OnImpact when the projectile connects
+  }
+
+  private createAttackVFX(): void {
+    switch (this.attributes.AttackVfxType) {
+      case AttackVfxType.Muzzle: {
+        const attachment = this.getMuzzleAttachment();
+        if (attachment === undefined)
+          return Log.warning(`Could not create attack VFX for ${this.instance.Name} tower: Could not find gun or muzzle attachment`);
+
+        for (const particle of attachment.GetChildren().filter((i): i is ParticleEmitter => i.IsA("ParticleEmitter"))) {
+          const emitCount = <Maybe<number>>particle.GetAttribute("EmitCount");
+          if (emitCount === undefined) {
+            const lifetime = <number>particle.GetAttribute("EnabledLifetime") ?? 0.1;
+            particle.Enabled = true;
+            task.delay(lifetime, () => particle.Enabled = false);
+          } else
+            particle.Emit(emitCount);
+        }
+      }
+
+      case undefined: return;
+    }
+  }
+
+  private getMuzzleAttachment(): Maybe<Attachment> {
+    const gun = this.instance.FindFirstChild(this.attributes.WeaponName);
+    if (gun === undefined) return;
+
+    return <Attachment>gun.FindFirstChild("Muzzle");
   }
 
   private playAnimation(name: AnimationName): AnimationTrack {
