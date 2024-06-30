@@ -86,7 +86,7 @@ interface PlayerGui extends BasePlayerGui {
             UpgradeName: TextLabel & {
               UIStroke: UIStroke;
             };
-            Close: ImageButton & {
+            Upgrade: ImageButton & {
               UICorner: UICorner;
               UIStroke: UIStroke;
               UIAspectRatioConstraint: UIAspectRatioConstraint;
@@ -107,7 +107,7 @@ interface PlayerGui extends BasePlayerGui {
             UpgradeName: TextLabel & {
               UIStroke: UIStroke;
             };
-            Close: ImageButton & {
+            Upgrade: ImageButton & {
               UICorner: UICorner;
               UIStroke: UIStroke;
               UIAspectRatioConstraint: UIAspectRatioConstraint;

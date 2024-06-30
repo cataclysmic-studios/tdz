@@ -25,10 +25,18 @@ export interface TowerStats {
 export const TOWER_UPGRADE_NAMES = <const>{
   Rifleman: [
     [
-      "Focus"
+      "Focus",
+      "Enhanced Optics",
+      "Sharpshooter Accuracy",
+      ".308 Winchester",
+      ".50 BMG"
     ],
     [
-      "Enhanced Ballistics"
+      "Enhanced Ballistics",
+      "Speed Training",
+      "Semi Auto",
+      "High Caliber",
+      "Full Auto"
     ]
   ]
 }
@@ -47,12 +55,53 @@ export const TOWER_STATS = <const>{
         price: 80,
         range: 2,
         reloadTime: -0.1
+      }),
+      identity<Partial<TowerStats>>({
+        price: 260,
+        range: 6
+      }),
+      identity<Partial<TowerStats>>({
+        price: 900,
+        damage: 2,
+        range: 10
+      }),
+      identity<Partial<TowerStats>>({
+        price: 2160,
+        damage: 26,
+        reloadTime: 0.4,
+        range: 6
+      }),
+      identity<Partial<TowerStats>>({
+        price: 4820,
+        damage: 55,
+        reloadTime: 1.2,
+        range: 4
       })
     ],
     [
       identity<Partial<TowerStats>>({
         price: 140,
         damage: 2
+      }),
+      identity<Partial<TowerStats>>({
+        price: 540,
+        damage: 1,
+        reloadTime: -0.3
+      }),
+      identity<Partial<TowerStats>>({
+        price: 820,
+        damage: 2,
+        reloadTime: -0.4
+      }),
+      identity<Partial<TowerStats>>({
+        price: 1980,
+        damage: 8,
+        range: 8
+      }),
+      identity<Partial<TowerStats>>({
+        price: 4380,
+        damage: 4,
+        reloadTime: -0.15
       })
     ]
   ]
