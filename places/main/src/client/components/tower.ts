@@ -93,11 +93,11 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.janitor.Add(Events.towerAttacked.connect((id, enemyPosition) => {
       if (id !== this.attributes.ID) return;
 
-      // TODO: create vfx, play sound
       const towerPosition = this.instance.GetPivot().Position;
       this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyPosition.X, towerPosition.Y, enemyPosition.Z)));
       this.playAnimation("Attack");
-      this.createAttackVFX();
+      task.spawn(() => this.playAttackSound());
+      task.spawn(() => this.createAttackVFX());
     }));
 
     for (const animation of <Animation[]>this.instance.Animations.GetChildren()) {
@@ -197,11 +197,34 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     }
   }
 
-  private getMuzzleAttachment(): Maybe<Attachment> {
-    const gun = this.instance.FindFirstChild(this.attributes.WeaponName);
+  private playAttackSound(): void {
+    const gun = this.getWeapon();
     if (gun === undefined) return;
 
-    return <Attachment>gun.FindFirstChild("Muzzle");
+    const part = gun.IsA("Model") ? gun.PrimaryPart! : gun;
+    const sound = <Sound>part.FindFirstChild("Attack");
+    if (sound === undefined) return;
+
+    this.playSound(sound, part);
+  }
+
+  private playSound(sound: Sound, parent: Instance): void {
+    sound = sound.Clone();
+    sound.Parent = parent;
+    sound.Ended.Once(() => sound.Destroy());
+    sound.Play();
+  }
+
+  private getMuzzleAttachment(): Maybe<Attachment> {
+    const gun = this.getWeapon();
+    if (gun === undefined) return;
+
+    const part = gun.IsA("Model") ? gun.PrimaryPart! : gun;
+    return <Attachment>part.FindFirstChild("Muzzle");
+  }
+
+  private getWeapon<I extends Model | BasePart>(): Maybe<I> {
+    return <I>this.instance.FindFirstChild(this.attributes.WeaponName);
   }
 
   private playAnimation(name: AnimationName): AnimationTrack {
