@@ -17,13 +17,13 @@ import Object from "@rbxts/object-utils";
 
 const INTERMISSION_LENGTH = 8;
 
-@Service()
+@Service({ loadOrder: 1 })
 export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogStart {
-  public readonly intermissionFinished = new Signal<(difficulty: Difficulty) => void>;
+  public readonly cashChanged = new Signal<(player: Player, newCash: number) => void>;
   public readonly timeScaleChanged = new Signal<(timeScale: number) => void>;
+  public readonly intermissionFinished = new Signal<(difficulty: Difficulty) => void>;
   public timeScale = 1;
 
-  private readonly cashChanged = new Signal<(player: Player, newCash: number) => void>;
   private readonly playerCash: Record<number, number> = {};
   private readonly playerJanitors: Partial<Record<number, Janitor>> = {};
   private teleportData!: TeleportData;
@@ -70,11 +70,6 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
     const spawnPoint = this.mapModel.FindFirstChildOfClass("SpawnLocation")?.CFrame ?? this.mapModel.GetPivot();
     teleportPlayers(spawnPoint, player);
 
-    janitor.Add(this.cashChanged.Connect((p, cash) => {
-      if (p !== player) return;
-      Events.updateCashUI(player, cash);
-    }));
-
     const difficultyInfo = DIFFICULTY_INFO[this.teleportData.difficulty];
     this.setCash(player, this.getCash(player) ?? difficultyInfo.startingCash); // ?? in case they join back
   }
@@ -99,10 +94,16 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
   public incrementAllCash(amount: number): void {
     for (const [id, cash] of Object.entries(this.playerCash))
       this.playerCash[id] = math.max(cash + amount, 0);
+
+    this.broadcastCashChange();
   }
 
   public incrementCash(player: Player, amount: number): void {
     this.setCash(player, math.max(this.getCash(player) + amount, 0));
+  }
+
+  public getCash(player: Player): number {
+    return this.playerCash[player.UserId];
   }
 
   public startTimer(length: number): Timer {
@@ -144,8 +145,9 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
     this.cashChanged.Fire(player, cash); // TODO: debounce
   }
 
-  private getCash(player: Player): number {
-    return this.playerCash[player.UserId];
+  private broadcastCashChange(): void {
+    for (const player of Players.GetPlayers())
+      task.spawn(() => this.cashChanged.Fire(player, this.getCash(player)));
   }
 
   private initialize(difficulty: Difficulty) {

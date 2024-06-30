@@ -1,3 +1,7 @@
+interface Leaderstats extends Folder {
+  readonly Cash: IntValue;
+}
+
 interface EnemyModel extends CharacterModel {
   Animations: Folder & {
     Walk: Animation;

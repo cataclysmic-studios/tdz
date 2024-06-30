@@ -14,7 +14,6 @@ interface ServerEvents {
 }
 
 interface ClientEvents {
-  updateCashUI: Networking.Unreliable<(cash: number) => void>;
   updateTimerUI: Networking.Unreliable<(remainingTime: number) => void>;
   towerAttacked: Networking.Unreliable<(id: number, enemyPosition: Vector3) => void>;
   updateHealthUI(health: number, maxHealth: number): void;
