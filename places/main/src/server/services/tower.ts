@@ -45,7 +45,7 @@ export class TowerService implements OnInit, OnTick, OnPlayerJoin, LogStart {
       for (const [enemy,] of this.matter.world.query(EnemyInfo)) {
         if (enemy === target) {
           // TODO: check for traits like stealth
-          if (towerInfo.timeSinceAttack >= reloadTime)
+          if (towerInfo.timeSinceAttack >= reloadTime / this.match.timeScale)
             this.attack(tower, enemy);
         }
       }
