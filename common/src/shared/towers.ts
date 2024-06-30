@@ -22,6 +22,17 @@ export interface TowerStats {
   splashRadius?: number;
 }
 
+export const TOWER_UPGRADE_NAMES = <const>{
+  Rifleman: [
+    [
+      "Focus"
+    ],
+    [
+      "Enhanced Ballistics"
+    ]
+  ]
+}
+
 export const TOWER_STATS = <const>{
   Rifleman: [
     identity<TowerStats>({ // this is base stats. they are fixed values
@@ -41,7 +52,7 @@ export const TOWER_STATS = <const>{
     [
       identity<Partial<TowerStats>>({
         price: 140,
-        damage: 2,
+        damage: 2
       })
     ]
   ]

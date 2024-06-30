@@ -1,10 +1,11 @@
 import type { OnStart } from "@flamework/core";
-import { Component, BaseComponent } from "@flamework/components";
+import { Component } from "@flamework/components";
 import { Workspace as World } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
 
 import { PlayerGui } from "common/shared/utility/client";
 import { Assets } from "common/shared/utility/instances";
+
 import DestroyableComponent from "common/shared/base-components/destroyable";
 
 interface Attributes {

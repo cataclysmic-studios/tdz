@@ -1,5 +1,7 @@
-import { Service, type OnInit, type OnTick } from "@flamework/core";
+import { Service, type OnInit } from "@flamework/core";
+import { RunService as Runtime } from "@rbxts/services";
 import Object from "@rbxts/object-utils";
+import Matter from "@rbxts/matter";
 
 import type { LogStart } from "common/shared/hooks";
 import type { OnPlayerJoin } from "common/server/hooks";
@@ -13,10 +15,9 @@ import type { UpgradeLevel, UpgradePath } from "common/shared/towers";
 import type { MatterService } from "./matter";
 import type { MatchService } from "./match";
 import type { EnemyService } from "./enemy";
-import { QueryResult } from "@rbxts/matter/lib/World";
 
 @Service()
-export class TowerService implements OnInit, OnTick, OnPlayerJoin, LogStart {
+export class TowerService implements OnInit, OnPlayerJoin, LogStart {
   private readonly towers: TowerEntity[] = [];
 
   public constructor(
@@ -32,9 +33,23 @@ export class TowerService implements OnInit, OnTick, OnPlayerJoin, LogStart {
 
     Events.placeTower.connect((player, towerName, cframe, price) => this.spawnTower(player, towerName, cframe, price));
     Functions.getTowerInfo.setCallback((_, id) => this.matter.world.get(<TowerEntity>id, TowerInfo)!); // such a hack lol
+
+    const loop = new Matter.Loop(this.matter.world);
+    loop.scheduleSystems([
+      {
+        system: () => this.updateStatsSystem(),
+        priority: math.huge
+      }, {
+        system: () => this.attackSystem(Matter.useDeltaTime()),
+        priority: math.huge
+      }
+    ]);
+    loop.begin({
+      default: Runtime.Heartbeat
+    });
   }
 
-  public onTick(dt: number): void {
+  private attackSystem(dt: number): void {
     for (const [tower, towerInfo] of this.matter.world.query(TowerInfo)) {
       const { reloadTime } = towerInfo.stats;
       this.matter.world.insert(tower, towerInfo.patch({
@@ -42,7 +57,7 @@ export class TowerService implements OnInit, OnTick, OnPlayerJoin, LogStart {
       }));
 
       const target = this.getTarget(tower);
-      for (const [enemy,] of this.matter.world.query(EnemyInfo)) {
+      for (const [enemy] of this.matter.world.query(EnemyInfo)) {
         if (enemy === target) {
           // TODO: check for traits like stealth
           if (towerInfo.timeSinceAttack >= reloadTime / this.match.timeScale)
@@ -52,7 +67,15 @@ export class TowerService implements OnInit, OnTick, OnPlayerJoin, LogStart {
     }
   }
 
-  private getDistance(towerPosition: Vector3, enemyPosition: Vector3) {
+  private updateStatsSystem(): void {
+    for (const [tower, record] of this.matter.world.queryChanged(TowerInfo)) {
+      if (!this.matter.world.contains(tower)) continue;
+      if (record.new === undefined) continue;
+      Events.updateTowerStats.broadcast(tower, record.new);
+    }
+  }
+
+  private getDistance(towerPosition: Vector3, enemyPosition: Vector3): number {
     return math.sqrt(
       math.pow(towerPosition.X - enemyPosition.X, 2) +
       math.pow(towerPosition.Y - enemyPosition.Y, 2) +
@@ -167,7 +190,7 @@ export class TowerService implements OnInit, OnTick, OnPlayerJoin, LogStart {
     });
   }
 
-  private spawnTower(player: Player, towerName: TowerName, cframe: CFrame, price: number) {
+  private spawnTower(player: Player, towerName: TowerName, cframe: CFrame, price: number): void {
     const stats = getTowerStats(towerName, [0, 0]);
     const towerInfo = TowerInfo({
       name: towerName,

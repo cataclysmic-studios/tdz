@@ -61,7 +61,7 @@ type Attributes = BaseAttributes & ({
 })
 export class Tower extends DestroyableComponent<Attributes, TowerModel> implements OnStart {
   public readonly name = this.instance.Name;
-  public readonly infoUpdated = new Signal<(newInfo: TowerInfo) => void>;
+  public readonly infoUpdated = new Signal<(newInfo: Omit<TowerInfo, "patch">) => void>;
 
   private readonly loadedAnimations: Partial<Record<AnimationName, AnimationTrack>> = {};
   private readonly highlight = this.janitor.Add(new Instance("Highlight", this.instance));
@@ -86,9 +86,14 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(this.instance);
     this.janitor.Add(this.timeScale.changed.Connect(() => this.adjustAnimationSpeeds()));
+    this.janitor.Add(Events.updateTowerStats.connect((id, info) => {
+      if (id !== this.attributes.ID) return;
+      this.infoUpdated.Fire(info);
+    }));
     this.janitor.Add(Events.towerUpgraded.connect((id, newInfo) => {
       if (id !== this.attributes.ID) return;
       this.info = newInfo;
+      this.infoUpdated.Fire(this.info);
     }));
     this.janitor.Add(Events.towerAttacked.connect((id, enemyPosition) => {
       if (id !== this.attributes.ID) return;

@@ -5,13 +5,12 @@ import type { RawActionEntry } from "@rbxts/gamejoy";
 
 import type { OnDataUpdate } from "common/client/hooks";
 import { PlayerGui } from "common/shared/utility/client";
+import { getTowerStats } from "shared/utility";
+import { toSuffixedNumber } from "common/shared/utility/numbers";
 
 import { InputInfluenced } from "common/client/base-components/input-influenced";
 import type { TowerViewport } from "./tower-viewport";
 import type { PlacementController } from "client/controllers/placement";
-import { TOWER_STATS } from "common/shared/towers";
-import { getTowerStats } from "shared/utility";
-import { toSuffixedNumber } from "common/shared/utility/numbers";
 
 @Component({
   tag: "TowerList",
