@@ -36,6 +36,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
     this.janitor.Add(() => this.updateEnemyInfoFrame(true));
 
     this.walkAnimation = this.janitor.Add(this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations.Walk));
+    this.walkAnimation.Priority = Enum.AnimationPriority.Idle;
     this.walkAnimation.Play();
     this.adjustWalkAnimationSpeed();
   }

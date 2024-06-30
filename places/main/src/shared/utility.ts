@@ -45,13 +45,15 @@ export function createTowerModel(towerName: TowerName, modelName: string, cframe
   towerModel.PivotTo(cframe);
   towerModel.Parent = PLACEMENT_STORAGE;
 
-  animateTower(towerModel, "Idle", 0);
+  animateTowerIdle(towerModel);
   growIn(towerModel);
   return towerModel;
 }
 
-export function animateTower(towerModel: TowerModel, animationName: ExtractKeys<TowerModel["Animations"], Animation>, fadeTime?: number): void {
-  towerModel.Humanoid.Animator.LoadAnimation(towerModel.Animations[animationName]).Play(fadeTime);
+export function animateTowerIdle(towerModel: TowerModel): void {
+  const idle = towerModel.Humanoid.Animator.LoadAnimation(towerModel.Animations.Idle);
+  idle.Priority = Enum.AnimationPriority.Idle;
+  idle.Play(0);
 }
 
 export function createRangePreview(range: number): MeshPart {
