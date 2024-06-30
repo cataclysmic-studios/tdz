@@ -6,6 +6,7 @@ import { toSuffixedNumber } from "common/shared/utility/numbers";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
 import type { MouseController } from "../controllers/mouse";
+import type { CharacterController } from "../controllers/character";
 import type { TimeScaleController } from "client/controllers/time-scale";
 
 interface Attributes {
@@ -25,6 +26,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
 
   public constructor(
     private readonly mouse: MouseController,
+    private readonly character: CharacterController,
     private readonly timeScale: TimeScaleController
   ) { super(); }
 
@@ -47,7 +49,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
   }
 
   private updateEnemyInfoFrame(disable = false): void {
-    const target = this.mouse.getTarget(undefined, []);
+    const target = this.mouse.getTarget(undefined, [this.character.get()!]);
     const targetModel = target?.FindFirstAncestorOfClass("Model");
     const enemyInfo = PlayerGui.Main.Main.EnemyInfo;
     if (disable || targetModel === undefined || !targetModel.HasTag("Enemy")) {

@@ -12,10 +12,10 @@ import { setSizePreviewColor } from "shared/utility";
 import { PLACEMENT_STORAGE } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
+import Log from "common/shared/logger";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
 import type { TimeScaleController } from "client/controllers/time-scale";
-import Log from "common/shared/logger";
 
 type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
 

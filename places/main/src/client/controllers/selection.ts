@@ -1,18 +1,16 @@
 import { Controller, type OnInit, type OnTick } from "@flamework/core";
 import { Components } from "@flamework/components";
-import { TweenInfoBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
 
 import type { LogStart } from "common/shared/hooks";
-import { Assets } from "common/shared/utility/instances";
 import { PlayerGui } from "common/shared/utility/client";
-import { tween } from "common/shared/utility/ui";
 import { createRangePreview } from "shared/utility";
 import { RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 
 import type { Tower } from "client/components/tower";
 import type { Upgrades } from "client/components/ui/upgrades";
 import type { MouseController } from "./mouse";
+import type { CharacterController } from "./character";
 
 @Controller()
 export class SelectionController implements OnInit, OnTick, LogStart {
@@ -23,7 +21,8 @@ export class SelectionController implements OnInit, OnTick, LogStart {
 
   public constructor(
     private readonly components: Components,
-    private readonly mouse: MouseController
+    private readonly mouse: MouseController,
+    private readonly character: CharacterController
   ) { }
 
   public onInit(): void {
@@ -86,7 +85,7 @@ export class SelectionController implements OnInit, OnTick, LogStart {
   }
 
   private getHoveredTower(): Maybe<Tower> {
-    const target = this.mouse.getTarget();
+    const target = this.mouse.getTarget(undefined, [this.character.get()!]);
     const model = target?.FindFirstAncestorOfClass("Model");
     if (model === undefined || !model.HasTag("Tower")) return;
 
