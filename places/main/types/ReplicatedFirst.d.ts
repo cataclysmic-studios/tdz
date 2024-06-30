@@ -9,6 +9,7 @@ interface ReplicatedFirst extends Instance {
     };
     Enemies: Folder & {
       Zombie: EnemyModel;
+      ["Fast Zombie"]: EnemyModel;
     };
     Towers: Folder & {
       Rifleman: TowerFolder;

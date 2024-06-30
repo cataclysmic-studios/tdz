@@ -70,10 +70,10 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     return this.enemies.size() > 0;
   }
 
-  public summon({ enemyName, amount, interval }: EnemySummonInfo): void {
+  public summon({ enemyName, amount, interval, length }: EnemySummonInfo): void {
     const map = this.match.getMap();
-    for (let i = 0; i < amount; i++) {
-      task.spawn(() => {
+    task.spawn(() => {
+      for (let i = 0; i < amount; i++) {
         const enemyModel = Assets.Enemies[enemyName].Clone();
         const [_, size] = enemyModel.GetBoundingBox();
         const spawnCFrame = map.StartPoint.CFrame.add(new Vector3(0, (size.Y / 2) - (map.StartPoint.Size.Y / 2), 0));
@@ -89,9 +89,10 @@ export class EnemyService implements OnInit, OnTick, LogStart {
             model: enemyModel,
           })
         ));
-      });
-      task.wait(interval / this.match.timeScale);
-    }
+        task.wait(interval / this.match.timeScale);
+      }
+    });
+    task.wait(length);
   }
 
   public kill(enemy: EnemyEntity): void {

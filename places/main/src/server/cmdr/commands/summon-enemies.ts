@@ -20,6 +20,11 @@ export = identity<CommandDefinition>({
       Name: "Interval",
       Description: "The interval (in seconds) between each enemy spawn",
       Default: 1
+    }, {
+      Type: "number",
+      Name: "Length",
+      Description: "The amount of time (in seconds) before summoning the next set of enemies",
+      Default: 1
     }
   ],
 });

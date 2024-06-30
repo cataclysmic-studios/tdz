@@ -5,7 +5,7 @@ import { Assets } from "common/shared/utility/instances";
 
 import type { EnemyService } from "server/services/enemy";
 
-export = function (context: CommandContext, name: EnemyName, amount: number, interval: number): void {
+export = function (context: CommandContext, name: EnemyName, amount: number, interval: number, length: number): void {
   const enemy = Dependency<EnemyService>();
   try {
     if (Assets.Enemies[name] === undefined)
@@ -14,7 +14,7 @@ export = function (context: CommandContext, name: EnemyName, amount: number, int
     task.spawn(() => {
       enemy.summon({
         enemyName: name,
-        amount, interval
+        amount, interval, length
       });
     });
     context.Reply(`Successfully spawned ${amount} ${name}(s)!`, Color3.fromRGB(0, 255, 0));

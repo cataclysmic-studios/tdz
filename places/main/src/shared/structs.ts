@@ -19,6 +19,7 @@ export interface EnemySummonInfo<Name extends EnemyName = EnemyName> {
   readonly enemyName: Name;
   readonly amount: number;
   readonly interval: number;
+  readonly length: number;
 }
 
 export const enum EnemyTraitType {
