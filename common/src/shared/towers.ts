@@ -94,13 +94,13 @@ export const TOWER_STATS = <const>{
       identity<Partial<TowerStats>>({
         price: 2160,
         damage: 26,
-        reloadTime: 0.4,
+        reloadTime: 0.6,
         range: 6
       }),
       identity<Partial<TowerStats>>({
         price: 4820,
         damage: 55,
-        reloadTime: 1.2,
+        reloadTime: 1,
         range: 4
       })
     ],

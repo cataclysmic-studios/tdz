@@ -22,10 +22,10 @@ export function getTowerStats(towerName: TowerName, upgrades: UpgradeLevel): Tow
   if (path1Level === 0 && path2Level === 0)
     return table.clone(baseStats);
 
-  const upradedStats = table.clone(baseStats);
-  applyUpgradePathStats(upradedStats, path1Level, <PathStats><unknown>path1Stats);
-  applyUpgradePathStats(upradedStats, path2Level, <PathStats><unknown>path2Stats);
-  return upradedStats;
+  const upgradedStats = table.clone(baseStats);
+  applyUpgradePathStats(upgradedStats, path1Level, <PathStats><unknown>path1Stats);
+  applyUpgradePathStats(upgradedStats, path2Level, <PathStats><unknown>path2Stats);
+  return upgradedStats;
 }
 
 function applyUpgradePathStats(baseStats: TowerStats, pathLevel: number, pathStats: PathStats): void {
