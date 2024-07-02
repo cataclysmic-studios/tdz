@@ -42,6 +42,7 @@ export class WavesService implements OnInit {
       if (waveTimer.isActive())
         this.match.destroyCurrentTimer();
 
+      this.match.incrementAllCash(wave.completionReward);
       const intermissionTimer = this.match.startTimer(4);
       // TODO: add tick sound on intermissionTimer countdown
       while (this.match.hasActiveTimer()) task.wait(0.2);
