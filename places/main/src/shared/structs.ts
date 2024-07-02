@@ -12,6 +12,7 @@ export const enum TargettingType {
 
 export interface WaveData {
   readonly length: string;
+  readonly completionReward: number;
   readonly enemies: EnemySummonInfo[];
 }
 

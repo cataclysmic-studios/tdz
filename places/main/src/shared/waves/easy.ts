@@ -5,6 +5,7 @@ import type { WaveData } from "shared/structs";
 const EASY_WAVES: WaveData[] = [
   {
     length: "1 minute",
+    completionReward: 200,
     enemies: [
       {
         enemyName: "Zombie",
@@ -15,6 +16,7 @@ const EASY_WAVES: WaveData[] = [
     ]
   }, {
     length: "1 minute",
+    completionReward: 280,
     enemies: [
       {
         enemyName: "Zombie",
@@ -25,6 +27,7 @@ const EASY_WAVES: WaveData[] = [
     ]
   }, {
     length: "1 minute",
+    completionReward: 360,
     enemies: [
       {
         enemyName: "Zombie",
@@ -35,6 +38,27 @@ const EASY_WAVES: WaveData[] = [
         enemyName: "Fast Zombie",
         amount: 8,
         interval: 0.8,
+        length: -1
+      }
+    ]
+  }, {
+    length: "1 minute",
+    completionReward: 360,
+    enemies: [
+      {
+        enemyName: "Zombie",
+        amount: 3,
+        interval: 1,
+        length: 1.5
+      }, {
+        enemyName: "Fast Zombie",
+        amount: 16,
+        interval: 0.8,
+        length: 5
+      }, {
+        enemyName: "Zombie",
+        amount: 4,
+        interval: 1,
         length: -1
       }
     ]
