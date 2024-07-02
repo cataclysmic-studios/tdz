@@ -10,7 +10,7 @@ import { Assets } from "common/shared/utility/instances";
 import { getTowerStats } from "shared/utility";
 import { TargettingType } from "shared/structs";
 import { EnemyEntity, EnemyInfo, TowerEntity, TowerInfo } from "shared/entity-components";
-import type { UpgradeLevel, UpgradePath } from "common/shared/towers";
+import { TOWER_STATS, type UpgradeLevel, type UpgradePath } from "common/shared/towers";
 
 import type { MatterService } from "./matter";
 import type { MatchService } from "./match";
@@ -32,7 +32,8 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
         part.CollisionGroup = "plrs";
 
     Events.placeTower.connect((player, towerName, cframe, price) => this.spawnTower(player, towerName, cframe, price));
-    Functions.getTowerInfo.setCallback((_, id) => this.matter.world.get(<TowerEntity>id, TowerInfo)!); // such a hack lol
+    Events.upgradeTower.connect((player, id, path, price) => this.upgrade(player, <TowerEntity>id, path, price));
+    Functions.getTowerInfo.setCallback((_, id) => this.matter.world.get(<TowerEntity>id, TowerInfo)!);
 
     const loop = new Matter.Loop(this.matter.world);
     loop.scheduleSystems([
@@ -47,6 +48,45 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     loop.begin({
       default: Runtime.Heartbeat
     });
+  }
+
+  public onPlayerJoin(player: Player): void {
+    Events.loadTowers(player, Object.fromEntries(this.towers.map(tower => [tower, this.matter.world.get(tower, TowerInfo)!]))); // such a hack lol
+  }
+
+  public attack(tower: TowerEntity, enemy: EnemyEntity): void {
+    if (!this.matter.world.contains(tower)) return;
+    if (!this.matter.world.contains(enemy)) return;
+
+    // TODO: handle damage types, splash damage, etc.
+    const towerInfo = this.matter.world.get(tower, TowerInfo)!;
+    const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!;
+    const damageDealt = this.enemy.damage(enemy, towerInfo.stats.damage);
+    this.matter.world.insert(tower, towerInfo.patch({
+      totalDamage: towerInfo.totalDamage + damageDealt,
+      timeSinceAttack: 0
+    }));
+
+    Events.towerAttacked.broadcast(tower, enemyInfo.model.GetPivot().Position);
+  }
+
+  public upgrade(player: Player, tower: TowerEntity, path: UpgradePath, price: number): void {
+    if (!this.matter.world.contains(tower)) return;
+    const info = this.matter.world.get(tower, TowerInfo)!;
+    if (info.ownerID !== player.UserId)
+      return player.Kick("wtf r u even doing");
+
+    const newUpgrades = table.clone<UpgradeLevel>(info.upgrades);
+    const pathLevel = newUpgrades[path - 1];
+    const pathLevelStats = TOWER_STATS[info.name][path][<number>pathLevel];
+    if (pathLevelStats.price !== price)
+      return player.Kick("you're not slick buddy");
+
+    newUpgrades[path - 1]++;
+    this.matter.world.insert(tower, info.patch({
+      upgrades: newUpgrades,
+      stats: getTowerStats(info.name, newUpgrades)
+    }));
   }
 
   private attackSystem(dt: number): void {
@@ -81,40 +121,6 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       math.pow(towerPosition.Y - enemyPosition.Y, 2) +
       math.pow(towerPosition.Z - enemyPosition.Z, 2)
     ) * 2;
-  }
-
-  public onPlayerJoin(player: Player): void {
-    Events.loadTowers(player, Object.fromEntries(this.towers.map(tower => [tower, this.matter.world.get(tower, TowerInfo)!]))); // such a hack lol
-  }
-
-  public attack(tower: TowerEntity, enemy: EnemyEntity): void {
-    if (!this.matter.world.contains(tower)) return;
-    if (!this.matter.world.contains(enemy)) return;
-
-    // TODO: handle damage types, splash damage, etc.
-    const towerInfo = this.matter.world.get(tower, TowerInfo)!;
-    const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!;
-    const damageDealt = this.enemy.damage(enemy, towerInfo.stats.damage);
-    this.matter.world.insert(tower, towerInfo.patch({
-      totalDamage: towerInfo.totalDamage + damageDealt,
-      timeSinceAttack: 0
-    }));
-
-    Events.towerAttacked.broadcast(tower, enemyInfo.model.GetPivot().Position);
-  }
-
-  public upgrade(tower: TowerEntity, path: UpgradePath): void {
-    if (!this.matter.world.contains(tower)) return;
-    const info = this.matter.world.get(tower, TowerInfo)!;
-    const newUpgrades = table.clone<UpgradeLevel>(info.upgrades);
-    newUpgrades[path - 1]++;
-
-    this.matter.world.insert(tower, info.patch({
-      upgrades: newUpgrades,
-      stats: getTowerStats(info.name, newUpgrades)
-    }));
-
-    Events.towerUpgraded.broadcast(tower, info);
   }
 
   private getTarget(tower: TowerEntity): Maybe<EnemyEntity> {
@@ -192,6 +198,9 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
 
   private spawnTower(player: Player, towerName: TowerName, cframe: CFrame, price: number): void {
     const stats = getTowerStats(towerName, [0, 0]);
+    if (stats.price !== price)
+      return player.Kick("yep you can stop doing that now");
+
     const towerInfo = TowerInfo({
       name: towerName,
       ownerID: player.UserId,

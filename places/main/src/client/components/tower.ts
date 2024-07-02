@@ -1,4 +1,4 @@
-import type { OnStart } from "@flamework/core";
+import type { OnStart, OnRender } from "@flamework/core";
 import { Component } from "@flamework/components";
 import { TweenInfoBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
@@ -8,7 +8,7 @@ import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player } from "common/shared/utility/client";
 import { tween } from "common/shared/utility/ui";
-import { setSizePreviewColor } from "shared/utility";
+import { createRangePreview, setSizePreviewColor } from "shared/utility";
 import { PLACEMENT_STORAGE } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
@@ -59,7 +59,7 @@ type Attributes = BaseAttributes & ({
     WeaponName: "Weapon"
   }
 })
-export class Tower extends DestroyableComponent<Attributes, TowerModel> implements OnStart {
+export class Tower extends DestroyableComponent<Attributes, TowerModel> implements OnStart, OnRender {
   public readonly name = this.instance.Name;
   public readonly infoUpdated = new Signal<(newInfo: Omit<TowerInfo, "patch">) => void>;
 
@@ -70,6 +70,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   private readonly defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;
   private readonly defaultRightAttachmentPosition = Assets.SizePreview.Right.Position;
   private readonly selectionFillTransparency = 0.75;
+  private currentRangePreview?: MeshPart;
   private info!: Omit<TowerInfo, "patch">;
 
   public constructor(
@@ -88,12 +89,8 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.janitor.Add(this.timeScale.changed.Connect(() => this.adjustAnimationSpeeds()));
     this.janitor.Add(Events.updateTowerStats.connect((id, info) => {
       if (id !== this.attributes.ID) return;
+      this.info = info;
       this.infoUpdated.Fire(info);
-    }));
-    this.janitor.Add(Events.towerUpgraded.connect((id, newInfo) => {
-      if (id !== this.attributes.ID) return;
-      this.info = newInfo;
-      this.infoUpdated.Fire(this.info);
     }));
     this.janitor.Add(Events.towerAttacked.connect((id, enemyPosition) => {
       if (id !== this.attributes.ID) return;
@@ -109,6 +106,22 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       const name = <AnimationName>animation.Name;
       this.loadedAnimations[name] = this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations[name]);
     }
+  }
+
+  public onRender(dt: number): void {
+    if (this.currentRangePreview === undefined) return;
+
+    const range = this.info.stats.range;
+    this.currentRangePreview.Size = this.currentRangePreview.Size.Lerp(new Vector3(range, this.currentRangePreview.Size.Y, range), 0.2);
+  }
+
+  public createRangePreview(): MeshPart {
+    const oldPreview = this.currentRangePreview
+    this.currentRangePreview = undefined
+    oldPreview?.Destroy();
+
+    this.currentRangePreview = createRangePreview(this.info.stats.range);
+    return this.currentRangePreview;
   }
 
   public isHighlightEnabled(): boolean {

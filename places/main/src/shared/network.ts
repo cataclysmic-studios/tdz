@@ -1,11 +1,12 @@
 import { Networking } from "@flamework/networking";
 
 import type { TeleportData } from "./structs";
+import type { UpgradePath } from "./towers";
 import type { TowerInfo } from "./entity-components";
-import { TowerStats } from "./towers";
 
 interface ServerEvents {
   placeTower(towerName: TowerName, cframe: CFrame, price: number): void;
+  upgradeTower(id: number, path: UpgradePath, price: number): void;
   loadTeleportData(teleportData: TeleportData): void;
   toggleDoubleSpeed(on: boolean): void;
   skipWave(): void;
@@ -21,7 +22,6 @@ interface ClientEvents {
   updateHealthUI(health: number, maxHealth: number): void;
   updateWaveUI(wave: number): void;
   timeScaleUpdated(timeScale: number): void;
-  towerUpgraded(id: number, newInfo: Omit<TowerInfo, "patch">): void;
   replicateTower(id: number, towerInfo: Omit<TowerInfo, "patch">): void;
   loadTowers(allTowers: Record<number, TowerInfo>): void;
 }

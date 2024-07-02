@@ -21,10 +21,9 @@ import { InputInfluenced } from "common/client/classes/input-influenced";
 import type { Tower } from "client/components/tower";
 import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "common/client/controllers/character";
-import type { CameraController } from "common/client/controllers/camera";
 import type { SelectionController } from "./selection";
 
-// TODO: collision groups, show "Press 'Q' to exit placement mode" gui
+// TODO: show "Press 'Q' to exit placement mode" gui
 @Controller()
 export class PlacementController extends InputInfluenced implements OnInit, OnStart, OnRender, LogStart {
   private readonly placementJanitor = new Janitor;
@@ -100,8 +99,11 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   public place(id: number, towerInfo: Omit<TowerInfo, "patch">): void {
     const { name, ownerID, upgrades, cframe } = towerInfo;
     const myTower = ownerID === Player.UserId;
-    const level = math.max(upgrades[0], upgrades[1]);
-    const towerModel = createTowerModel(name, `Level${level}`, cframe);
+    const [path1Level, path2Level] = upgrades;
+    const baseAppearanceLevel = math.max(upgrades[0], upgrades[1]);
+    const pathIdent = (path1Level < 3 && path2Level < 3) ? ("") : (path1Level >= 3 ? "A" : "B");
+    const modelName = `Level${baseAppearanceLevel}${pathIdent}`;
+    const towerModel = createTowerModel(name, modelName, cframe);
     towerModel.SetAttribute("ID", id);
 
     const size = <number>towerModel.GetAttribute("Size");

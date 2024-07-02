@@ -1,4 +1,4 @@
-import { Controller, type OnInit, type OnTick } from "@flamework/core";
+import { Controller, OnStart, type OnInit, type OnTick } from "@flamework/core";
 import { Components } from "@flamework/components";
 import { Janitor } from "@rbxts/janitor";
 
@@ -13,9 +13,10 @@ import type { MouseController } from "./mouse";
 import type { CharacterController } from "./character";
 
 @Controller()
-export class SelectionController implements OnInit, OnTick, LogStart {
+export class SelectionController implements OnInit, OnStart, OnTick, LogStart {
   private readonly selectedSizePreviewHeight = 0.75;
   private readonly selectionJanitor = new Janitor;
+  private upgrades!: Upgrades;
   private selectedTower?: Tower;
   private lastTowerHovered?: Tower;
 
@@ -24,6 +25,10 @@ export class SelectionController implements OnInit, OnTick, LogStart {
     private readonly mouse: MouseController,
     private readonly character: CharacterController
   ) { }
+
+  public onStart(): void {
+    this.upgrades = this.components.getAllComponents<Upgrades>()[0];
+  }
 
   public onInit(): void {
     this.mouse.lmbDown.Connect(() => {
@@ -55,7 +60,7 @@ export class SelectionController implements OnInit, OnTick, LogStart {
     tower.toggleSelectionHighlight(true);
     this.selectionJanitor.Add(tower.setSizePreviewHeight(this.selectedSizePreviewHeight));
 
-    const rangePreview = this.selectionJanitor.Add(createRangePreview(tower.getStats().range));
+    const rangePreview = this.selectionJanitor.Add(tower.createRangePreview());
     rangePreview.Color = RANGE_PREVIEW_COLORS.CanPlace;
     rangePreview.CFrame = tower.instance.GetPivot().sub(new Vector3(0, 0.8, 0));
 
@@ -65,9 +70,8 @@ export class SelectionController implements OnInit, OnTick, LogStart {
     if (!upgradesUI.Viewport.HasTag("TowerViewport"))
       upgradesUI.Viewport.AddTag("TowerViewport");
 
-    const [upgrades] = this.components.getAllComponents<Upgrades>();
-    upgrades.updateInfo(tower.getInfo());
-    this.selectionJanitor.Add(tower.infoUpdated.Connect(info => upgrades.updateInfo(info)));
+    this.upgrades.updateInfo(tower.attributes.ID, tower.getInfo());
+    this.selectionJanitor.Add(tower.infoUpdated.Connect(info => this.upgrades.updateInfo(tower.attributes.ID, info)));
     upgradesUI.Visible = true;
   }
 
@@ -82,6 +86,10 @@ export class SelectionController implements OnInit, OnTick, LogStart {
     this.selectedTower = undefined;
 
     PlayerGui.Main.Main.TowerUpgrades.Visible = false;
+  }
+
+  public isSelectingTower(): boolean {
+    return this.selectedTower !== undefined;
   }
 
   private getHoveredTower(): Maybe<Tower> {
