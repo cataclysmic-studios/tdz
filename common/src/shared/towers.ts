@@ -22,21 +22,47 @@ export interface TowerStats {
   splashRadius?: number;
 }
 
-export const TOWER_UPGRADE_NAMES = <const>{
+interface UpgradeMeta {
+  readonly name: string;
+  readonly icon: string;
+}
+
+export const TOWER_UPGRADE_META = <const>{
   Rifleman: [
     [
-      "Focus",
-      "Enhanced Optics",
-      "Sharpshooter Accuracy",
-      ".308 Winchester",
-      ".50 BMG"
-    ],
-    [
-      "Enhanced Ballistics",
-      "Speed Training",
-      "Semi Auto",
-      "High Caliber",
-      "Full Auto"
+      {
+        name: "Focus",
+        icon: "rbxassetid://10909681909"
+      }, {
+        name: "Enhanced Optics",
+        icon: "rbxassetid://10909681909"
+      }, {
+        name: "Sharpshooter Accuracy",
+        icon: "rbxassetid://10909681909"
+      }, {
+        name: ".308 Winchester",
+        icon: "rbxassetid://10909681909"
+      }, {
+        name: ".50 BMG",
+        icon: "rbxassetid://10909681909"
+      }
+    ], [
+      {
+        name: "Enhanced Ballistics",
+        icon: "rbxassetid://10909681909"
+      }, {
+        name: "Speed Training",
+        icon: "rbxassetid://10909681909"
+      }, {
+        name: "Semi Auto",
+        icon: "rbxassetid://10909681909"
+      }, {
+        name: "High Caliber",
+        icon: "rbxassetid://10909681909"
+      }, {
+        name: "Full Auto",
+        icon: "rbxassetid://10909681909"
+      }
     ]
   ]
 }
