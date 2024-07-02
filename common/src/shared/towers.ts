@@ -101,7 +101,7 @@ export const TOWER_STATS = <const>{
         price: 4820,
         damage: 55,
         reloadTime: 1,
-        range: 4
+        range: 12
       })
     ],
     [
@@ -122,7 +122,7 @@ export const TOWER_STATS = <const>{
       identity<Partial<TowerStats>>({
         price: 1980,
         damage: 8,
-        range: 8
+        range: 6
       }),
       identity<Partial<TowerStats>>({
         price: 4380,
