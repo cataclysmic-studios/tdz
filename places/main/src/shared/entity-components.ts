@@ -1,7 +1,7 @@
 import { component, type Entity } from "@rbxts/matter";
 
 import type { TowerStats, UpgradeLevel } from "./towers";
-import type { TargettingType } from "./structs";
+import type { TargetingType } from "./structs";
 
 export type EnemyEntity = Entity<[EnemyInfo]>;
 export type EnemyInfo = ReturnType<typeof EnemyInfo>;
@@ -19,7 +19,7 @@ export const TowerInfo = component<{
   upgrades: UpgradeLevel;
   stats: TowerStats;
   timeSinceAttack: number;
-  targetting: TargettingType,
+  targeting: TargetingType,
   readonly cframe: CFrame;
   readonly name: TowerName;
   readonly ownerID: number;

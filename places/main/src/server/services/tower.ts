@@ -8,7 +8,7 @@ import type { OnPlayerJoin } from "common/server/hooks";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
 import { getTowerStats } from "shared/utility";
-import { TargettingType } from "shared/structs";
+import { TargetingType } from "shared/structs";
 import { EnemyEntity, EnemyInfo, TowerEntity, TowerInfo } from "shared/entity-components";
 import { TOWER_STATS, type UpgradeLevel, type UpgradePath } from "common/shared/towers";
 
@@ -131,8 +131,8 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       enemies.push(enemy);
 
     const towerInfo = this.matter.world.get(tower, TowerInfo)!;
-    switch (towerInfo.targetting) {
-      case TargettingType.First: {
+    switch (towerInfo.targeting) {
+      case TargetingType.First: {
         return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
           if (!this.matter.world.contains(a)) return false;
           if (!this.matter.world.contains(b)) return false;
@@ -141,7 +141,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
           return infoA.distance > infoB.distance;
         }));
       }
-      case TargettingType.Last: {
+      case TargetingType.Last: {
         return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
           if (!this.matter.world.contains(a)) return false;
           if (!this.matter.world.contains(b)) return false;
@@ -150,7 +150,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
           return infoA.distance < infoB.distance;
         }));
       }
-      case TargettingType.Strong: {
+      case TargetingType.Strong: {
         return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
           if (!this.matter.world.contains(a)) return false;
           if (!this.matter.world.contains(b)) return false;
@@ -159,7 +159,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
           return infoA.health < infoB.health;
         }));
       }
-      case TargettingType.Weak: {
+      case TargetingType.Weak: {
         return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
           if (!this.matter.world.contains(a)) return false;
           if (!this.matter.world.contains(b)) return false;
@@ -168,7 +168,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
           return infoA.health > infoB.health;
         }));
       }
-      case TargettingType.Close: {
+      case TargetingType.Close: {
         return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
           if (!this.matter.world.contains(a)) return false;
           if (!this.matter.world.contains(b)) return false;
@@ -180,7 +180,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
           return towerPosition.sub(pointA).Magnitude > towerPosition.sub(pointB).Magnitude;
         }));
       }
-      case TargettingType.Random:
+      case TargetingType.Random:
         return enemies[math.random(0, enemies.size() - 1)];
     }
   }
@@ -207,7 +207,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       cframe, stats,
       worth: price,
       timeSinceAttack: stats.reloadTime,
-      targetting: TargettingType.First,
+      targeting: TargetingType.First,
       totalDamage: 0,
       upgrades: [0, 0],
     });

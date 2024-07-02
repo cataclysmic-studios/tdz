@@ -1,7 +1,7 @@
 import type { Difficulty } from "common/shared/structs/difficulty";
 import type { Assets } from "common/shared/utility/instances";
 
-export const enum TargettingType {
+export const enum TargetingType {
   First,
   Last,
   Close,
