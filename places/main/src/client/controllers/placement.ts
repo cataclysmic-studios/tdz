@@ -35,6 +35,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   private canPlace = true;
   private placing = false;
   private yOrientation = new SmoothValue(0, 8);
+  private lastDt = 0;
 
   public constructor(
     private readonly components: Components,
@@ -67,8 +68,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.lastMouseWorldPosition = this.mouse.getWorldPosition();
     this.swaySpring.shove(new Vector3(doubleSidedLimit(delta.X, 30), 0, doubleSidedLimit(delta.Z, 30)));
 
-    const sway = this.swaySpring.update(dt).div(100);
-    const swayAngles = CFrame.Angles(-sway.Z * 2, math.rad(this.yOrientation.update(dt)), sway.X);
+    const swayAngles = this.getSway(dt);
     const mouseFilter = [this.character.get()!, PLACEMENT_STORAGE];
     const towerCFrame = new CFrame(this.mouse.getWorldPosition(undefined, mouseFilter))
       .add(new Vector3(0, this.placementModel.GetScale() * 3, 0));
@@ -94,6 +94,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementRangePreview.Color = previewColor;
     this.placementSizePreview.Beam1.Color = new ColorSequence(previewColor);
     this.placementSizePreview.Beam2.Color = new ColorSequence(previewColor);
+    this.lastDt = dt;
   }
 
   public place(id: number, towerInfo: Omit<TowerInfo, "patch">): void {
@@ -160,7 +161,8 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     if (this.placementModel === undefined) return;
 
     const towerName = <TowerName>this.placementModel.Name;
-    const cframe = this.placementModel.GetPivot();
+    const sway = this.getSway(this.lastDt);
+    const cframe = this.placementModel.GetPivot().mul(sway.Inverse());
     const [{ price }] = TOWER_STATS[towerName];
     const purchased = await Functions.spendCash(price);
     if (!purchased)
@@ -168,5 +170,10 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
 
     Events.placeTower(towerName, cframe, price);
     this.exitPlacement();
+  }
+
+  private getSway(dt: number): CFrame {
+    const sway = this.swaySpring.update(dt).div(100);
+    return CFrame.Angles(-sway.Z * 2, math.rad(this.yOrientation.update(dt)), sway.X);
   }
 }
