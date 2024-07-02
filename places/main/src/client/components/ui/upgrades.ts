@@ -47,20 +47,22 @@ export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["Tower
 
     const [path1Level, path2Level] = info.upgrades;
     const [_, allPath1Stats, allPath2Stats] = TOWER_STATS[info.name];
-    const [path1Names, path2Names] = TOWER_UPGRADE_META[info.name];
+    const [allPath1Meta, allPath2Meta] = TOWER_UPGRADE_META[info.name];
     const path1Max = path1Level === 5;
     const path2Max = path2Level === 5;
-    const path1Locked = path1Level >= 3;
-    const path2Locked = path2Level >= 3;
-    const nextPath1Meta = path1Max ? path1Names[4] : path1Names[path1Level];
-    const nextPath2Meta = path2Max ? path1Names[4] : path2Names[path2Level];
+    const path1Locked = path2Level >= 3 && path1Level === 2;
+    const path2Locked = path1Level >= 3 && path2Level === 2;
+    const nextPath1Meta = path1Max ? allPath1Meta[4] : allPath1Meta[path1Level];
+    const nextPath2Meta = path2Max ? allPath2Meta[4] : allPath2Meta[path2Level];
     const nextPath1Stats = path1Max ? allPath1Stats[4] : allPath1Stats[path1Level];
     const nextPath2Stats = path2Max ? allPath2Stats[4] : allPath2Stats[path2Level];
     const path1 = this.instance.Upgrades.Path1;
     const path2 = this.instance.Upgrades.Path2;
 
-    path1.Upgrade.Visible = !path1Max;
-    path2.Upgrade.Visible = !path2Max;
+    const canUpgradePath1 = !path1Max && !path1Locked;
+    const canUpgradePath2 = !path2Max && !path2Locked;
+    path1.Upgrade.Visible = canUpgradePath1;
+    path2.Upgrade.Visible = canUpgradePath2;
     path1.UpgradeName.Text = nextPath1Meta.name;
     path2.UpgradeName.Text = nextPath2Meta.name;
     path1.Icon.Image = nextPath1Meta.icon;
@@ -71,7 +73,7 @@ export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["Tower
     this.fillOutIndicator(path2, path2Level);
 
     if (info.ownerID !== Player.UserId) return;
-    if (!path1Max && !path1Locked)
+    if (canUpgradePath1)
       this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Once(async () => {
         if (this.path1Debounce) return;
         this.path1Debounce = true;
@@ -84,7 +86,7 @@ export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["Tower
 
         Events.upgradeTower(id, 1, price);
       }));
-    if (!path2Max && !path2Locked)
+    if (canUpgradePath2)
       this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Once(async () => {
         if (this.path2Debounce) return;
         this.path2Debounce = true;
