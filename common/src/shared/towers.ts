@@ -16,15 +16,11 @@ export interface TowerStats {
   damageType: DamageType;
   damage: number;
   range: number;
-  minimumRange?: number;
+  canSeeStealth: boolean;
   reloadTime: number;
+  minimumRange?: number;
   burstCount?: number;
   splashRadius?: number;
-}
-
-interface UpgradeMeta {
-  readonly name: string;
-  readonly icon: string;
 }
 
 export const TOWER_UPGRADE_META = <const>{
@@ -74,7 +70,8 @@ export const TOWER_STATS = <const>{
       damageType: DamageType.Bullet,
       damage: 3,
       range: 14,
-      reloadTime: 1.2
+      reloadTime: 1.2,
+      canSeeStealth: false
     }),
     [ // these are path 1 upgrades, and they add number values, not set them!
       identity<Partial<TowerStats>>({ // this will set range to 16, and reload time to 1.1
@@ -89,19 +86,22 @@ export const TOWER_STATS = <const>{
       identity<Partial<TowerStats>>({
         price: 900,
         damage: 2,
-        range: 10
+        range: 10,
+        canSeeStealth: true
       }),
       identity<Partial<TowerStats>>({
         price: 2160,
         damage: 26,
         reloadTime: 0.6,
-        range: 6
+        range: 6,
+        canSeeStealth: true
       }),
       identity<Partial<TowerStats>>({
         price: 4820,
         damage: 55,
         reloadTime: 1,
-        range: 12
+        range: 12,
+        canSeeStealth: true
       })
     ],
     [
@@ -122,12 +122,14 @@ export const TOWER_STATS = <const>{
       identity<Partial<TowerStats>>({
         price: 1980,
         damage: 8,
-        range: 6
+        range: 6,
+        canSeeStealth: true
       }),
       identity<Partial<TowerStats>>({
         price: 4380,
         damage: 4,
-        reloadTime: -0.15
+        reloadTime: -0.15,
+        canSeeStealth: true
       })
     ]
   ]

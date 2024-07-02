@@ -85,8 +85,9 @@ export class EnemyService implements OnInit, OnTick, LogStart {
         this.enemies.push(this.matter.world.spawn(
           EnemyInfo({
             distance: 0,
+            isStealth: <boolean>enemyModel.GetAttribute("Stealth"),
             health: <number>enemyModel.GetAttribute("MaxHealth"),
-            model: enemyModel,
+            model: enemyModel
           })
         ));
         task.wait(interval / this.match.timeScale);

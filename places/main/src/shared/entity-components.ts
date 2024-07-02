@@ -8,6 +8,7 @@ export type EnemyInfo = ReturnType<typeof EnemyInfo>;
 export const EnemyInfo = component<{
   distance: number;
   health: number;
+  isStealth: boolean;
   readonly model: EnemyModel;
 }>("EnemyInfo");
 

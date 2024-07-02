@@ -41,6 +41,7 @@
     "@rbxts/janitor": "^1.15.7-ts.0",
     "@rbxts/matter": "^0.8.1",
     "@rbxts/object-utils": "^1.0.4",
+    "@rbxts/partcache": "^1.1.1",
     "@rbxts/signal": "^1.1.1",
     "@rbxts/strict-map": "^1.0.2",
     "@rbxts/string-utils": "^1.0.3",

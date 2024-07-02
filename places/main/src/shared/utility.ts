@@ -33,9 +33,9 @@ function applyUpgradePathStats(baseStats: TowerStats, pathLevel: number, pathSta
     const statsAddition = pathStats[i];
     for (const [name, value] of Object.entries(statsAddition))
       if (typeOf(value) === "number" && name !== "price")
-        (<ExtractMembers<TowerStats, Maybe<number>>>baseStats)[name] += value;
+        baseStats[<NonNullable<ExtractKeys<TowerStats, Maybe<number>>>>name] += <number>value;
       else
-        baseStats[name] = value;
+        baseStats[<NonNullable<ExcludeKeys<TowerStats, Maybe<number>>>>name] = <Exclude<typeof value, number>>value;
   }
 }
 
