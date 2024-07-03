@@ -63,8 +63,11 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
     enemyInfo.Position = UDim2.fromOffset(X, Y); // TODO: add traits frames
     enemyInfo.Main.EnemyName.Text = this.instance.Name.upper();
     enemyInfo.Main.Health.Amount.Text = `${toSuffixedNumber(this.attributes.Health)}/${toSuffixedNumber(this.attributes.MaxHealth)} HP`;
-    enemyInfo.Main.Health.Bar.Size = enemyInfo.Main.Health.Bar.Size.Lerp(UDim2.fromScale(this.attributes.Health / this.attributes.MaxHealth, 1), 0.2); // this needs to be changed if calling function on tap
-    if (enemyInfo.Visible === false)
+
+    const notShowing = enemyInfo.Visible === false;
+    const newBarSize = UDim2.fromScale(this.attributes.Health / this.attributes.MaxHealth, 1);
+    enemyInfo.Main.Health.Bar.Size = notShowing ? newBarSize : enemyInfo.Main.Health.Bar.Size.Lerp(newBarSize, 0.2); // this needs to be changed if calling function on tap
+    if (notShowing)
       enemyInfo.Visible = true;
   }
 

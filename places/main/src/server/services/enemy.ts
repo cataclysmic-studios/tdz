@@ -40,14 +40,11 @@ export class EnemyService implements OnInit, OnTick, LogStart {
   }
 
   public onTick(dt: number): void {
-    // TODO: check if mouse.getTarget() is any enemy model (ON CLIENT, NOT IN THIS SERVICE)
-
     const map = this.match.getMap();
     for (const [enemy, info] of this.matter.world.query(EnemyInfo)) {
       const root = info.model.HumanoidRootPart;
       const speed = <number>info.model.GetAttribute("Speed") * <number>info.model.GetAttribute("DefaultScale") * this.match.timeScale;
       this.matter.world.insert(enemy, info.patch({ distance: info.distance + speed * dt }));
-
       info.model.SetAttribute("Health", info.health);
 
       const path = this.match.getPath();
@@ -61,7 +58,6 @@ export class EnemyService implements OnInit, OnTick, LogStart {
         this.despawn(enemy);
         this.match.decrementHealth(info.health);
         Sound.SoundEffects.Damaged.Play();
-        return;
       }
     }
   }
