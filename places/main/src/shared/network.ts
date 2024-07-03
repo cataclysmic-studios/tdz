@@ -28,7 +28,7 @@ interface ClientEvents {
 
 interface ServerFunctions {
   getTimeScale(): number;
-  spendCash(price: number): boolean;
+  spendCash(price: number): [boolean, number];
   getTowerInfo(id: number): Omit<TowerInfo, "patch">;
 }
 

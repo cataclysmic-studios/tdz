@@ -15,6 +15,8 @@ import type { TeleportData } from "shared/structs";
 import type { Difficulty } from "common/shared/structs/difficulty";
 import Object from "@rbxts/object-utils";
 
+const { max } = math;
+
 const INTERMISSION_LENGTH = 8;
 
 @Service({ loadOrder: 1 })
@@ -53,12 +55,13 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
     Functions.spendCash.setCallback((player, price) => {
       if (price < 0) { // attempting to add cash
         player.Kick("stop it asshole");
-        return false;
+        return [false, 0];
       }
 
-      if (this.getCash(player) < price) return false;
+      const cash = this.getCash(player);
+      if (cash < price) return [false, max(price - cash, 0)];
       this.decrementCash(player, price);
-      return true;
+      return [true, 0];
     });
   }
 
@@ -93,13 +96,13 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
 
   public incrementAllCash(amount: number): void {
     for (const [id, cash] of Object.entries(this.playerCash))
-      this.playerCash[id] = math.max(cash + amount, 0);
+      this.playerCash[id] = max(cash + amount, 0);
 
     this.broadcastCashChange();
   }
 
   public incrementCash(player: Player, amount: number): void {
-    this.setCash(player, math.max(this.getCash(player) + amount, 0));
+    this.setCash(player, max(this.getCash(player) + amount, 0));
   }
 
   public getCash(player: Player): number {
@@ -123,7 +126,7 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
   }
 
   private incrementHealth(amount: number): void {
-    this.setHealth(math.max(this.getHealth() + amount, 0));
+    this.setHealth(max(this.getHealth() + amount, 0));
   }
 
   private setHealth(health: number): void {

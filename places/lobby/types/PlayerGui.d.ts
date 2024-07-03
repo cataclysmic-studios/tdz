@@ -5,6 +5,9 @@ interface PlayerGui extends BasePlayerGui {
       StartGame: ImageButton;
     };
     Main: Frame & {
+      NotificationContainer: Frame & {
+        UIListLayout: UIListLayout;
+      };
       Towers: Frame & {
         UIListLayout: UIListLayout;
         UIAspectRatioConstraint: UIAspectRatioConstraint;

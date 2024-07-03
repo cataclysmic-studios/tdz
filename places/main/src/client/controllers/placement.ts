@@ -21,6 +21,7 @@ import { InputInfluenced } from "common/client/classes/input-influenced";
 import type { Tower } from "client/components/tower";
 import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "common/client/controllers/character";
+import { NotificationStyle, type NotificationController } from "common/client/controllers/notification";
 import type { SelectionController } from "./selection";
 
 // TODO: show "Press 'Q' to exit placement mode" gui
@@ -41,6 +42,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     private readonly components: Components,
     private readonly mouse: MouseController,
     private readonly character: CharacterController,
+    private readonly notification: NotificationController,
     private readonly selection: SelectionController
   ) { super(); }
 
@@ -155,16 +157,21 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
 
   private async confirmPlacement(): Promise<void> {
     if (!this.placing) return;
-    if (!this.canPlace) return;
     if (this.placementModel === undefined) return;
+    if (!this.canPlace) {
+      this.notification.send("You cannot place towers here.", NotificationStyle.Error);
+      return Sound.SoundEffects.Error.Play();
+    }
 
     const towerName = <TowerName>this.placementModel.Name;
     const sway = this.getSway(this.lastDt);
     const cframe = this.placementModel.GetPivot().mul(sway.Inverse());
     const [{ price }] = TOWER_STATS[towerName];
-    const purchased = await Functions.spendCash(price);
-    if (!purchased)
+    const [purchased, cashNeeded] = await Functions.spendCash(price);
+    if (!purchased) {
+      this.notification.failedPurchase(cashNeeded);
       return Sound.SoundEffects.Error.Play();
+    }
 
     Events.placeTower(towerName, cframe, price);
     this.exitPlacement();

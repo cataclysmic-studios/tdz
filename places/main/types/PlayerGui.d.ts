@@ -1,6 +1,9 @@
 interface PlayerGui extends BasePlayerGui {
   Main: ScreenGui & {
     Main: Frame & {
+      NotificationContainer: Frame & {
+        UIListLayout: UIListLayout;
+      };
       EnemyInfo: Frame & {
         Main: ImageLabel & {
           UIStroke: UIStroke;

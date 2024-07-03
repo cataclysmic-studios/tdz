@@ -1,4 +1,11 @@
 interface PlayerGui extends BasePlayerGui {
+  Main: ScreenGui & {
+    Main: Frame & {
+      NotificationContainer: Frame & {
+        UIListLayout: UIListLayout;
+      };
+    };
+  };
   LoadScreen: ScreenGui & {
     Background: ImageLabel & {
       UIGradient: UIGradient;

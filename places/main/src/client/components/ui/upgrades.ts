@@ -9,6 +9,7 @@ import { toSuffixedNumber } from "common/shared/utility/numbers";
 import { TOWER_STATS, TOWER_UPGRADE_META } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
 import { Events, Functions } from "client/network";
+import { NotificationController } from "common/client/controllers/notification";
 
 const INDICATOR_UNFILLED_BG = Color3.fromRGB(41, 44, 32);
 const INDICATOR_UNFILLED_STROKE = Color3.fromRGB(7, 21, 10);
@@ -23,6 +24,10 @@ export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["Tower
   private readonly updateJanitor = new Janitor;
   private path1Debounce = false;
   private path2Debounce = false;
+
+  public constructor(
+    private readonly notification: NotificationController
+  ) { super(); }
 
   public onStart(): void {
     task.spawn(() => { // pre-load upgrade icons
@@ -80,9 +85,11 @@ export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["Tower
         task.delay(0.15, () => this.path1Debounce = false);
 
         const price = nextPath1Stats.price!;
-        const purchased = await Functions.spendCash(price);
-        if (!purchased)
+        const [purchased, cashNeeded] = await Functions.spendCash(price);
+        if (!purchased) {
+          this.notification.failedPurchase(cashNeeded);
           return Sound.SoundEffects.Error.Play();
+        }
 
         Events.upgradeTower(id, 1, price);
       }));
@@ -93,9 +100,11 @@ export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["Tower
         task.delay(0.15, () => this.path2Debounce = false);
 
         const price = nextPath2Stats.price!;
-        const purchased = await Functions.spendCash(price);
-        if (!purchased)
+        const [purchased, cashNeeded] = await Functions.spendCash(price);
+        if (!purchased) {
+          this.notification.failedPurchase(cashNeeded);
           return Sound.SoundEffects.Error.Play();
+        }
 
         Events.upgradeTower(id, 2, price);
       }));

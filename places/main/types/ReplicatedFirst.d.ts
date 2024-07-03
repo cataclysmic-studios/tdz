@@ -19,6 +19,9 @@ interface ReplicatedFirst extends Instance {
     Maps: Folder & {
       ["Pleasant Island"]: MapModel;
     };
+    UI: Folder & {
+      NotificationLabel: TextLabel & { UIStroke: UIStroke; };
+    };
     VFX: Folder & {
       Projectiles: Folder & {
         BulletTracer: Part;
