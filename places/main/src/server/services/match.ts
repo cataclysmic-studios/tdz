@@ -38,9 +38,11 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
 
   public onInit(): void {
     Events.loadTeleportData.connect((_, teleportData) => {
+      if (this.teleportData !== undefined) return;
       this.teleportData = teleportData;
       this.mapModel = Assets.Maps[teleportData.map].Clone();
       this.mapModel.Parent = World;
+      this.mapModel.AddTag("Map");
       this.path = new Path(this.mapModel);
       this.initialize(teleportData.difficulty);
     });

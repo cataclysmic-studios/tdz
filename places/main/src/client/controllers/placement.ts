@@ -1,6 +1,6 @@
 import { Controller, type OnInit, type OnRender, type OnStart } from "@flamework/core";
 import { Components } from "@flamework/components";
-import { Workspace as World, SoundService as Sound } from "@rbxts/services";
+import { Workspace as World, SoundService as Sound, CollectionService as Collection } from "@rbxts/services";
 import { RaycastParamsBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
 import Object from "@rbxts/object-utils";
@@ -71,7 +71,8 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.swaySpring.shove(new Vector3(doubleSidedLimit(delta.X, 30), 0, doubleSidedLimit(delta.Z, 30)));
 
     const swayAngles = this.getSway(dt);
-    const mouseFilter = [this.character.get()!, PLACEMENT_STORAGE];
+    const [map] = <MapModel[]>Collection.GetTagged("Map");
+    const mouseFilter = [this.character.get()!, PLACEMENT_STORAGE, map.PathNodes, map.StartPoint, map.EndPoint];
     const towerCFrame = new CFrame(this.mouse.getWorldPosition(undefined, mouseFilter))
       .add(new Vector3(0, this.placementModel.GetScale() * 3, 0));
 

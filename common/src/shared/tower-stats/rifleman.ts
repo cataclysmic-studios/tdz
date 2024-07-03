@@ -29,8 +29,9 @@ const RiflemanStats = identity<[TowerStats, PathStats, PathStats]>([
       reloadTime: -0.2,
       canSeeStealth: true
     }, {
-      price: 4820,
+      price: 5160,
       damage: 11,
+      reloadTime: -0.25,
       range: 6,
       canSeeStealth: true
     }
