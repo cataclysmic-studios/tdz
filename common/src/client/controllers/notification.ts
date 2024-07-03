@@ -1,10 +1,12 @@
-import { Controller } from "@flamework/core";
+import { Controller, type OnInit } from "@flamework/core";
 import { TweenInfoBuilder } from "@rbxts/builders";
 
+import { CommonEvents } from "../../client/network";
 import { PlayerGui } from "../../shared/utility/client";
 import { Assets } from "../../shared/utility/instances";
 import { toSuffixedNumber } from "../../shared/utility/numbers";
 import { tween } from "../../shared/utility/ui";
+import { NotificationStyle } from "../../shared/structs/notifications";
 
 interface StylePalette {
   readonly text: Color3;
@@ -15,18 +17,24 @@ const PALETTES: Record<NotificationStyle, StylePalette> = {
   [NotificationStyle.Error]: {
     text: Color3.fromRGB(255, 80, 80),
     stroke: Color3.fromRGB(93, 30, 30)
+  },
+  [NotificationStyle.GainedMoney]: {
+    text: Color3.fromRGB(64, 217, 99),
+    stroke: Color3.fromRGB(26, 77, 36)
   }
 };
 
-export const enum NotificationStyle {
-  Error
-}
-
 @Controller()
-export class NotificationController {
+export class NotificationController implements OnInit {
   private activeNotifications = 0;
 
-  public send(message: string, style: NotificationStyle, lifetime = 3, fadeTime = 1): void {
+  public onInit(): void {
+    CommonEvents.sendNotification.connect((message, style, lifetime, fadeTime) =>
+      this.send(message, style, lifetime, fadeTime)
+    );
+  }
+
+  public send(message: string, style: NotificationStyle, lifetime = 4, fadeTime = 1): void {
     const container = PlayerGui.Main.Main.NotificationContainer;
     const label = Assets.UI.NotificationLabel.Clone();
     const colors = PALETTES[style];

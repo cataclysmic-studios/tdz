@@ -3,6 +3,7 @@ import { Networking } from "@flamework/networking";
 interface ServerEvents {
   leaveLobby(id: number): void;
   startGame(id: number): void;
+  updateLoginStreak(): void;
 }
 
 interface ClientEvents {

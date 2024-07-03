@@ -1,14 +1,17 @@
 import { Service, type OnInit } from "@flamework/core";
 import { Janitor } from "@rbxts/janitor";
 
+import { CommonEvents } from "common/server/network";
 import { Events } from "server/network";
 import { toSeconds } from "common/shared/utility/time";
+import { NotificationStyle } from "common/shared/structs/notifications";
 import type { Difficulty } from "common/shared/structs/difficulty";
 import WAVES from "shared/waves";
 import Log from "common/shared/logger";
 
 import type { MatchService } from "./match";
 import type { EnemyService } from "./enemy";
+import { toSuffixedNumber } from "common/shared/utility/numbers";
 
 @Service()
 export class WavesService implements OnInit {
@@ -33,7 +36,6 @@ export class WavesService implements OnInit {
       let timerEnded = false;
       const waveTimer = this.match.startTimer(toSeconds(wave.length));
       this.waveJanitor.Add(waveTimer.ended.Once(() => timerEnded = true));
-      // print(this.match.)
 
       for (const summonInfo of wave.enemies)
         this.enemy.summon(summonInfo);
@@ -43,6 +45,9 @@ export class WavesService implements OnInit {
         this.match.destroyCurrentTimer();
 
       this.match.incrementAllCash(wave.completionReward);
+      CommonEvents.sendNotification.broadcast(`+$${toSuffixedNumber(wave.completionReward)}`, NotificationStyle.GainedMoney);
+      // TODO: play sound
+
       const intermissionTimer = this.match.startTimer(4);
       // TODO: add tick sound on intermissionTimer countdown
       while (this.match.hasActiveTimer()) task.wait(0.2);

@@ -1,7 +1,9 @@
 import { Networking } from "@flamework/networking";
-import type { GitHubInfo } from "./structs/github";
 
-interface ServerEvents {
+import type { GitHubInfo } from "./structs/github";
+import type { NotificationStyle } from "./structs/notifications";
+
+interface CommonServerEvents {
   data: {
     initialize(): void;
     set(directory: string, value: unknown): void;
@@ -9,17 +11,17 @@ interface ServerEvents {
     decrement(directory: string, amount?: number): void;
     addToArray(directory: string, value: defined): void;
     deleteFromArray(directory: string, value: defined): void;
-    updateLoginStreak(): void;
   };
 }
 
-interface ClientEvents {
+interface CommonClientEvents {
+  sendNotification(message: string, style: NotificationStyle, lifetime?: number, fadeTime?: number): void;
   data: {
     updated(directory: string, value: unknown): void;
   };
 }
 
-interface ServerFunctions {
+interface CommonServerFunctions {
   data: {
     get(directory?: string, defaultValue?: unknown): unknown;
   };
@@ -28,7 +30,7 @@ interface ServerFunctions {
   };
 }
 
-interface ClientFunctions { }
+interface CommonClientFunctions { }
 
-export const CommonGlobalEvents = Networking.createEvent<ServerEvents, ClientEvents>();
-export const CommonGlobalFunctions = Networking.createFunction<ServerFunctions, ClientFunctions>();
+export const CommonGlobalEvents = Networking.createEvent<CommonServerEvents, CommonClientEvents>();
+export const CommonGlobalFunctions = Networking.createFunction<CommonServerFunctions, CommonClientFunctions>();

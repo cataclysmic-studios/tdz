@@ -11,6 +11,7 @@ import { Assets } from "common/shared/utility/instances";
 import { Player } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
 import { createRangePreview, createSizePreview, createTowerModel, getTowerModelName, growIn, setSizePreviewColor } from "shared/utility";
+import { NotificationStyle } from "common/shared/structs/notifications";
 import { PLACEMENT_STORAGE, RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 import { TOWER_STATS } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
@@ -21,7 +22,7 @@ import { InputInfluenced } from "common/client/classes/input-influenced";
 import type { Tower } from "client/components/tower";
 import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "common/client/controllers/character";
-import { NotificationStyle, type NotificationController } from "common/client/controllers/notification";
+import type { NotificationController } from "common/client/controllers/notification";
 import type { SelectionController } from "./selection";
 
 // TODO: show "Press 'Q' to exit placement mode" gui
