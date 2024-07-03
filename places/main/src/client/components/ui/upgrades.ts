@@ -9,10 +9,12 @@ import { Player, PlayerGui } from "common/shared/utility/client";
 import { toSuffixedNumber } from "common/shared/utility/numbers";
 import { TOWER_STATS, TOWER_UPGRADE_META, TowerMeta, TowerStats, UpgradePath } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
+import Log from "common/shared/logger";
 
 import { InputInfluenced } from "common/client/base-components/input-influenced";
+import type { SelectionController } from "client/controllers/selection";
 import type { NotificationController } from "common/client/controllers/notification";
-import Log from "common/shared/logger";
+
 
 const MAX_PATH_LEVEL = 5;
 const INDICATOR_UNFILLED_BG = Color3.fromRGB(41, 44, 32);
@@ -32,6 +34,7 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
   private path2Debounce = false;
 
   public constructor(
+    private readonly selection: SelectionController,
     private readonly notification: NotificationController
   ) { super(); }
 
@@ -91,14 +94,14 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     this.fillOutIndicator(path2, path2Level);
 
     if (info.ownerID !== Player.UserId) return;
-    if (canUpgradePath1)
-      this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Once(() => this.requestUpgrade(1)));
-    if (canUpgradePath2)
-      this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Once(() => this.requestUpgrade(2)));
+    this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Once(() => this.requestUpgrade(1)));
+    this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Once(() => this.requestUpgrade(2)));
   }
 
   private async requestUpgrade(path: UpgradePath): Promise<void> {
     if (this.currentID === undefined) return;
+    if (this.currentInfo === undefined) return;
+    if (!this.selection.isSelected()) return;
 
     const debounceKey: "path1Debounce" | "path2Debounce" = `path${path}Debounce`;
     if (this[debounceKey]) return;
@@ -109,8 +112,10 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     if (stats === undefined)
       return Log.warning(`Something went wrong: Upgrades.getStats(${path}) returned undefined`);
 
+    const canUpgrade = this.canUpgrade(path);
     const price = stats.price!;
     const [purchased, cashNeeded] = await Functions.spendCash(price);
+    if (!canUpgrade) return;
     if (!purchased) {
       this.notification.failedPurchase(cashNeeded);
       return Sound.SoundEffects.Error.Play();
