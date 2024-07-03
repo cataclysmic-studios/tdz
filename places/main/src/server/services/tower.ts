@@ -112,7 +112,6 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       const target = this.getTarget(tower);
       for (const [enemy, enemyInfo] of this.matter.world.query(EnemyInfo)) {
         if (enemy === target) {
-          if (!towerInfo.stats.canSeeStealth && enemyInfo.isStealth) return;
           if (towerInfo.timeSinceAttack >= reloadTime / this.match.timeScale)
             this.attack(tower, enemy);
         }
@@ -146,40 +145,16 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     const towerInfo = this.matter.world.get(tower, TowerInfo)!;
     switch (towerInfo.targeting) {
       case TargetingType.First: {
-        return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
-          if (!this.matter.world.contains(a)) return false;
-          if (!this.matter.world.contains(b)) return false;
-          const infoA = this.matter.world.get(a, EnemyInfo)!;
-          const infoB = this.matter.world.get(b, EnemyInfo)!;
-          return infoA.distance > infoB.distance;
-        }));
+        return this.findEnemyInRange(towerInfo, this.sortEnemiesBy(enemies, "distance", true));
       }
       case TargetingType.Last: {
-        return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
-          if (!this.matter.world.contains(a)) return false;
-          if (!this.matter.world.contains(b)) return false;
-          const infoA = this.matter.world.get(a, EnemyInfo)!;
-          const infoB = this.matter.world.get(b, EnemyInfo)!;
-          return infoA.distance < infoB.distance;
-        }));
+        return this.findEnemyInRange(towerInfo, this.sortEnemiesBy(enemies, "distance", false));
       }
       case TargetingType.Strong: {
-        return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
-          if (!this.matter.world.contains(a)) return false;
-          if (!this.matter.world.contains(b)) return false;
-          const infoA = this.matter.world.get(a, EnemyInfo)!;
-          const infoB = this.matter.world.get(b, EnemyInfo)!;
-          return infoA.health < infoB.health;
-        }));
+        return this.findEnemyInRange(towerInfo, this.sortEnemiesBy(enemies, "health", true));
       }
       case TargetingType.Weak: {
-        return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
-          if (!this.matter.world.contains(a)) return false;
-          if (!this.matter.world.contains(b)) return false;
-          const infoA = this.matter.world.get(a, EnemyInfo)!;
-          const infoB = this.matter.world.get(b, EnemyInfo)!;
-          return infoA.health > infoB.health;
-        }));
+        return this.findEnemyInRange(towerInfo, this.sortEnemiesBy(enemies, "health", false));
       }
       case TargetingType.Close: {
         return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
@@ -198,11 +173,24 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     }
   }
 
+  private sortEnemiesBy(enemies: EnemyEntity[], infoKey: ExtractKeys<EnemyInfo, number>, greaterThan: boolean): EnemyEntity[] {
+    return enemies.sort((a, b) => {
+      if (!this.matter.world.contains(a)) return false;
+      if (!this.matter.world.contains(b)) return false;
+
+      const infoA = this.matter.world.get(a, EnemyInfo)!;
+      const infoB = this.matter.world.get(b, EnemyInfo)!;
+      return greaterThan ?
+        (infoA[infoKey] > infoB[infoKey])
+        : (infoA[infoKey] < infoB[infoKey]);
+    })
+  }
+
   private findEnemyInRange(towerInfo: TowerInfo, enemies: EnemyEntity[]): Maybe<EnemyEntity> {
     return enemies.find(enemy => {
       if (!this.matter.world.contains(enemy)) return false;
       const { range, minimumRange } = towerInfo.stats;
-      const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!;
+      const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!; this.sortEnemiesBy(enemies, "distance", true)
       const enemyPosition = enemyInfo.model.GetPivot().Position;
       const distanceFromTower = this.getDistance(towerInfo.cframe.Position, enemyPosition);
       return distanceFromTower <= range && distanceFromTower >= (minimumRange ?? 0);
