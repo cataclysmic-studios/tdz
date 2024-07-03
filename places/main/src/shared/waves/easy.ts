@@ -99,6 +99,48 @@ const EASY_WAVES: WaveData[] = [
         length: -1
       }
     ]
+  }, { // 7
+    length: "1 minute",
+    completionReward: 400,
+    enemies: [
+      {
+        enemyName: "Fast Zombie",
+        amount: 20,
+        interval: 0.8,
+        length: 6
+      }, {
+        enemyName: "Heavy Zombie",
+        amount: 16,
+        interval: 1,
+        length: 6
+      }, {
+        enemyName: "Zombie",
+        amount: 4,
+        interval: 1,
+        length: -1
+      }
+    ]
+  }, { // 8
+    length: "1 minute",
+    completionReward: 400,
+    enemies: [
+      {
+        enemyName: "Heavy Zombie",
+        amount: 16,
+        interval: 1,
+        length: 5
+      }, {
+        enemyName: "Brute",
+        amount: 1,
+        interval: 1,
+        length: 1
+      }, {
+        enemyName: "Fast Zombie",
+        amount: 8,
+        interval: 0.8,
+        length: 3
+      }
+    ]
   }
 ];
 

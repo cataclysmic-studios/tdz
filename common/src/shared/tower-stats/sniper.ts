@@ -1,4 +1,4 @@
-import { DamageType, ProjectileType, type PathStats, type TowerStats } from "shared/towers";
+import { DamageType, ProjectileType, type PathStats, type TowerStats } from "../../shared/towers";
 
 const SniperStats = identity<[TowerStats, PathStats, PathStats]>([
   { // base stats. they are fixed values

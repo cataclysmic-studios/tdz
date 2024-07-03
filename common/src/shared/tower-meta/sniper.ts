@@ -1,4 +1,4 @@
-import { TowerMeta } from "shared/towers";
+import { TowerMeta } from "../../shared/towers";
 
 const SniperMeta = identity<TowerMeta[][]>([
   [ // path 1

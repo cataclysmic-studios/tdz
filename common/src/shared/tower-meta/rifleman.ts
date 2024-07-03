@@ -1,4 +1,4 @@
-import type { TowerMeta } from "shared/towers"
+import type { TowerMeta } from "../../shared/towers"
 
 const RiflemanMeta = identity<TowerMeta[][]>([
   [ // path 1
