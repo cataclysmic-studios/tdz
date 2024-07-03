@@ -1,4 +1,4 @@
-import { Component, BaseComponent } from "@flamework/components";
+import { Component } from "@flamework/components";
 import { OnStart } from "@flamework/core";
 import { ContentProvider, SoundService as Sound } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
@@ -10,6 +10,7 @@ import { toSuffixedNumber } from "common/shared/utility/numbers";
 import { TOWER_STATS, TOWER_UPGRADE_META, TowerMeta, TowerStats, UpgradePath } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
 
+import { InputInfluenced } from "common/client/base-components/input-influenced";
 import type { NotificationController } from "common/client/controllers/notification";
 import Log from "common/shared/logger";
 
@@ -23,7 +24,7 @@ const INDICATOR_FILLED_STROKE = Color3.fromRGB(68, 203, 97);
   tag: "Upgrades",
   ancestorWhitelist: [PlayerGui]
 })
-export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["TowerUpgrades"]> implements OnStart {
+export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["TowerUpgrades"]> implements OnStart {
   private readonly updateJanitor = new Janitor;
   private currentID?: number;
   private currentInfo?: Omit<TowerInfo, "patch">;
@@ -35,6 +36,10 @@ export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["Tower
   ) { super(); }
 
   public onStart(): void {
+    this.input
+      .Bind("E", () => this.requestUpgrade(1))
+      .Bind("R", () => this.requestUpgrade(2));
+
     this.instance.GetPropertyChangedSignal("Visible")
       .Connect(() => this.instance.Visible ? this.updateJanitor.Cleanup() : undefined);
 
