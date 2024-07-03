@@ -1,6 +1,7 @@
 interface PlayerGui extends BasePlayerGui {
   Main: ScreenGui & {
     Main: Frame & {
+      ExitPlacementTip: TextLabel;
       NotificationContainer: Frame & {
         UIListLayout: UIListLayout;
       };

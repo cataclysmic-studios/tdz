@@ -8,7 +8,7 @@ import Object from "@rbxts/object-utils";
 import type { LogStart } from "common/shared/hooks";
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
-import { Player } from "common/shared/utility/client";
+import { Player, PlayerGui } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
 import { createRangePreview, createSizePreview, createTowerModel, getTowerModelName, growIn, setSizePreviewColor } from "shared/utility";
 import { NotificationStyle } from "common/shared/structs/notifications";
@@ -25,7 +25,6 @@ import type { CharacterController } from "common/client/controllers/character";
 import type { NotificationController } from "common/client/controllers/notification";
 import type { SelectionController } from "./selection";
 
-// TODO: show "Press 'Q' to exit placement mode" gui
 @Controller()
 export class PlacementController extends InputInfluenced implements OnInit, OnStart, OnRender, LogStart {
   private readonly placementJanitor = new Janitor;
@@ -123,6 +122,10 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   public enterPlacement(towerName: TowerName): void {
     if (this.placing)
       this.exitPlacement();
+
+    const tooltip = PlayerGui.Main.Main.ExitPlacementTip;
+    tooltip.Visible = true;
+    this.placementJanitor.Add(() => tooltip.Visible = false);
 
     this.selection.deselect();
     this.placing = true;
