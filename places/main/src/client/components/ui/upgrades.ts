@@ -103,10 +103,10 @@ export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["Tower
 
   private fillOutIndicator(path: typeof this.instance.Upgrades.Path1, level: number): void {
     const dots = path.LevelIndicator.GetChildren().filter((i): i is Frame & { UIStroke: UIStroke; } => i.IsA("Frame") && i.Name === "Dot");
-    if (level === 0)
-      for (const dot of dots)
-        this.toggleDot(dot, false);
-    else
+    for (const dot of dots)
+      this.toggleDot(dot, false);
+
+    if (level !== 0)
       for (const dot of dots) {
         if (dot.LayoutOrder <= 5 - level) continue;
         this.toggleDot(dot, true);
