@@ -5,6 +5,29 @@ interface PlayerGui extends BasePlayerGui {
       NotificationContainer: Frame & {
         UIListLayout: UIListLayout;
       };
+      TowerInfo: Frame & {
+        Main: ImageLabel & {
+          UIStroke: UIStroke;
+          TowerName: TextLabel & {
+            UIStroke: UIStroke;
+          };
+        };
+        OwnerName: TextLabel & {
+          UITextSizeConstraint: UITextSizeConstraint;
+          UIStroke: UIStroke;
+          UIPadding: UIPadding;
+        };
+        Level: ImageLabel & {
+          Value: TextLabel & {
+            UIStroke: UIStroke;
+          };
+          UIStroke: UIStroke;
+        };
+        UIAspectRatioConstraint: UIAspectRatioConstraint;
+        CanSeeStealth: ImageLabel & {
+          UIAspectRatioConstraint: UIAspectRatioConstraint;
+        };
+      };
       EnemyInfo: Frame & {
         Main: ImageLabel & {
           UIStroke: UIStroke;

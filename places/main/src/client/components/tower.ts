@@ -1,6 +1,6 @@
 import type { OnStart, OnRender } from "@flamework/core";
 import { Component } from "@flamework/components";
-import { Workspace as World } from "@rbxts/services";
+import { Workspace as World, Players } from "@rbxts/services";
 import { RaycastParamsBuilder, TweenInfoBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
 import FastCast, { Caster } from "@rbxts/fastcast";
@@ -10,7 +10,7 @@ import Signal from "@rbxts/signal";
 
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
-import { Player } from "common/shared/utility/client";
+import { Player, PlayerGui } from "common/shared/utility/client";
 import { tween } from "common/shared/utility/ui";
 import { createRangePreview, getTowerModelName, setSizePreviewColor, upgradeTowerModel } from "shared/utility";
 import { findLeadShot } from "shared/projectile-utility";
@@ -21,6 +21,8 @@ import type { TowerInfo } from "shared/entity-components";
 import Log from "common/shared/logger";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
+import type { MouseController } from "../controllers/mouse";
+import type { CharacterController } from "../controllers/character";
 import type { SelectionController } from "client/controllers/selection";
 import type { TimeScaleController } from "client/controllers/time-scale";
 
@@ -56,6 +58,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   public readonly name = this.instance.Name;
   public readonly infoUpdated = new Signal<(newInfo: Omit<TowerInfo, "patch">) => void>;
 
+  private readonly nameCache: Record<number, string> = {};
   private readonly loadedAnimations: Partial<Record<AnimationName, AnimationTrack>> = {};
   private readonly sizePreviewTweenInfo = new TweenInfoBuilder().SetTime(0.08);
   private readonly defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
@@ -69,6 +72,8 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   private info!: Omit<TowerInfo, "patch">;
 
   public constructor(
+    private readonly mouse: MouseController,
+    private readonly character: CharacterController,
     private readonly selection: SelectionController,
     private readonly timeScale: TimeScaleController
   ) { super(); }
@@ -78,6 +83,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.loadHighlight();
     this.loadAnimations();
     this.loadProjectileCache();
+
     this.caster = new FastCast;
     this.janitor.Add(this.caster.LengthChanged.Connect((_, lastPoint, rayDirection, displacement, segmentVelocity, projectile) =>
       this.updateProjectile(<BasePart>projectile, lastPoint, rayDirection, displacement, segmentVelocity)
@@ -92,6 +98,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(this.instance);
+    this.janitor.Add(() => this.updateInfoFrame(true));
     this.janitor.Add(this.timeScale.changed.Connect(() => this.adjustAnimationSpeeds()));
     this.janitor.Add(Events.updateTowerStats.connect((id, info) => {
       if (id !== this.attributes.ID) return;
@@ -123,15 +130,37 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   }
 
   public onRender(dt: number): void {
-    if (this.currentRangePreview === undefined) return;
+    this.updateInfoFrame();
 
+    if (this.currentRangePreview === undefined) return;
     const range = this.info.stats.range;
     this.currentRangePreview.Size = this.currentRangePreview.Size.Lerp(new Vector3(range, this.currentRangePreview.Size.Y, range), 0.2);
   }
 
+  private updateInfoFrame(disable = false): void {
+    const target = this.mouse.getTarget(undefined, [this.character.get()!]);
+    const targetModel = target?.FindFirstAncestorOfClass("Model");
+    const towerInfo = PlayerGui.Main.Main.TowerInfo;
+    if (disable || targetModel === undefined || !targetModel.HasTag("Tower")) {
+      if (towerInfo.Visible === false) return;
+      towerInfo.Visible = false;
+      return;
+    }
+
+    if (targetModel !== this.instance) return;
+    const { X, Y } = this.mouse.getPosition();
+    towerInfo.Position = UDim2.fromOffset(X, Y); // TODO: add traits frames
+    towerInfo.Main.TowerName.Text = this.instance.Name.upper();
+    towerInfo.OwnerName.Text = this.getPlayerNameFromID(this.info.ownerID);
+    towerInfo.Level.Value.Text = `${this.info.upgrades[0]}-${this.info.upgrades[1]}`;
+    towerInfo.CanSeeStealth.Visible = this.info.stats.canSeeStealth;
+    if (towerInfo.Visible === false)
+      towerInfo.Visible = true;
+  }
+
   public createRangePreview(): MeshPart {
-    const oldPreview = this.currentRangePreview
-    this.currentRangePreview = undefined
+    const oldPreview = this.currentRangePreview;
+    this.currentRangePreview = undefined;
     oldPreview?.Destroy();
 
     this.currentRangePreview = createRangePreview(this.info.stats.range);
@@ -203,6 +232,12 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
   public isMine(): boolean {
     return this.getInfo().ownerID === Player.UserId;
+  }
+
+  private getPlayerNameFromID(id: number): string {
+    const name = this.nameCache[id] ?? Players.GetNameFromUserIdAsync(this.info.ownerID);
+    this.nameCache[id] = name;
+    return name;
   }
 
   private updateProjectile(projectile: BasePart, lastPoint: Vector3, rayDirection: Vector3, displacement: number, segmentVelocity: Vector3): void {

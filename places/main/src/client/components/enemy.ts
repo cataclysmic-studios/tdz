@@ -35,7 +35,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(this.instance);
     this.janitor.Add(this.timeScale.changed.Connect(() => this.adjustWalkAnimationSpeed()))
-    this.janitor.Add(() => this.updateEnemyInfoFrame(true));
+    this.janitor.Add(() => this.updateInfoFrame(true));
 
     this.walkAnimation = this.janitor.Add(this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations.Walk));
     this.walkAnimation.Priority = Enum.AnimationPriority.Idle;
@@ -45,10 +45,10 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
 
   public onRender(dt: number): void {
     // TODO: call this function on tap for mobile
-    this.updateEnemyInfoFrame();
+    this.updateInfoFrame();
   }
 
-  private updateEnemyInfoFrame(disable = false): void {
+  private updateInfoFrame(disable = false): void {
     const target = this.mouse.getTarget(undefined, [this.character.get()!]);
     const targetModel = target?.FindFirstAncestorOfClass("Model");
     const enemyInfo = PlayerGui.Main.Main.EnemyInfo;
