@@ -145,19 +145,19 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     const towerInfo = this.matter.world.get(tower, TowerInfo)!;
     switch (towerInfo.targeting) {
       case TargetingType.First: {
-        return this.findEnemyInRange(towerInfo, this.sortEnemiesBy(enemies, "distance", true));
+        return this.findTargetableEnemy(towerInfo, this.sortEnemiesBy(enemies, "distance", true));
       }
       case TargetingType.Last: {
-        return this.findEnemyInRange(towerInfo, this.sortEnemiesBy(enemies, "distance", false));
+        return this.findTargetableEnemy(towerInfo, this.sortEnemiesBy(enemies, "distance", false));
       }
       case TargetingType.Strong: {
-        return this.findEnemyInRange(towerInfo, this.sortEnemiesBy(enemies, "health", true));
+        return this.findTargetableEnemy(towerInfo, this.sortEnemiesBy(enemies, "health", true));
       }
       case TargetingType.Weak: {
-        return this.findEnemyInRange(towerInfo, this.sortEnemiesBy(enemies, "health", false));
+        return this.findTargetableEnemy(towerInfo, this.sortEnemiesBy(enemies, "health", false));
       }
       case TargetingType.Close: {
-        return this.findEnemyInRange(towerInfo, enemies.sort((a, b) => {
+        return this.findTargetableEnemy(towerInfo, enemies.sort((a, b) => {
           if (!this.matter.world.contains(a)) return false;
           if (!this.matter.world.contains(b)) return false;
           const infoA = this.matter.world.get(a, EnemyInfo)!;
@@ -186,14 +186,15 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     })
   }
 
-  private findEnemyInRange(towerInfo: TowerInfo, enemies: EnemyEntity[]): Maybe<EnemyEntity> {
+  private findTargetableEnemy(towerInfo: TowerInfo, enemies: EnemyEntity[]): Maybe<EnemyEntity> {
     return enemies.find(enemy => {
       if (!this.matter.world.contains(enemy)) return false;
       const { range, minimumRange } = towerInfo.stats;
       const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!; this.sortEnemiesBy(enemies, "distance", true)
       const enemyPosition = enemyInfo.model.GetPivot().Position;
       const distanceFromTower = this.getDistance(towerInfo.cframe.Position, enemyPosition);
-      return distanceFromTower <= range && distanceFromTower >= (minimumRange ?? 0);
+      return (distanceFromTower <= range && distanceFromTower >= (minimumRange ?? 0))
+        && (enemyInfo.isStealth ? towerInfo.stats.canSeeStealth : true);
     });
   }
 
