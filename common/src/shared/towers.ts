@@ -30,9 +30,14 @@ export interface TowerStats {
   splashRadius?: number;
 }
 
-export const TOWER_UPGRADE_META = <const>{
+export interface TowerMeta {
+  readonly name: string;
+  readonly icon: string;
+}
+
+export const TOWER_UPGRADE_META = <const>{ // path 2
   Rifleman: [
-    [
+    identity<TowerMeta[]>([
       {
         name: "Focus",
         icon: "rbxassetid://10909681909"
@@ -49,7 +54,8 @@ export const TOWER_UPGRADE_META = <const>{
         name: ".50 BMG",
         icon: "rbxassetid://10909681909"
       }
-    ], [
+    ]),
+    identity<TowerMeta[]>([ // path 2
       {
         name: "Enhanced Ballistics",
         icon: "rbxassetid://10909681909"
@@ -66,7 +72,7 @@ export const TOWER_UPGRADE_META = <const>{
         name: "Full Auto",
         icon: "rbxassetid://10909681909"
       }
-    ]
+    ])
   ],
   Sniper: [
     [

@@ -82,9 +82,13 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.janitor.Add(this.caster.LengthChanged.Connect((_, lastPoint, rayDirection, displacement, segmentVelocity, projectile) =>
       this.updateProjectile(<BasePart>projectile, lastPoint, rayDirection, displacement, segmentVelocity)
     ), "Disconnect");
-    this.janitor.Add(this.caster.CastTerminating.Connect(cast =>
-      this.projectileCache.ReturnPart(<BasePart>cast.RayInfo.CosmeticBulletObject)
-    ), "Disconnect");
+    this.janitor.Add(this.caster.CastTerminating.Connect(cast => {
+      try {
+        this.projectileCache.ReturnPart(<BasePart>cast.RayInfo.CosmeticBulletObject)
+      } catch (err) {
+        Log.warning("Failed to return projectile to part cache.");
+      }
+    }), "Disconnect");
 
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(this.instance);
