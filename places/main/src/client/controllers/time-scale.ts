@@ -2,6 +2,7 @@ import { Controller, type OnInit, type OnStart } from "@flamework/core";
 import Signal from "@rbxts/signal";
 
 import { Events, Functions } from "client/network";
+import { adjustAllSoundSpeeds, initializeDefaultSoundSpeeds } from "shared/utility";
 
 @Controller()
 export class TimeScaleController implements OnInit, OnStart {
@@ -12,10 +13,12 @@ export class TimeScaleController implements OnInit, OnStart {
     Events.timeScaleUpdated.connect(timeScale => {
       this.timeScale = timeScale;
       this.changed.Fire(timeScale);
+      adjustAllSoundSpeeds(timeScale);
     });
   }
 
   public async onStart(): Promise<void> {
+    initializeDefaultSoundSpeeds();
     this.timeScale = await Functions.getTimeScale();
   }
 

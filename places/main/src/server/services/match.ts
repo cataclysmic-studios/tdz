@@ -1,4 +1,4 @@
-import { OnInit, Service } from "@flamework/core";
+import { Service, type OnInit, type OnStart } from "@flamework/core";
 import { Workspace as World, SoundService as Sound, Players } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
 import Signal from "@rbxts/signal";
@@ -7,7 +7,7 @@ import type { LogStart } from "common/shared/hooks";
 import type { OnPlayerJoin, OnPlayerLeave } from "common/server/hooks";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
-import { teleportPlayers } from "shared/utility";
+import { adjustAllSoundSpeeds, initializeDefaultSoundSpeeds, teleportPlayers } from "shared/utility";
 import { Path } from "shared/classes/path";
 import { Timer } from "server/timer";
 import { DIFFICULTY_INFO } from "shared/constants";
@@ -20,7 +20,7 @@ const { max } = math;
 const INTERMISSION_LENGTH = 8;
 
 @Service({ loadOrder: 1 })
-export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogStart {
+export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeave, LogStart {
   public readonly cashChanged = new Signal<(player: Player, newCash: number) => void>;
   public readonly timeScaleChanged = new Signal<(timeScale: number) => void>;
   public readonly intermissionFinished = new Signal<(difficulty: Difficulty) => void>;
@@ -46,9 +46,11 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
     });
     Events.toggleDoubleSpeed.connect((_, on) => {
       if (Players.GetPlayers().size() > 1) return; // TODO: vote for 2x
+
       this.timeScale = on ? 2 : 1;
-      Events.timeScaleUpdated.broadcast(this.timeScale);
       this.timeScaleChanged.Fire(this.timeScale);
+      Events.timeScaleUpdated.broadcast(this.timeScale);
+      adjustAllSoundSpeeds(this.timeScale);
     });
 
     Functions.getTimeScale.setCallback(() => this.timeScale);
@@ -63,6 +65,10 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
       this.decrementCash(player, price);
       return [true, 0];
     });
+  }
+
+  public onStart(): void {
+    initializeDefaultSoundSpeeds();
   }
 
   public onPlayerJoin(player: Player): void {

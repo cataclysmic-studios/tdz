@@ -1,13 +1,42 @@
-import { RunService as Runtime } from "@rbxts/services";
+import { RunService as Runtime, Workspace as World, Players } from "@rbxts/services";
 import { TweenInfoBuilder } from "@rbxts/builders";
 import Object from "@rbxts/object-utils";
 
 import { Assets } from "common/shared/utility/instances";
 import { tween } from "common/shared/utility/ui";
+import { flatten } from "common/shared/utility/array";
+import { TOWER_STATS } from "common/shared/towers";
 import { PLACEMENT_STORAGE } from "./constants";
-import { TOWER_STATS } from "./towers";
-import { TowerStats, PathStats, UpgradeLevel } from "./towers";
+import type { TowerStats, PathStats, UpgradeLevel } from "./towers";
 import Log from "./logger";
+
+function getAllSounds(): Sound[] {
+  return flatten([Assets.GetDescendants(), World.GetDescendants()])
+    .filter((i): i is Sound => i.IsA("Sound"))
+    .filter(sound => {
+      const model = sound.FindFirstAncestorOfClass("Model");
+      if (model === undefined) return true;
+
+      const player = Players.GetPlayerFromCharacter(model);
+      return player === undefined; // filter out character sounds like footsteps
+    });
+}
+
+export function initializeDefaultSoundSpeeds(): void {
+  task.spawn(() => {
+    for (const sound of getAllSounds()) {
+      if (sound.GetAttribute("DefaultSpeed") !== undefined) continue;
+      sound.SetAttribute("DefaultSpeed", sound.PlaybackSpeed)
+    }
+  });
+}
+
+export function adjustAllSoundSpeeds(timeScale: number): void {
+  task.spawn(() => {
+    for (const sound of getAllSounds())
+      task.spawn(() => sound.PlaybackSpeed = <number>sound.GetAttribute("DefaultSpeed") * timeScale);
+  });
+}
 
 export function teleportPlayers(cframe: CFrame, ...players: Player[]): void {
   for (const player of players) {

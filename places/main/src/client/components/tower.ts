@@ -143,12 +143,14 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   }
 
   public toggleHoverHighlight(on: boolean): void {
+    if (this.highlight === undefined) return;
     if (this.highlight.FillTransparency === this.selectionFillTransparency) return; // if selection highlight is enabled dont turn off
     this.highlight.Enabled = on;
     this.highlight.FillTransparency = on ? 1 : 0;
   }
 
   public toggleSelectionHighlight(on: boolean): void {
+    if (this.highlight === undefined) return;
     if (this.highlight.FillTransparency === 1) return; // if hover highlight is enabled dont turn off
     this.highlight.Enabled = on;
     this.highlight.FillTransparency = on ? this.selectionFillTransparency : 0;
