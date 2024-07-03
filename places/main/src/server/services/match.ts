@@ -1,5 +1,5 @@
 import { OnInit, Service } from "@flamework/core";
-import { Workspace as World, Players } from "@rbxts/services";
+import { Workspace as World, SoundService as Sound, Players } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
 import Signal from "@rbxts/signal";
 
@@ -157,8 +157,9 @@ export class MatchService implements OnInit, OnPlayerJoin, OnPlayerLeave, LogSta
     task.spawn(() => {
       const { startingHealth } = DIFFICULTY_INFO[difficulty];
       this.setHealth(startingHealth);
-      this.startTimer(INTERMISSION_LENGTH)
-        .ended.Once(() => this.intermissionFinished.Fire(difficulty));
+      const timer = this.startTimer(INTERMISSION_LENGTH);
+      timer.counted.Connect(() => Sound.SoundEffects.Tick.Play());
+      timer.ended.Once(() => this.intermissionFinished.Fire(difficulty));
     });
   }
 }

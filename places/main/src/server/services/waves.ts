@@ -1,4 +1,5 @@
 import { Service, type OnInit } from "@flamework/core";
+import { SoundService as Sound } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
 
 import { CommonEvents } from "common/server/network";
@@ -49,7 +50,7 @@ export class WavesService implements OnInit {
       // TODO: play sound
 
       const intermissionTimer = this.match.startTimer(4);
-      // TODO: add tick sound on intermissionTimer countdown
+      this.waveJanitor.Add(intermissionTimer.counted.Connect(() => Sound.SoundEffects.Tick.Play()));
       while (this.match.hasActiveTimer()) task.wait(0.2);
     }
 
