@@ -1,6 +1,15 @@
 import type { Difficulty } from "common/shared/structs/difficulty";
 import type { Assets } from "common/shared/utility/instances";
 
+export const enum AttackVfxType {
+  Muzzle = "Muzzle",
+  OnImpact = "OnImpact"
+}
+
+export const enum ProjectileImpactVfxType {
+  Explosion = "Explosion"
+}
+
 export const enum TargetingType {
   First,
   Last,

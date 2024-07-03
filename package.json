@@ -36,6 +36,7 @@
     "@flamework/networking": "latest",
     "@rbxts/builders": "^1.0.2",
     "@rbxts/cmdr": "^1.12.1",
+    "@rbxts/fastcast": "^13.2.0-ts.2",
     "@rbxts/gamejoy": "^1.1.4",
     "@rbxts/iris": "^2.2.0-ts.0",
     "@rbxts/janitor": "^1.15.7-ts.0",

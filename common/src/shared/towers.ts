@@ -4,16 +4,23 @@ export type UpgradeLevel = [PathLevel, PathLevel];
 export type PathStats = readonly [Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>, Partial<TowerStats>];
 
 export const enum DamageType {
-  Bullet,
-  Laser,
-  Ice,
-  Fire,
-  Melee
+  Bullet = "Bullet",
+  Laser = "Laser",
+  Ice = "Ice",
+  Fire = "Fire",
+  Melee = "Melee"
+}
+
+export const enum ProjectileType {
+  Bullet = "Bullet",
+  Laser = "Laser",
+  Explosive = "Explosive"
 }
 
 export interface TowerStats {
   price: number;
   damageType: DamageType;
+  projectileType: ProjectileType;
   damage: number;
   range: number;
   canSeeStealth: boolean;
@@ -68,6 +75,7 @@ export const TOWER_STATS = <const>{
     identity<TowerStats>({ // this is base stats. they are fixed values
       price: 200,
       damageType: DamageType.Bullet,
+      projectileType: ProjectileType.Bullet,
       damage: 3,
       range: 14,
       reloadTime: 1.2,

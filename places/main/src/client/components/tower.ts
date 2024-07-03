@@ -1,7 +1,11 @@
 import type { OnStart, OnRender } from "@flamework/core";
 import { Component } from "@flamework/components";
-import { TweenInfoBuilder } from "@rbxts/builders";
+import { Workspace as World } from "@rbxts/services";
+import { RaycastParamsBuilder, TweenInfoBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
+import FastCast, { Caster } from "@rbxts/fastcast";
+import type { PartCache } from "@rbxts/partcache/out/class";
+import PartCacheModule from "@rbxts/partcache";
 import Signal from "@rbxts/signal";
 
 import { Events, Functions } from "client/network";
@@ -9,7 +13,9 @@ import { Assets } from "common/shared/utility/instances";
 import { Player } from "common/shared/utility/client";
 import { tween } from "common/shared/utility/ui";
 import { createRangePreview, getTowerModelName, setSizePreviewColor, upgradeTowerModel } from "shared/utility";
-import { PLACEMENT_STORAGE } from "shared/constants";
+import { findLeadShot } from "shared/projectile-utility";
+import { AttackVfxType, ProjectileImpactVfxType } from "shared/structs";
+import { ENEMY_STORAGE, PLACEMENT_STORAGE, PROJECTILE_SPEEDS } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
 import Log from "common/shared/logger";
@@ -19,21 +25,6 @@ import type { SelectionController } from "client/controllers/selection";
 import type { TimeScaleController } from "client/controllers/time-scale";
 
 type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
-
-const enum AttackVfxType {
-  Muzzle = "Muzzle",
-  OnImpact = "OnImpact"
-}
-
-const enum ProjectileImpactVfxType {
-  Explosion = "Explosion"
-}
-
-const enum ProjectileType {
-  Bullet = "Bullet",
-  Laser = "Laser",
-  Explosive = "Explosive"
-}
 
 interface BaseAttributes {
   readonly ID: number;
@@ -47,12 +38,12 @@ type Attributes = BaseAttributes & ({
   readonly Melee: true;
   readonly AttackVfxType: Maybe<AttackVfxType.OnImpact>;
   readonly ProjectileImpactVfxType: never;
-  readonly ProjectileType: never;
+  readonly ProjectileName: never;
 } | {
   readonly Melee: false;
   readonly AttackVfxType?: AttackVfxType;
   readonly ProjectileImpactVfxType?: ProjectileImpactVfxType;
-  readonly ProjectileType: ProjectileType;
+  readonly ProjectileName: ProjectileName;
 });
 
 @Component({
@@ -72,6 +63,8 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   private readonly defaultRightAttachmentPosition = Assets.SizePreview.Right.Position;
   private readonly selectionFillTransparency = 0.75;
   private currentRangePreview?: MeshPart;
+  private projectileCache!: PartCache;
+  private caster!: Caster;
   private highlight!: Highlight;
   private info!: Omit<TowerInfo, "patch">;
 
@@ -84,6 +77,14 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.info = await Functions.getTowerInfo(this.attributes.ID);
     this.loadHighlight();
     this.loadAnimations();
+    this.loadProjectileCache();
+    this.caster = new FastCast;
+    this.janitor.Add(this.caster.LengthChanged.Connect((_, lastPoint, rayDirection, displacement, segmentVelocity, projectile) =>
+      this.updateProjectile(<BasePart>projectile, lastPoint, rayDirection, displacement, segmentVelocity)
+    ), "Disconnect");
+    this.janitor.Add(this.caster.CastTerminating.Connect(cast =>
+      this.projectileCache.ReturnPart(<BasePart>cast.RayInfo.CosmeticBulletObject)
+    ), "Disconnect");
 
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(this.instance);
@@ -102,16 +103,17 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
         upgradeTowerModel(<TowerName>this.instance.Name, this.instance, info.upgrades, this.instance.GetPivot());
         this.loadHighlight(this.selection.isSelected(this));
         this.loadAnimations();
+        this.loadProjectileCache();
       }
     }));
-    this.janitor.Add(Events.towerAttacked.connect((id, enemyPosition) => {
+    this.janitor.Add(Events.towerAttacked.connect((id, enemyPosition, enemyVelocity) => {
       if (id !== this.attributes.ID) return;
 
       const towerPosition = this.instance.GetPivot().Position;
       this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyPosition.X, towerPosition.Y, enemyPosition.Z)));
       this.playAnimation("Attack");
       task.spawn(() => this.playAttackSound());
-      task.spawn(() => this.createAttackVFX());
+      task.spawn(() => this.createAttackVFX(enemyPosition, enemyVelocity));
     }));
 
   }
@@ -197,17 +199,47 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     return this.getInfo().ownerID === Player.UserId;
   }
 
-  private createProjectile(): void {
-    // check if AttackVfxType is OnImpact when the projectile connects
+  private updateProjectile(projectile: BasePart, lastPoint: Vector3, rayDirection: Vector3, displacement: number, segmentVelocity: Vector3): void {
+    const currentPoint = lastPoint.add(rayDirection.mul(displacement));
+    projectile.CFrame = CFrame.lookAlong(currentPoint, rayDirection);
   }
 
-  private createAttackVFX(): void {
+  private createProjectile(target: Vector3, targetVelocity: Vector3): void {
+    const attachment = this.getMuzzleAttachment();
+    if (attachment === undefined) return;
+
+    // check if AttackVfxType is OnImpact when the projectile connects
+    const origin = attachment.WorldPosition;
+    const direction = attachment.WorldCFrame.LookVector;
+    const speed = PROJECTILE_SPEEDS[this.info.stats.projectileType];
+    const distance = origin.sub(target).Magnitude;
+    const raycastParams = new RaycastParamsBuilder()
+      .SetFilter(ENEMY_STORAGE.GetChildren(), Enum.RaycastFilterType.Include)
+      .SetIgnoreWater(true)
+      .Build();
+
+    const ledTarget = findLeadShot(origin, target, targetVelocity, speed);
+    const ledDirection = CFrame.lookAt(origin, ledTarget.add(new Vector3(0, -ledTarget.Y + origin.Y, 0))).LookVector;
+    this.caster.Fire(origin, direction, ledDirection.mul(speed), {
+      MaxDistance: distance,
+      RaycastParams: raycastParams,
+      Acceleration: new Vector3(0, -World.Gravity, 0),
+      CosmeticBulletProvider: this.projectileCache,
+      HighFidelityBehavior: 1,
+      HighFidelitySegmentSize: 1,
+      AutoIgnoreContainer: true,
+      CanPierceFunction: () => false
+    });
+  }
+
+  private createAttackVFX(target: Vector3, targetVelocity: Vector3): void {
     switch (this.attributes.AttackVfxType) {
       case AttackVfxType.Muzzle: {
         const attachment = this.getMuzzleAttachment();
         if (attachment === undefined)
           return Log.warning(`Could not create attack VFX for ${this.instance.Name} tower: Could not find gun or muzzle attachment`);
 
+        task.spawn(() => this.createProjectile(target, targetVelocity));
         for (const particle of attachment.GetChildren().filter((i): i is ParticleEmitter => i.IsA("ParticleEmitter"))) {
           const emitCount = <Maybe<number>>particle.GetAttribute("EmitCount");
           if (emitCount === undefined) {
@@ -241,6 +273,14 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     sound.Play();
   }
 
+  private loadProjectileCache(): void {
+    this.projectileCache?.Dispose();
+
+    const projectileTemplate = Assets.VFX.Projectiles[this.attributes.ProjectileName];
+    this.projectileCache = new PartCacheModule(projectileTemplate, math.ceil(math.max(10 / (this.info.stats.reloadTime * 1.2), 10)));
+    this.projectileCache.SetCacheParent(PLACEMENT_STORAGE);
+  }
+
   private loadHighlight(loadSelected = false): void {
     this.highlight?.Destroy();
     this.highlight = this.janitor.Add(new Instance("Highlight", this.instance));
@@ -251,7 +291,6 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     if (loadSelected)
       this.toggleSelectionHighlight(true);
   }
-
 
   private loadAnimations(): void {
     for (const animation of <Animation[]>this.instance.Animations.GetChildren()) {

@@ -42,6 +42,7 @@ export function commaFormat(n: number | string): string {
   parts.insert(0, formatted);
   return parts.join(",");
 }
+
 const suffixes = <const>["K", "M", "B", "T", "Q"];
 export function toSuffixedNumber(n: number): string {
   if (n < 100_000)

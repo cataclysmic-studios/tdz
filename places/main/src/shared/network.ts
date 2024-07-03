@@ -18,7 +18,7 @@ interface ServerEvents {
 interface ClientEvents {
   updateTimerUI: Networking.Unreliable<(remainingTime: number) => void>;
   updateTowerStats: Networking.Unreliable<(id: number, towerInfo: Omit<TowerInfo, "patch">) => void>;
-  towerAttacked: Networking.Unreliable<(id: number, enemyPosition: Vector3) => void>;
+  towerAttacked: Networking.Unreliable<(id: number, enemyPosition: Vector3, enemyVelocity: Vector3) => void>;
   updateHealthUI(health: number, maxHealth: number): void;
   updateWaveUI(wave: number): void;
   timeScaleUpdated(timeScale: number): void;

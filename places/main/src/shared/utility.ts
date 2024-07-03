@@ -6,7 +6,7 @@ import { Assets } from "common/shared/utility/instances";
 import { tween } from "common/shared/utility/ui";
 import { PLACEMENT_STORAGE } from "./constants";
 import { TOWER_STATS } from "./towers";
-import type { TowerStats, PathStats, UpgradeLevel } from "./towers";
+import { TowerStats, PathStats, UpgradeLevel } from "./towers";
 import Log from "./logger";
 
 export function teleportPlayers(cframe: CFrame, ...players: Player[]): void {
@@ -36,7 +36,7 @@ function applyUpgradePathStats(baseStats: TowerStats, pathLevel: number, pathSta
       if (typeOf(value) === "number" && name !== "price")
         baseStats[<NonNullable<ExtractKeys<TowerStats, Maybe<number>>>>name] += <number>value;
       else
-        baseStats[<NonNullable<ExcludeKeys<TowerStats, Maybe<number>>>>name] = <Exclude<typeof value, number>>value;
+        baseStats[name] = <never>value;
   }
 }
 

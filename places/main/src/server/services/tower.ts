@@ -10,11 +10,13 @@ import { Assets } from "common/shared/utility/instances";
 import { getTowerStats } from "shared/utility";
 import { TargetingType } from "shared/structs";
 import { EnemyEntity, EnemyInfo, TowerEntity, TowerInfo } from "shared/entity-components";
-import { TOWER_STATS, type UpgradeLevel, type UpgradePath } from "common/shared/towers";
+import { ProjectileType, TOWER_STATS, type UpgradeLevel, type UpgradePath } from "common/shared/towers";
 
 import type { MatterService } from "./matter";
 import type { MatchService } from "./match";
 import type { EnemyService } from "./enemy";
+import { findLeadShot, getTimeToReach } from "shared/projectile-utility";
+import { GRAVITATIONAL_PROJECTILE_TYPES, PROJECTILE_SPEEDS } from "shared/constants";
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {
@@ -61,13 +63,24 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     // TODO: handle damage types, splash damage, etc.
     const towerInfo = this.matter.world.get(tower, TowerInfo)!;
     const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!;
-    const damageDealt = this.enemy.damage(enemy, towerInfo.stats.damage);
-    this.matter.world.insert(tower, towerInfo.patch({
-      totalDamage: towerInfo.totalDamage + damageDealt,
-      timeSinceAttack: 0
-    }));
+    const enemyPosition = enemyInfo.model.GetPivot().Position;
+    const enemyVelocity = enemyInfo.model.HumanoidRootPart.AssemblyLinearVelocity;
+    Events.towerAttacked.broadcast(tower, enemyPosition, enemyVelocity);
+    this.matter.world.insert(tower, towerInfo.patch({ timeSinceAttack: 0 }));
 
-    Events.towerAttacked.broadcast(tower, enemyInfo.model.GetPivot().Position);
+
+    const projectileType = towerInfo.stats.projectileType;
+    const speed = PROJECTILE_SPEEDS[projectileType];
+    const towerPosition = towerInfo.cframe.Position;
+    const gravity = GRAVITATIONAL_PROJECTILE_TYPES.includes(projectileType) ? 196.2 : 0;
+    const projectileArrivalDelay = getTimeToReach(towerPosition, findLeadShot(towerPosition, enemyPosition, enemyVelocity, speed, gravity), speed, gravity) / this.match.timeScale;
+    task.delay(projectileArrivalDelay, () => {
+      const damageDealt = this.enemy.damage(enemy, towerInfo.stats.damage);
+      this.matter.world.insert(tower, towerInfo.patch({
+        totalDamage: towerInfo.totalDamage + damageDealt,
+        timeSinceAttack: 0
+      }));
+    });
   }
 
   public upgrade(player: Player, tower: TowerEntity, path: UpgradePath, price: number): void {

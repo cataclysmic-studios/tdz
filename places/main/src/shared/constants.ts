@@ -1,7 +1,19 @@
 import { Workspace as World } from "@rbxts/services";
 
 import { Difficulty } from "common/shared/structs/difficulty";
+import { ProjectileType } from "common/shared/towers";
+import { metersToStuds } from "./utility/3D";
 import type { DifficultyInfo, TeleportData } from "./structs";
+
+export const GRAVITATIONAL_PROJECTILE_TYPES: ProjectileType[] = [
+  ProjectileType.Bullet
+];
+
+export const PROJECTILE_SPEEDS: Record<ProjectileType, number> = {
+  [ProjectileType.Bullet]: metersToStuds(50),
+  [ProjectileType.Laser]: metersToStuds(50),
+  [ProjectileType.Explosive]: metersToStuds(20)
+};
 
 export const RANGE_PREVIEW_COLORS = {
   CanPlace: Color3.fromRGB(0, 170, 255),
