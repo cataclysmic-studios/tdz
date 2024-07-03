@@ -8,13 +8,14 @@ import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player } from "common/shared/utility/client";
 import { tween } from "common/shared/utility/ui";
-import { createRangePreview, setSizePreviewColor } from "shared/utility";
+import { createRangePreview, getTowerModelName, setSizePreviewColor, upgradeTowerModel } from "shared/utility";
 import { PLACEMENT_STORAGE } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
 import Log from "common/shared/logger";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
+import type { SelectionController } from "client/controllers/selection";
 import type { TimeScaleController } from "client/controllers/time-scale";
 
 type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
@@ -39,6 +40,7 @@ interface BaseAttributes {
   readonly Size: number;
   readonly Melee: boolean;
   readonly WeaponName: string;
+  CurrentModelName: TowerModelName;
 }
 
 type Attributes = BaseAttributes & ({
@@ -64,33 +66,43 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   public readonly infoUpdated = new Signal<(newInfo: Omit<TowerInfo, "patch">) => void>;
 
   private readonly loadedAnimations: Partial<Record<AnimationName, AnimationTrack>> = {};
-  private readonly highlight = this.janitor.Add(new Instance("Highlight", this.instance));
   private readonly sizePreviewTweenInfo = new TweenInfoBuilder().SetTime(0.08);
   private readonly defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
   private readonly defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;
   private readonly defaultRightAttachmentPosition = Assets.SizePreview.Right.Position;
   private readonly selectionFillTransparency = 0.75;
   private currentRangePreview?: MeshPart;
+  private highlight!: Highlight;
   private info!: Omit<TowerInfo, "patch">;
 
   public constructor(
+    private readonly selection: SelectionController,
     private readonly timeScale: TimeScaleController
   ) { super(); }
 
   public async onStart(): Promise<void> {
     this.info = await Functions.getTowerInfo(this.attributes.ID);
-    this.highlight.Enabled = false;
-    this.highlight.Adornee = this.instance;
-    this.highlight.FillColor = new Color3(1, 1, 1);
-    this.highlight.OutlineColor = new Color3(1, 1, 1);
+    this.loadHighlight();
+    this.loadAnimations();
 
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(this.instance);
     this.janitor.Add(this.timeScale.changed.Connect(() => this.adjustAnimationSpeeds()));
     this.janitor.Add(Events.updateTowerStats.connect((id, info) => {
       if (id !== this.attributes.ID) return;
+
+      const hasChanges = this.info !== info;
       this.info = info;
-      this.infoUpdated.Fire(info);
+      if (hasChanges) {
+        this.infoUpdated.Fire(info);
+        if (info.upgrades[0] === 0 && info.upgrades[1] === 0) return;
+
+        const newModelName = getTowerModelName(info.upgrades)
+        if (this.instance.GetAttribute("CurrentModelName") === newModelName) return;
+        upgradeTowerModel(<TowerName>this.instance.Name, this.instance, info.upgrades, this.instance.GetPivot());
+        this.loadHighlight(this.selection.isSelected(this));
+        this.loadAnimations();
+      }
     }));
     this.janitor.Add(Events.towerAttacked.connect((id, enemyPosition) => {
       if (id !== this.attributes.ID) return;
@@ -102,10 +114,6 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       task.spawn(() => this.createAttackVFX());
     }));
 
-    for (const animation of <Animation[]>this.instance.Animations.GetChildren()) {
-      const name = <AnimationName>animation.Name;
-      this.loadedAnimations[name] = this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations[name]);
-    }
   }
 
   public onRender(dt: number): void {
@@ -231,6 +239,26 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     sound.Parent = parent;
     sound.Ended.Once(() => sound.Destroy());
     sound.Play();
+  }
+
+  private loadHighlight(loadSelected = false): void {
+    this.highlight?.Destroy();
+    this.highlight = this.janitor.Add(new Instance("Highlight", this.instance));
+    this.highlight.Enabled = false;
+    this.highlight.Adornee = this.instance;
+    this.highlight.FillColor = new Color3(1, 1, 1);
+    this.highlight.OutlineColor = new Color3(1, 1, 1);
+    if (loadSelected)
+      this.toggleSelectionHighlight(true);
+  }
+
+
+  private loadAnimations(): void {
+    for (const animation of <Animation[]>this.instance.Animations.GetChildren()) {
+      const name = <AnimationName>animation.Name;
+      this.loadedAnimations[name] = this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations[name]);
+    }
+    this.adjustAnimationSpeeds();
   }
 
   private getMuzzleAttachment(): Maybe<Attachment> {

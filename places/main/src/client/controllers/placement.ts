@@ -10,7 +10,7 @@ import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
-import { createRangePreview, createSizePreview, createTowerModel, growIn, setSizePreviewColor } from "shared/utility";
+import { createRangePreview, createSizePreview, createTowerModel, getTowerModelName, growIn, setSizePreviewColor } from "shared/utility";
 import { PLACEMENT_STORAGE, RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 import { TOWER_STATS } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
@@ -100,12 +100,10 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   public place(id: number, towerInfo: Omit<TowerInfo, "patch">): void {
     const { name, ownerID, upgrades, cframe } = towerInfo;
     const myTower = ownerID === Player.UserId;
-    const [path1Level, path2Level] = upgrades;
-    const baseAppearanceLevel = math.max(upgrades[0], upgrades[1]);
-    const pathIdent = (path1Level < 3 && path2Level < 3) ? ("") : (path1Level >= 3 ? "A" : "B");
-    const modelName = `Level${baseAppearanceLevel}${pathIdent}`;
+    const modelName = getTowerModelName(upgrades);
     const towerModel = createTowerModel(name, modelName, cframe);
     towerModel.SetAttribute("ID", id);
+    towerModel.SetAttribute("CurrentModelName", modelName);
 
     const size = <number>towerModel.GetAttribute("Size");
     const sizePreview = createSizePreview(size, id);

@@ -4,7 +4,6 @@ import { Janitor } from "@rbxts/janitor";
 
 import type { LogStart } from "common/shared/hooks";
 import { PlayerGui } from "common/shared/utility/client";
-import { createRangePreview } from "shared/utility";
 import { RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 
 import type { Tower } from "client/components/tower";
@@ -88,8 +87,12 @@ export class SelectionController implements OnInit, OnStart, OnTick, LogStart {
     PlayerGui.Main.Main.TowerUpgrades.Visible = false;
   }
 
-  public isSelectingTower(): boolean {
-    return this.selectedTower !== undefined;
+  public getSelectedTower(): Maybe<Tower> {
+    return this.selectedTower;
+  }
+
+  public isSelected(tower?: Tower): boolean {
+    return tower === undefined ? this.selectedTower !== undefined : this.selectedTower === tower;
   }
 
   private getHoveredTower(): Maybe<Tower> {

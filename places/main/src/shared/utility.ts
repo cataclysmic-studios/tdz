@@ -7,6 +7,7 @@ import { tween } from "common/shared/utility/ui";
 import { PLACEMENT_STORAGE } from "./constants";
 import { TOWER_STATS } from "./towers";
 import type { TowerStats, PathStats, UpgradeLevel } from "./towers";
+import Log from "./logger";
 
 export function teleportPlayers(cframe: CFrame, ...players: Player[]): void {
   for (const player of players) {
@@ -39,6 +40,34 @@ function applyUpgradePathStats(baseStats: TowerStats, pathLevel: number, pathSta
   }
 }
 
+export function upgradeTowerModel(towerName: TowerName, towerModel: TowerModel, level: UpgradeLevel, cframe: CFrame): void {
+  const contentsFilter = (i: Instance): boolean => !i.IsA("Humanoid");
+  const previousContents = towerModel.GetChildren().filter(contentsFilter);
+  const newModelName = getTowerModelName(level);
+  towerModel.SetAttribute("CurrentModelName", newModelName);
+
+  const newModel = <TowerModel>Assets.Towers[<TowerName>towerName].FindFirstChild(newModelName)?.Clone();
+  if (newModel === undefined)
+    return Log.warning(`Failed to find tower model for ${towerName} at level ${level[0]}-${level[1]} (model name: ${newModelName})`)
+
+  newModel.ScaleTo(<number>newModel.GetAttribute("DefaultScale"));
+  newModel.PivotTo(cframe);
+  const newModelContents = newModel.GetChildren().filter(contentsFilter);
+  const changeableAttributes = ["ProjectileType"];
+  for (const [name, value] of newModel.GetAttributes()) {
+    if (!changeableAttributes.includes(name)) continue;
+    towerModel.SetAttribute(name, value);
+  }
+
+  for (const content of newModelContents)
+    content.Parent = towerModel;
+
+  for (const content of previousContents)
+    content.Destroy();
+
+  newModel.Destroy();
+}
+
 export function createTowerModel(towerName: TowerName, modelName: string, cframe: CFrame = new CFrame): TowerModel {
   const towerModel = <TowerModel>Assets.Towers[<TowerName>towerName].WaitForChild(modelName).Clone();
   towerModel.Name = towerName;
@@ -48,6 +77,13 @@ export function createTowerModel(towerName: TowerName, modelName: string, cframe
   animateTowerIdle(towerModel);
   growIn(towerModel);
   return towerModel;
+}
+
+export function getTowerModelName(level: UpgradeLevel): TowerModelName {
+  const [path1Level, path2Level] = level;
+  const baseAppearanceLevel = math.max(path1Level, path2Level);
+  const pathIdent = (path1Level < 3 && path2Level < 3) ? ("") : (path1Level >= 3 ? "A" : "B");
+  return <TowerModelName>`Level${baseAppearanceLevel}${pathIdent}`;
 }
 
 export function animateTowerIdle(towerModel: TowerModel): void {
