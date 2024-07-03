@@ -66,30 +66,11 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     return this.enemies.size() > 0;
   }
 
-  public summon({ enemyName, amount, interval, length }: EnemySummonInfo): void {
-    const map = this.match.getMap();
-    task.spawn(() => {
-      for (let i = 0; i < amount; i++) {
-        const enemyModel = Assets.Enemies[enemyName].Clone();
-        const [_, size] = enemyModel.GetBoundingBox();
-        const spawnCFrame = map.StartPoint.CFrame.add(new Vector3(0, (size.Y / 2) - (map.StartPoint.Size.Y / 2), 0));
-        enemyModel.HumanoidRootPart.CFrame = spawnCFrame;
-        enemyModel.Parent = ENEMY_STORAGE;
-        growIn(enemyModel);
-
-        enemyModel.AddTag("Enemy");
-        this.enemies.push(this.matter.world.spawn(
-          EnemyInfo({
-            distance: 0,
-            isStealth: <boolean>enemyModel.GetAttribute("Stealth"),
-            health: <number>enemyModel.GetAttribute("MaxHealth"),
-            model: enemyModel
-          })
-        ));
-        task.wait(interval / this.match.timeScale);
-      }
-    });
-    task.wait(length);
+  public summon({ enemyName, amount, interval }: EnemySummonInfo): void {
+    for (let i = 0; i < amount; i++) {
+      this.spawn(enemyName);
+      task.wait(interval / this.match.timeScale);
+    }
   }
 
   public kill(enemy: EnemyEntity): void {
@@ -111,7 +92,8 @@ export class EnemyService implements OnInit, OnTick, LogStart {
       // TODO: check for things like "no cash" traits, maybe some gamemodes earn less cash per damage, etc.
       this.match.incrementAllCash(damageDealt);
     }
-    return damageDealt
+
+    return damageDealt;
   }
 
   private heal(enemy: EnemyEntity, amount: number): void {
@@ -119,6 +101,26 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     const info = this.matter.world.get(enemy, EnemyInfo)!;
     const maxHealth = <number>info.model.GetAttribute("MaxHealth");
     this.matter.world.insert(enemy, info.patch({ health: math.clamp(info.health + amount, 0, maxHealth) }));
+  }
+
+  private spawn(enemyName: EnemyName): void {
+    const map = this.match.getMap();
+    const enemyModel = Assets.Enemies[enemyName].Clone();
+    const [_, size] = enemyModel.GetBoundingBox();
+    const spawnCFrame = map.StartPoint.CFrame.add(new Vector3(0, (size.Y / 2) - (map.StartPoint.Size.Y / 2), 0));
+    enemyModel.HumanoidRootPart.CFrame = spawnCFrame;
+    enemyModel.Parent = ENEMY_STORAGE;
+    growIn(enemyModel);
+
+    enemyModel.AddTag("Enemy");
+    this.enemies.push(this.matter.world.spawn(
+      EnemyInfo({
+        distance: 0,
+        isStealth: <boolean>enemyModel.GetAttribute("Stealth"),
+        health: <number>enemyModel.GetAttribute("MaxHealth"),
+        model: enemyModel
+      })
+    ));
   }
 
   private despawn(enemy: EnemyEntity): void {

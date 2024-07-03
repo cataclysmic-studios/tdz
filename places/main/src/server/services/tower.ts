@@ -110,7 +110,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       }));
 
       const target = this.getTarget(tower);
-      for (const [enemy, enemyInfo] of this.matter.world.query(EnemyInfo)) {
+      for (const [enemy] of this.matter.world.query(EnemyInfo)) {
         if (enemy === target) {
           if (towerInfo.timeSinceAttack >= reloadTime / this.match.timeScale)
             this.attack(tower, enemy);

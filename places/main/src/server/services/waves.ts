@@ -38,8 +38,11 @@ export class WavesService implements OnInit {
       const waveTimer = this.match.startTimer(toSeconds(wave.length));
       this.waveJanitor.Add(waveTimer.ended.Once(() => timerEnded = true));
 
-      for (const summonInfo of wave.enemies)
+      for (const summonInfo of wave.enemies) {
         this.enemy.summon(summonInfo);
+        if (summonInfo.length === -1) continue;
+        task.wait(summonInfo.length / this.match.timeScale);
+      }
 
       while (!timerEnded && this.enemy.areEnemiesAlive()) task.wait(0.2);
       if (waveTimer.isActive())
