@@ -3,7 +3,7 @@ import { SoundService as Sound } from "@rbxts/services";
 import type { Entity } from "@rbxts/matter";
 
 import type { LogStart } from "common/shared/hooks";
-import { Events } from "server/network";
+import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
 import { getEnemyBaseTraits, growIn } from "shared/utility";
 import { EnemyInfo } from "shared/entity-components";
@@ -36,6 +36,8 @@ export class EnemyService implements OnInit, OnTick, LogStart {
       for (const enemy of this.enemies)
         task.spawn(() => this.kill(enemy, DamageType.God));
     });
+
+    Functions.getEnemyTraits.setCallback((_, id) => this.matter.world.get(<EnemyEntity>id, EnemyInfo)!.traits);
 
     for (const enemyModel of <EnemyModel[]>Assets.Enemies.GetChildren())
       for (const part of enemyModel.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart")))
@@ -140,16 +142,22 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     enemyModel.Parent = ENEMY_STORAGE;
     growIn(enemyModel);
 
-    enemyModel.AddTag("Enemy");
-    this.enemies.push(this.matter.world.spawn(
+    const finalTraits = removeDuplicates(flatten([getEnemyBaseTraits(enemyModel), traits]))
+      .filter(traits => "type" in traits);
+
+    const enemy = this.matter.world.spawn(
       EnemyInfo({
-        traits: removeDuplicates(flatten([getEnemyBaseTraits(enemyModel), traits])),
+        traits: finalTraits,
         distance: 0,
         isStealth: <boolean>enemyModel.GetAttribute("Stealth"),
         health: <number>enemyModel.GetAttribute("MaxHealth"),
         model: enemyModel
       })
-    ));
+    );
+
+    enemyModel.SetAttribute("ID", enemy);
+    enemyModel.AddTag("Enemy");
+    this.enemies.push(enemy);
   }
 
   private despawn(enemy: EnemyEntity): void {

@@ -1,8 +1,8 @@
 import { Networking } from "@flamework/networking";
 
-import type { TeleportData } from "./structs";
+import type { EnemyTrait, TeleportData } from "./structs";
 import type { UpgradePath } from "./towers";
-import type { TowerInfo } from "./entity-components";
+import type { EnemyInfo, TowerInfo } from "./entity-components";
 
 interface ServerEvents {
   placeTower(towerName: TowerName, cframe: CFrame, price: number): void;
@@ -30,6 +30,7 @@ interface ServerFunctions {
   getTimeScale(): number;
   spendCash(price: number): [boolean, number];
   getTowerInfo(id: number): Omit<TowerInfo, "patch">;
+  getEnemyTraits(id: number): EnemyTrait[];
 }
 
 interface ClientFunctions { }

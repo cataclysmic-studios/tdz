@@ -22,6 +22,15 @@ interface ReplicatedFirst extends Instance {
     };
     UI: Folder & {
       NotificationLabel: TextLabel & { UIStroke: UIStroke; };
+      Traits: Folder & {
+        NoEffectivenessTrait: ImageLabel & {
+          Icon: ImageLabel;
+        };
+        RegularTrait: ImageLabel & {
+          Icon: ImageLabel;
+          Effectiveness: TextLabel;
+        };
+      };
     };
     VFX: Folder & {
       Projectiles: Folder & {
