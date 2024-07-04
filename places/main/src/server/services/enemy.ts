@@ -5,14 +5,17 @@ import type { Entity } from "@rbxts/matter";
 import type { LogStart } from "common/shared/hooks";
 import { Events } from "server/network";
 import { Assets } from "common/shared/utility/instances";
-import { growIn } from "shared/utility";
+import { getEnemyBaseTraits, growIn } from "shared/utility";
 import { EnemyInfo } from "shared/entity-components";
+import { DamageType } from "common/shared/towers";
 import { ENEMY_STORAGE } from "shared/constants";
-import type { EnemySummonInfo } from "shared/structs";
+import { type EnemySummonInfo, type EnemyTrait, EnemyTraitType } from "shared/structs";
 
 import type { MatterService } from "server/services/matter";
 import type { MatchService } from "./match";
 import { DEVELOPERS } from "common/shared/constants";
+import { flatten, removeDuplicates } from "common/shared/utility/array";
+import Log from "common/shared/logger";
 
 type EnemyEntity = Entity<[EnemyInfo]>;
 
@@ -28,10 +31,10 @@ export class EnemyService implements OnInit, OnTick, LogStart {
   public onInit(): void {
     Events.admin.killAllEnemies.connect(player => {
       if (!DEVELOPERS.includes(player.UserId))
-        return player.Kick("wtf r u doing bruh, not even fun to do that");
+        return player.Kick("wtf r u doing brah, it's not even fun to do that");
 
       for (const enemy of this.enemies)
-        task.spawn(() => this.kill(enemy));
+        task.spawn(() => this.kill(enemy, DamageType.God));
     });
 
     for (const enemyModel of <EnemyModel[]>Assets.Enemies.GetChildren())
@@ -66,20 +69,20 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     return this.enemies.size() > 0;
   }
 
-  public summon({ enemyName, amount, interval }: EnemySummonInfo): void {
+  public summon({ enemyName, amount, interval, traits }: EnemySummonInfo): void {
     for (let i = 0; i < amount; i++) {
-      this.spawn(enemyName);
+      this.spawn(enemyName, traits);
       task.wait(interval / this.match.timeScale);
     }
   }
 
-  public kill(enemy: EnemyEntity): void {
+  public kill(enemy: EnemyEntity, damageType: DamageType): void {
     if (!this.matter.world.contains(enemy)) return;
     const info = this.matter.world.get(enemy, EnemyInfo)!;
-    this.damage(enemy, info.health);
+    this.damage(enemy, info.health, damageType);
   }
 
-  public damage(enemy: EnemyEntity, amount: number): number {
+  public damage(enemy: EnemyEntity, amount: number, damageType: DamageType): number {
     if (!this.matter.world.contains(enemy)) return 0;
     const info = this.matter.world.get(enemy, EnemyInfo)!;
     const maxHealth = <number>info.model.GetAttribute("MaxHealth");
@@ -87,12 +90,26 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     const newHealth = math.clamp(info.health - amount, 0, maxHealth);
     this.matter.world.insert(enemy, info.patch({ health: newHealth }));
 
-    const damageDealt = healthBeforeDamage - newHealth;
-    if (damageDealt > 0) {
-      // TODO: check for things like "no cash" traits, maybe some gamemodes earn less cash per damage, etc.
-      this.match.incrementAllCash(damageDealt);
-    }
+    let damageDealt = math.clamp(healthBeforeDamage - newHealth, 0, maxHealth);
+    damageDealt = this.applyResistance(enemy, damageType, damageDealt, EnemyTraitType.BulletResistance, DamageType.Bullet);
+    damageDealt = this.applyResistance(enemy, damageType, damageDealt, EnemyTraitType.LaserResistance, DamageType.Laser);
 
+    if (!this.hasTrait(enemy, EnemyTraitType.NoCash))
+      this.match.incrementAllCash(damageDealt);
+
+    return damageDealt;
+  }
+
+  private applyResistance(enemy: EnemyEntity, damageType: DamageType, damageDealt: number, resistanceTrait: EnemyTraitType, resistedDamageType: DamageType): number {
+    const info = this.matter.world.get(enemy, EnemyInfo)!;
+    if (this.hasTrait(enemy, resistanceTrait) && damageType === resistedDamageType) {
+      const effectiveness = this.getTraitEffectiveness(enemy, resistanceTrait);
+      if (effectiveness === undefined)
+        throw Log.fatal(`${info.model.Name} was spawned with ${resistanceTrait} trait with no effectiveness`);
+
+      const resistance = 1 - (effectiveness === 0 ? 0 : effectiveness / 100);
+      resistance === 0 ? damageDealt = 0 : damageDealt /= resistance;
+    }
     return damageDealt;
   }
 
@@ -103,7 +120,18 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     this.matter.world.insert(enemy, info.patch({ health: math.clamp(info.health + amount, 0, maxHealth) }));
   }
 
-  private spawn(enemyName: EnemyName): void {
+  private hasTrait(enemy: EnemyEntity, traitType: EnemyTraitType): boolean {
+    const info = this.matter.world.get(enemy, EnemyInfo)!;
+    return info.traits.map(trait => trait.type).includes(traitType);
+  }
+
+  private getTraitEffectiveness(enemy: EnemyEntity, traitType: EnemyTraitType): Maybe<number> {
+    if (!this.hasTrait(enemy, traitType)) return;
+    const info = this.matter.world.get(enemy, EnemyInfo)!;
+    return info.traits.find(trait => trait.type === traitType)?.effectiveness;
+  }
+
+  private spawn(enemyName: EnemyName, traits: EnemyTrait[] = []): void {
     const map = this.match.getMap();
     const enemyModel = Assets.Enemies[enemyName].Clone();
     const [_, size] = enemyModel.GetBoundingBox();
@@ -115,6 +143,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     enemyModel.AddTag("Enemy");
     this.enemies.push(this.matter.world.spawn(
       EnemyInfo({
+        traits: removeDuplicates(flatten([getEnemyBaseTraits(enemyModel), traits])),
         distance: 0,
         isStealth: <boolean>enemyModel.GetAttribute("Stealth"),
         health: <number>enemyModel.GetAttribute("MaxHealth"),

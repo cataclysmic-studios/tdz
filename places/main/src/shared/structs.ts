@@ -30,11 +30,13 @@ export interface EnemySummonInfo<Name extends EnemyName = EnemyName> {
   readonly amount: number;
   readonly interval: number;
   readonly length: number;
+  readonly traits?: EnemyTrait[];
 }
 
-export const enum EnemyTraitType {
-  BulletResistance = "Bullet Resistance",
-  NoCash = "No Cash",
+export enum EnemyTraitType {
+  NoCash = "NoCash",
+  BulletResistance = "BulletResistance",
+  LaserResistance = "LaserResistance"
 }
 
 export interface EnemyTrait<T extends EnemyTraitType = EnemyTraitType> {

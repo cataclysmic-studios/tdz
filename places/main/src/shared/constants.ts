@@ -3,7 +3,13 @@ import { Workspace as World } from "@rbxts/services";
 import { Difficulty } from "common/shared/structs/difficulty";
 import { ProjectileType } from "common/shared/towers";
 import { metersToStuds } from "./utility/3D";
-import type { DifficultyInfo, TeleportData } from "./structs";
+import { DifficultyInfo, EnemyTraitType, TeleportData } from "./structs";
+
+export const TRAIT_ICONS: Record<EnemyTraitType, string> = {
+  [EnemyTraitType.NoCash]: "rbxassetid://18324545188",
+  [EnemyTraitType.BulletResistance]: "rbxassetid://395920626",
+  [EnemyTraitType.LaserResistance]: "rbxassetid://395920626",
+}
 
 export const GRAVITATIONAL_PROJECTILE_TYPES: ProjectileType[] = [
   ProjectileType.Bullet

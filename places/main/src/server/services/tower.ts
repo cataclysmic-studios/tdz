@@ -75,7 +75,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     const gravity = GRAVITATIONAL_PROJECTILE_TYPES.includes(projectileType) ? 196.2 : 0;
     const projectileArrivalDelay = getTimeToReach(towerPosition, findLeadShot(towerPosition, enemyPosition, enemyVelocity, speed, gravity), speed, gravity) / this.match.timeScale;
     task.delay(projectileArrivalDelay, () => {
-      const damageDealt = this.enemy.damage(enemy, towerInfo.stats.damage);
+      const damageDealt = this.enemy.damage(enemy, towerInfo.stats.damage, towerInfo.stats.damageType);
       this.matter.world.insert(tower, towerInfo.patch({
         totalDamage: towerInfo.totalDamage + damageDealt,
         timeSinceAttack: 0

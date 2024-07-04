@@ -1,5 +1,6 @@
 import { RunService as Runtime, Workspace as World, Players } from "@rbxts/services";
 import { TweenInfoBuilder } from "@rbxts/builders";
+import { startsWith } from "@rbxts/string-utils";
 import Object from "@rbxts/object-utils";
 
 import { Assets } from "common/shared/utility/instances";
@@ -7,8 +8,22 @@ import { tween } from "common/shared/utility/ui";
 import { flatten } from "common/shared/utility/array";
 import { TOWER_STATS } from "common/shared/towers";
 import { PLACEMENT_STORAGE } from "./constants";
+import { type EnemyTrait, EnemyTraitType } from "./structs";
 import type { TowerStats, PathStats, UpgradeLevel } from "./towers";
 import Log from "./logger";
+
+export function getEnemyBaseTraits(enemyModel: EnemyModel): EnemyTrait[] {
+  const traits: EnemyTrait[] = [];
+  for (const tag of enemyModel.GetTags().filter(tag => startsWith(tag, "Trait."))) {
+    const [_, traitName] = tag.split("Trait.");
+    const effectiveness = <number>enemyModel.GetAttribute(traitName);
+    traits.push({
+      type: EnemyTraitType[<keyof typeof EnemyTraitType>traitName],
+      effectiveness: effectiveness !== undefined && typeOf(effectiveness) === "number" ? effectiveness : undefined
+    });
+  }
+  return traits;
+}
 
 function getAllSounds(): Sound[] {
   return flatten([Assets.GetDescendants(), World.GetDescendants()])

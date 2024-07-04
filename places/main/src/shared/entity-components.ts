@@ -1,7 +1,7 @@
 import { component, type Entity } from "@rbxts/matter";
 
 import type { TowerStats, UpgradeLevel } from "./towers";
-import type { TargetingType } from "./structs";
+import type { EnemyTrait, TargetingType } from "./structs";
 
 export type EnemyEntity = Entity<[EnemyInfo]>;
 export type EnemyInfo = ReturnType<typeof EnemyInfo>;
@@ -9,6 +9,7 @@ export const EnemyInfo = component<{
   distance: number;
   health: number;
   isStealth: boolean;
+  readonly traits: EnemyTrait[];
   readonly model: EnemyModel;
 }>("EnemyInfo");
 

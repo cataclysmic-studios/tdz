@@ -13,7 +13,8 @@ export const enum DamageType {
   Laser = "Laser",
   Ice = "Ice",
   Fire = "Fire",
-  Melee = "Melee"
+  Melee = "Melee",
+  God = "God"
 }
 
 export const enum ProjectileType {
