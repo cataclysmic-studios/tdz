@@ -70,7 +70,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     const cframe = this.match.getPath().getCFrameAtDistance(enemyInfo.distance);
     const enemyPosition = cframe.Position;
     const enemyVelocity = cframe.LookVector.mul(enemyInfo.speed); // * Matter.useDeltaTime() (?)
-    Events.towerAttacked.broadcast(tower, new Vector2int16(enemyInfo.distance * DISTANCE_ACCURACY, enemyInfo.speed * SPEED_ACCURACY));
+    Events.towerAttacked.broadcast(new Vector3int16(tower, enemyInfo.distance * DISTANCE_ACCURACY, enemyInfo.speed * SPEED_ACCURACY));
     this.matter.world.insert(tower, towerInfo.patch({ timeSinceAttack: 0 }));
 
     const projectileType = towerInfo.stats.projectileType;

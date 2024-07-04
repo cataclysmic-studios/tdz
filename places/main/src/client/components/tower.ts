@@ -117,10 +117,10 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
         this.loadProjectileCache();
       }
     }));
-    this.janitor.Add(Events.towerAttacked.connect((id, distanceAndSpeed) => {
+    this.janitor.Add(Events.towerAttacked.connect(idDistanceAndSpeed => {
+      const { X: id, Y: distance, Z: speed } = idDistanceAndSpeed.div(new Vector3int16(1, DISTANCE_ACCURACY, SPEED_ACCURACY));
       if (id !== this.attributes.ID) return;
 
-      const { X: distance, Y: speed } = distanceAndSpeed.div(new Vector2int16(DISTANCE_ACCURACY, SPEED_ACCURACY));
       const enemyCFrame = this.path.get().getCFrameAtDistance(distance);
       const enemyVelocity = enemyCFrame.LookVector.mul(speed);
       const towerPosition = this.instance.GetPivot().Position;

@@ -15,10 +15,10 @@ interface ServerEvents {
 interface ClientEvents {
   updateTimerUI: Networking.Unreliable<(remainingTime: number) => void>;
   updateTowerStats: Networking.Unreliable<(id: number, towerInfo: Omit<TowerInfo, "patch">) => void>;
-  towerAttacked: Networking.Unreliable<(id: number, distanceAndSpeed: Vector2int16) => void>;
+  towerAttacked: Networking.Unreliable<(idDistanceAndSpeed: Vector3int16) => void>; // TODO: use Vector3int16 and include id too, also use bitpacking on ID (11 bits)
   enemyDied(id: number): void;
   updateEnemies(enemyRecordEntries: [number, Omit<EnemyInfo, "patch">][]): void;
-  updateHealthUI(health: number, maxHealth: number): void;
+  updateHealthUI(health: number, maxHealth: number): void; // TODO: use Vector2int16
   updateWaveUI(wave: number): void;
   timeScaleUpdated(timeScale: number): void;
   replicateTower(id: number, towerInfo: Omit<TowerInfo, "patch">): void;
