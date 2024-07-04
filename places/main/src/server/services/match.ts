@@ -14,8 +14,9 @@ import { DIFFICULTY_INFO } from "shared/constants";
 import type { TeleportData } from "shared/structs";
 import type { Difficulty } from "common/shared/structs/difficulty";
 import Object from "@rbxts/object-utils";
+import Log from "common/shared/logger";
 
-const { max } = math;
+const { max, clamp } = math;
 
 const INTERMISSION_LENGTH = 8;
 
@@ -140,13 +141,16 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   }
 
   private incrementHealth(amount: number): void {
-    this.setHealth(max(this.getHealth() + amount, 0));
+    this.setHealth(this.getHealth() + amount);
   }
 
   private setHealth(health: number): void {
     this.maxHealth = health > this.maxHealth ? health : this.maxHealth;
-    this.health = health;
+    this.health = clamp(health, 0, this.maxHealth);
     Events.updateHealthUI.broadcast(health, this.maxHealth);
+
+    if (health === 0)
+      Log.info("You lost...")
   }
 
   private getHealth(): number {

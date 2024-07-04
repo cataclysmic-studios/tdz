@@ -5,17 +5,18 @@ import type { Entity } from "@rbxts/matter";
 import type { LogStart } from "common/shared/hooks";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
+import { flatten, removeDuplicates } from "common/shared/utility/array";
+import { removeVectorY } from "common/shared/utility/3D";
 import { getEnemyBaseTraits, growIn } from "shared/utility";
 import { EnemyInfo } from "shared/entity-components";
 import { DamageType } from "common/shared/towers";
+import { DEVELOPERS } from "common/shared/constants";
 import { ENEMY_STORAGE } from "shared/constants";
 import { type EnemySummonInfo, type EnemyTrait, EnemyTraitType } from "shared/structs";
+import Log from "common/shared/logger";
 
 import type { MatterService } from "server/services/matter";
 import type { MatchService } from "./match";
-import { DEVELOPERS } from "common/shared/constants";
-import { flatten, removeDuplicates } from "common/shared/utility/array";
-import Log from "common/shared/logger";
 
 type EnemyEntity = Entity<[EnemyInfo]>;
 
@@ -29,18 +30,13 @@ export class EnemyService implements OnInit, OnTick, LogStart {
   ) { }
 
   public onInit(): void {
-    Events.admin.killAllEnemies.connect(player => {
-      if (!DEVELOPERS.includes(player.UserId))
-        return player.Kick("wtf r u doing brah, it's not even fun to do that");
-
-      this.killAll();
-    });
-
     Functions.getEnemyTraits.setCallback((_, id) => this.matter.world.get(<EnemyEntity>id, EnemyInfo)!.traits);
 
     for (const enemyModel of <EnemyModel[]>Assets.Enemies.GetChildren())
-      for (const part of enemyModel.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart")))
+      for (const part of enemyModel.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart"))) {
+        part.CanCollide = false;
         part.CollisionGroup = "plrs";
+      }
   }
 
   public onTick(dt: number): void {
@@ -61,7 +57,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
       if (info.health === 0)
         return this.despawn(enemy);
 
-      if (cframe.Position.FuzzyEq(map.EndPoint.Position)) {
+      if (removeVectorY(cframe.Position).FuzzyEq(removeVectorY(map.EndPoint.Position)), 0.01) {
         this.despawn(enemy);
         this.match.decrementHealth(info.health);
         Sound.SoundEffects.Damaged.Play();

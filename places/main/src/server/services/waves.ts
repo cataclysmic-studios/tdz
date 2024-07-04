@@ -59,6 +59,6 @@ export class WavesService implements OnInit, LogStart {
     }
 
     // TODO: win rewards, win UI, music, etc.
-    Log.ok("You won!!!");
+    Log.info("You won!!!");
   }
 }
