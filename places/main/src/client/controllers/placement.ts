@@ -10,7 +10,7 @@ import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player, PlayerGui } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
-import { createRangePreview, createSizePreview, createTowerModel, getTowerModelName, growIn, setSizePreviewColor } from "shared/utility";
+import { createRangePreview, createSizePreview, createTowerModel, getTowerModelName, growIn, isSizePreviewOverlapping, setSizePreviewColor } from "shared/utility";
 import { NotificationStyle } from "common/shared/structs/notifications";
 import { PLACEMENT_STORAGE, RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 import { TOWER_STATS } from "common/shared/towers";
@@ -90,8 +90,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const groundBelow = World.Raycast(towerCFrame.Position, new Vector3(0, -3.1 * towerScale, 0), raycastParams);
     const groundInside = World.Raycast(towerCFrame.Position, new Vector3(0, -1.1, 0), raycastParams);
     const inPlacableLocation = this.mouse.getTarget(undefined, mouseFilter)?.HasTag(isWaterTower ? "PlacableWater" : "PlacableGround") ?? false;
-    const partsTouchingSizePreview = this.placementSizePreview.GetTouchingParts();
-    this.canPlace = inPlacableLocation && groundBelow?.Instance !== undefined && groundInside?.Instance === undefined && !partsTouchingSizePreview.map(part => part.Name).includes("SizePreview");
+    this.canPlace = inPlacableLocation && groundBelow?.Instance !== undefined && groundInside?.Instance === undefined && !isSizePreviewOverlapping(this.placementSizePreview);
 
     const previewColor = RANGE_PREVIEW_COLORS[this.canPlace ? "CanPlace" : "CanNotPlace"];
     this.placementRangePreview.Color = previewColor;
@@ -112,7 +111,6 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const sizePreview = createSizePreview(size, id);
     setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"]);
     sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
-    sizePreview.Touched.Connect(() => { }); // for touch interest
 
     growIn(sizePreview);
     growIn(towerModel);
@@ -138,7 +136,6 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
 
     const size = <number>this.placementModel.GetAttribute("Size");
     this.placementSizePreview = this.placementJanitor.Add(createSizePreview(size));
-    this.placementJanitor.Add(this.placementSizePreview.Touched.Connect(() => { })); // for touch interest
 
     for (const tower of this.components.getAllComponents<Tower>())
       task.spawn(() => {
@@ -146,7 +143,6 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
         const originalColor = sizePreview.Beam1.Color;
         setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS.Selected);
 
-        this.placementJanitor.Add(sizePreview.Touched.Connect(() => { }));
         this.placementJanitor.Add(() => {
           sizePreview.Beam1.Color = originalColor;
           sizePreview.Beam2.Color = originalColor;

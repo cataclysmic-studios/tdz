@@ -1,4 +1,4 @@
-const { sqrt } = math;
+import { removeVectorY } from "../utility/3D";
 
 export default class CircularRegion {
   public constructor(
@@ -15,10 +15,10 @@ export default class CircularRegion {
   }
 
   public overlapsRegion(other: CircularRegion): boolean {
-    return this.getDistance(other.center) <= this.radius + other.radius;
+    return this.getDistance(other.center) <= this.radius;
   }
 
   private getDistance(point: Vector3): number {
-    return sqrt((point.X - this.center.X) ** 2 + (point.Z - this.center.Z) ** 2);
+    return removeVectorY(point.sub(this.center)).Magnitude;
   }
 }

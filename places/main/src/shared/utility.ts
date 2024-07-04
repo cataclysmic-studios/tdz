@@ -11,6 +11,7 @@ import { PLACEMENT_STORAGE } from "./constants";
 import { type EnemyTrait, EnemyTraitType } from "./structs";
 import type { TowerStats, PathStats, UpgradeLevel } from "./towers";
 import Log from "./logger";
+import CircularRegion from "./classes/circular-region";
 
 export function getEnemyBaseTraits(enemyModel: EnemyModel): EnemyTrait[] {
   const traits: EnemyTrait[] = [];
@@ -144,6 +145,15 @@ export function createRangePreview(range: number): MeshPart {
   return rangePreview;
 }
 
+const sizePreviews: typeof Assets.SizePreview[] = [];
+export function isSizePreviewOverlapping(sizePreview: typeof Assets.SizePreview): boolean {
+  const sizeRegion = new CircularRegion(sizePreview.Position, sizePreview.Size.X);
+  return Object.values(sizePreviews)
+    .filter(otherPreview => otherPreview !== sizePreview)
+    .map(otherPreview => new CircularRegion(otherPreview.Position, otherPreview.Size.X))
+    .some(region => sizeRegion.overlapsRegion(region));
+}
+
 export function createSizePreview(size: number, towerID?: number): typeof Assets.SizePreview {
   const sizePreview = Assets.SizePreview.Clone();
   const defaultTowerSize = sizePreview.Size.X;
@@ -158,6 +168,9 @@ export function createSizePreview(size: number, towerID?: number): typeof Assets
   sizePreview.SetAttribute("TowerID", towerID);
   sizePreview.Parent = PLACEMENT_STORAGE;
   growIn(sizePreview);
+
+  sizePreviews.push(sizePreview);
+  sizePreview.Destroying.Once(() => sizePreviews.remove(sizePreviews.indexOf(sizePreview)));
   return sizePreview;
 }
 
