@@ -3,36 +3,36 @@ import type { TowerMeta } from "../../shared/towers"
 const RiflemanMeta = identity<TowerMeta[][]>([
   [ // path 1
     {
-      name: "Accuracy Training",
+      name: "Focus",
       icon: "rbxassetid://10909681909"
     }, {
-      name: "Eagle Eye",
+      name: "Speed Training",
       icon: "rbxassetid://10909681909"
     }, {
-      name: "Tommy Gun",
+      name: "Thompson SMG",
       icon: "rbxassetid://10909681909"
     }, {
-      name: "Operator",
+      name: "Back Support",
       icon: "rbxassetid://10909681909"
     }, {
-      name: "Machine Gunner",
+      name: "M1918 BAR",
       icon: "rbxassetid://10909681909"
     }
   ], [ // path 2
     {
-      name: "AP Ammo",
+      name: "Enhanced Ballistics",
       icon: "rbxassetid://10909681909"
     }, {
-      name: "Supersonic Ammo",
+      name: "Enhanced Optics",
       icon: "rbxassetid://10909681909"
     }, {
-      name: "Watchman",
+      name: "M1903 Springfield",
       icon: "rbxassetid://10909681909"
     }, {
       name: "High Caliber",
       icon: "rbxassetid://10909681909"
     }, {
-      name: "Model 700",
+      name: "M1941 Johnson Rifle",
       icon: "rbxassetid://10909681909"
     }
   ]

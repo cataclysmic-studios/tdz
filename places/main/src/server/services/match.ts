@@ -48,11 +48,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
     });
     Events.toggleDoubleSpeed.connect((_, on) => {
       if (Players.GetPlayers().size() > 1) return; // TODO: vote for 2x
-
-      this.timeScale = on ? 2 : 1;
-      this.timeScaleChanged.Fire(this.timeScale);
-      Events.timeScaleUpdated.broadcast(this.timeScale);
-      adjustAllSoundSpeeds(this.timeScale);
+      this.setTimeScale(on ? 2 : 1);
     });
 
     Functions.getTimeScale.setCallback(() => this.timeScale);
@@ -88,6 +84,13 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   public onPlayerLeave(player: Player): void {
     this.playerJanitors[player.UserId]?.Destroy();
     this.playerJanitors[player.UserId] = undefined;
+  }
+
+  public setTimeScale(timeScale: number): void {
+    this.timeScale = timeScale;
+    this.timeScaleChanged.Fire(timeScale);
+    Events.timeScaleUpdated.broadcast(timeScale);
+    adjustAllSoundSpeeds(timeScale);
   }
 
   public getPath(): Path {

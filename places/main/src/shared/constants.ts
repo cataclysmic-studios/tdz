@@ -5,6 +5,9 @@ import { ProjectileType } from "common/shared/towers";
 import { metersToStuds } from "./utility/3D";
 import { DifficultyInfo, EnemyTraitType, TeleportData } from "./structs";
 
+export const MIN_TIME_SCALE = 0.5;
+export const MAX_TIME_SCALE = 10;
+
 export const TRAIT_ICONS: Record<EnemyTraitType, string> = {
   [EnemyTraitType.NoCash]: "rbxassetid://18324545188",
   [EnemyTraitType.BulletResistance]: "rbxassetid://395920626",

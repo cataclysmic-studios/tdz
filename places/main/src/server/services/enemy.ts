@@ -33,8 +33,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
       if (!DEVELOPERS.includes(player.UserId))
         return player.Kick("wtf r u doing brah, it's not even fun to do that");
 
-      for (const enemy of this.enemies)
-        task.spawn(() => this.kill(enemy, DamageType.God));
+      this.killAll();
     });
 
     Functions.getEnemyTraits.setCallback((_, id) => this.matter.world.get(<EnemyEntity>id, EnemyInfo)!.traits);
@@ -78,10 +77,13 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     }
   }
 
-  public kill(enemy: EnemyEntity, damageType: DamageType): void {
-    if (!this.matter.world.contains(enemy)) return;
-    const info = this.matter.world.get(enemy, EnemyInfo)!;
-    this.damage(enemy, info.health, damageType);
+  public killAll(): void {
+    for (const enemy of this.enemies)
+      task.spawn(() => {
+        if (!this.matter.world.contains(enemy)) return;
+        const info = this.matter.world.get(enemy, EnemyInfo)!;
+        this.damage(enemy, info.health, DamageType.God);
+      });
   }
 
   public damage(enemy: EnemyEntity, amount: number, damageType: DamageType): number {
