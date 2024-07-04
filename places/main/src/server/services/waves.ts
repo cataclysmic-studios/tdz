@@ -58,6 +58,6 @@ export class WavesService implements OnInit {
     }
 
     // TODO: win rewards, win UI, music, etc.
-    Log.info("You won!!!");
+    Log.ok("You won!!!");
   }
 }

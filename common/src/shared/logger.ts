@@ -18,6 +18,8 @@ const log = (category: LogFunctionName, ...messages: defined[]): void => {
   const prefix = `[${category.upper().gsub("_", " ")[0]}]:`;
   if (category === "fatal")
     error(`${prefix} ${flatten(messages).map(v => typeOf(v) === "table" ? repr(v) : v).join(" ")}`, 0);
+  else if (category === "warning")
+    warn(prefix, ...messages);
   else
     print(prefix, ...messages);
 }
@@ -33,9 +35,8 @@ namespace Log {
     }
   }
 
-  export function debug(...messages: defined[]): void {
-    if (!Runtime.IsStudio()) return;
-    log("debug", ...messages);
+  export function ok(...messages: defined[]): void {
+    log("ok", ...messages);
   }
 
   export function info(...messages: defined[]): void {
@@ -48,6 +49,11 @@ namespace Log {
 
   export function fatal(...messages: defined[]): void {
     log("fatal", ...messages);
+  }
+
+  export function debug(...messages: defined[]): void {
+    if (!Runtime.IsStudio()) return;
+    log("debug", ...messages);
   }
 
   /**
