@@ -11,12 +11,9 @@ import type Wave from "common/shared/classes/wave";
 
 import type { CameraController } from "./camera";
 import type { MouseController } from "./mouse";
-import { Events } from "client/network";
 
 @Controller()
 export class ControlPanelController implements OnStart {
-  private doubleSpeedEnabled = false;
-
   private readonly input = new InputContext({
     ActionGhosting: 0,
     Process: false,

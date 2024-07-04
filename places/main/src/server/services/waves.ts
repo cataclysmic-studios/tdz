@@ -2,6 +2,7 @@ import { Service, type OnInit } from "@flamework/core";
 import { SoundService as Sound } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
 
+import type { LogStart } from "common/shared/hooks";
 import { CommonEvents } from "common/server/network";
 import { Events } from "server/network";
 import { toSeconds } from "common/shared/utility/time";
@@ -15,7 +16,7 @@ import type { EnemyService } from "./enemy";
 import { toSuffixedNumber } from "common/shared/utility/numbers";
 
 @Service()
-export class WavesService implements OnInit {
+export class WavesService implements OnInit, LogStart {
   private readonly waveJanitor = new Janitor;
 
   public constructor(
