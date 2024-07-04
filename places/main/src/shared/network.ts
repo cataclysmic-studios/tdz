@@ -1,6 +1,6 @@
 import { Networking } from "@flamework/networking";
 
-import type { EnemyTrait, TeleportData } from "./structs";
+import type { TeleportData } from "./structs";
 import type { UpgradePath } from "./towers";
 import type { EnemyInfo, TowerInfo } from "./entity-components";
 
@@ -10,27 +10,27 @@ interface ServerEvents {
   loadTeleportData(teleportData: TeleportData): void;
   toggleDoubleSpeed(on: boolean): void;
   skipWave(): void;
-  admin: {
-    killAllEnemies(): void;
-  }
 }
 
 interface ClientEvents {
   updateTimerUI: Networking.Unreliable<(remainingTime: number) => void>;
   updateTowerStats: Networking.Unreliable<(id: number, towerInfo: Omit<TowerInfo, "patch">) => void>;
   towerAttacked: Networking.Unreliable<(id: number, enemyPosition: Vector3, enemyVelocity: Vector3) => void>;
+  enemyDied(id: number): void;
+  updateEnemies(enemyRecordEntries: [number, Omit<EnemyInfo, "patch">][]): void;
   updateHealthUI(health: number, maxHealth: number): void;
   updateWaveUI(wave: number): void;
   timeScaleUpdated(timeScale: number): void;
   replicateTower(id: number, towerInfo: Omit<TowerInfo, "patch">): void;
   loadTowers(allTowers: Record<number, TowerInfo>): void;
+  mapLoaded(mapName: MapName): void;
 }
 
 interface ServerFunctions {
   getTimeScale(): number;
   spendCash(price: number): [boolean, number];
   getTowerInfo(id: number): Omit<TowerInfo, "patch">;
-  getEnemyTraits(id: number): EnemyTrait[];
+  getEnemyInfo(id: number): Omit<EnemyInfo, "patch">;
 }
 
 interface ClientFunctions { }

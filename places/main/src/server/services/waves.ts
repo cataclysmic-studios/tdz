@@ -58,7 +58,6 @@ export class WavesService implements OnInit, LogStart {
       while (this.match.hasActiveTimer()) task.wait(0.2);
     }
 
-    // TODO: win rewards, win UI, music, etc.
-    Log.info("You won!!!");
+    this.match.complete(true);
   }
 }

@@ -14,7 +14,7 @@ export class Path {
   private totalLength = 0;
 
   public constructor(
-    private readonly map: MapModel
+    public readonly map: MapModel
   ) {
     this.calculateLengths(); // initialize segment lengths & total length
   }

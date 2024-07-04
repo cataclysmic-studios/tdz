@@ -36,6 +36,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   private timerJanitor = new Janitor;
   private maxHealth = 0;
   private health = 0;
+  private completed = false;
 
   public onInit(): void {
     Events.loadTeleportData.connect((_, teleportData) => {
@@ -75,7 +76,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
     this.playerJanitors[player.UserId] = janitor;
 
     do task.wait(0.2); while (this.teleportData === undefined);
-    const spawnPoint = this.mapModel.FindFirstChildOfClass("SpawnLocation")?.CFrame ?? this.mapModel.GetPivot();
+    const spawnPoint = this.mapModel.FindFirstChildOfClass("SpawnLocation")?.CFrame ?? this.mapModel.GetPivot().add(new Vector3(0, 10, 0));
     if (player.Character === undefined)
       player.CharacterAdded.Once(() => teleportPlayers(spawnPoint, player));
     else
@@ -83,11 +84,22 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
 
     const difficultyInfo = DIFFICULTY_INFO[this.teleportData.difficulty];
     this.setCash(player, this.getCash(player) ?? difficultyInfo.startingCash); // ?? in case they join back
+    Events.mapLoaded.broadcast(<MapName>this.mapModel.Name);
   }
 
   public onPlayerLeave(player: Player): void {
     this.playerJanitors[player.UserId]?.Destroy();
     this.playerJanitors[player.UserId] = undefined;
+  }
+
+  public isComplete(): boolean {
+    return this.completed;
+  }
+
+  public complete(won: boolean): void {
+    this.completed = true;
+    Log.info(won ? "You won!" : "You lost...");
+    // TODO: rewards, win/lose UI, music, etc.
   }
 
   public setTimeScale(timeScale: number): void {
@@ -150,7 +162,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
     Events.updateHealthUI.broadcast(health, this.maxHealth);
 
     if (health === 0)
-      Log.info("You lost...");
+      this.complete(false);
   }
 
   private getHealth(): number {
@@ -171,7 +183,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
       task.spawn(() => this.cashChanged.Fire(player, this.getCash(player)));
   }
 
-  private initialize(difficulty: Difficulty) {
+  private initialize(difficulty: Difficulty): void {
     task.spawn(() => {
       const { startingHealth } = DIFFICULTY_INFO[difficulty];
       this.setHealth(startingHealth);

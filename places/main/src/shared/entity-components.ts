@@ -7,10 +7,14 @@ export type EnemyEntity = Entity<[EnemyInfo]>;
 export type EnemyInfo = ReturnType<typeof EnemyInfo>;
 export const EnemyInfo = component<{
   distance: number;
-  health: number;
+  speed: number;
   isStealth: boolean;
+  health: number;
+  readonly maxHealth: number;
   readonly traits: EnemyTrait[];
-  readonly model: EnemyModel;
+  readonly scale: number;
+  readonly height: number;
+  readonly name: EnemyName;
 }>("EnemyInfo");
 
 export type TowerEntity = Entity<[TowerInfo]>;

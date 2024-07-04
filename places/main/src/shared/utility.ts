@@ -6,12 +6,54 @@ import Object from "@rbxts/object-utils";
 import { Assets } from "common/shared/utility/instances";
 import { tween } from "common/shared/utility/ui";
 import { flatten } from "common/shared/utility/array";
+import { removeVectorY } from "common/shared/utility/3D";
 import { TOWER_STATS } from "common/shared/towers";
 import { PLACEMENT_STORAGE } from "./constants";
 import { type EnemyTrait, EnemyTraitType } from "./structs";
 import type { TowerStats, PathStats, UpgradeLevel } from "./towers";
 import CircularRegion from "./classes/circular-region";
 import Log from "./logger";
+
+export function getRecordDifference<K extends string | number | symbol, V>(record1: Record<K, V>, record2: Record<K, V>): Partial<Record<K, V>> {
+  const difference: Partial<Record<K, V>> = {};
+
+  for (const key of <K[]>Object.keys(record2))
+    if (key in record2)
+      if (!(key in record1))
+        difference[key] = record2[key];
+
+  return difference;
+}
+
+export function getRecordChanges<K extends string | number | symbol, V>(record1: Record<K, V>, record2: Record<K, V>): Partial<Record<K, { oldValue?: V, newValue?: V }>> {
+  const difference: Partial<Record<K, { oldValue?: V, newValue?: V }>> = {};
+
+  for (const key of <K[]>Object.keys(record1))
+    if (key in record1 && key in record2)
+      if (record1[key] !== record2[key])
+        difference[key] = {
+          oldValue: record1[key],
+          newValue: record2[key]
+        };
+      else if (key in record1 && !(key in record2))
+        difference[key] = {
+          oldValue: record1[key],
+          newValue: undefined
+        };
+
+  for (const key of <K[]>Object.keys(record2))
+    if (key in record2 && !(key in record1))
+      difference[key] = {
+        oldValue: undefined,
+        newValue: record2[key]
+      };
+
+  return difference;
+}
+
+export function didEnemyCompletePath(position: Vector3, endPointPosition: Vector3): boolean {
+  return removeVectorY(position).FuzzyEq(removeVectorY(endPointPosition));
+}
 
 export function getEnemyBaseTraits(enemyModel: EnemyModel): EnemyTrait[] {
   const traits: EnemyTrait[] = [];

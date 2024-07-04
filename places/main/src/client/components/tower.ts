@@ -21,9 +21,8 @@ import type { TowerInfo } from "shared/entity-components";
 import Log from "common/shared/logger";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
-import type { MouseController } from "../controllers/mouse";
-import type { CharacterController } from "../controllers/character";
-import type { SelectionController } from "client/controllers/selection";
+import type { MouseController } from "common/client/controllers/mouse";
+import type { CharacterController } from "common/client/controllers/character";
 import type { TimeScaleController } from "client/controllers/time-scale";
 import { fuzzyEquals, lerp } from "common/shared/utility/numbers";
 

@@ -1,4 +1,4 @@
-import { OnInit, OnTick, Service } from "@flamework/core";
+import { Service, type OnInit, type OnStart, type OnTick } from "@flamework/core";
 import { SoundService as Sound } from "@rbxts/services";
 import type { Entity } from "@rbxts/matter";
 
@@ -6,12 +6,9 @@ import type { LogStart } from "common/shared/hooks";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
 import { flatten, removeDuplicates } from "common/shared/utility/array";
-import { removeVectorY } from "common/shared/utility/3D";
-import { getEnemyBaseTraits, growIn } from "shared/utility";
+import { didEnemyCompletePath, getEnemyBaseTraits } from "shared/utility";
 import { EnemyInfo } from "shared/entity-components";
 import { DamageType } from "common/shared/towers";
-import { DEVELOPERS } from "common/shared/constants";
-import { ENEMY_STORAGE } from "shared/constants";
 import { type EnemySummonInfo, type EnemyTrait, EnemyTraitType } from "shared/structs";
 import Log from "common/shared/logger";
 
@@ -20,9 +17,11 @@ import type { MatchService } from "./match";
 
 type EnemyEntity = Entity<[EnemyInfo]>;
 
+const CLIENT_UPDATE_INTERVAL = 0.1;
+
 @Service()
-export class EnemyService implements OnInit, OnTick, LogStart {
-  private readonly enemies: EnemyEntity[] = [];
+export class EnemyService implements OnInit, OnStart, OnTick, LogStart {
+  public readonly enemies: EnemyEntity[] = [];
 
   public constructor(
     private readonly matter: MatterService,
@@ -30,34 +29,39 @@ export class EnemyService implements OnInit, OnTick, LogStart {
   ) { }
 
   public onInit(): void {
-    Functions.getEnemyTraits.setCallback((_, id) => this.matter.world.get(<EnemyEntity>id, EnemyInfo)!.traits);
+    Functions.getEnemyInfo.setCallback((_, id) => this.matter.world.get(<EnemyEntity>id, EnemyInfo)!);
+  }
 
-    for (const enemyModel of <EnemyModel[]>Assets.Enemies.GetChildren())
-      for (const part of enemyModel.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart"))) {
-        part.CanCollide = false;
-        part.CollisionGroup = "plrs";
+  public onStart(): void {
+    task.spawn(() => {
+      while (!this.match.isComplete()) {
+        const enemyEntries = this.enemies
+          .map<[EnemyEntity, EnemyInfo]>(enemy => [enemy, this.matter.world.get(enemy, EnemyInfo)!])
+          .filter(([enemy]) => this.matter.world.contains(enemy));
+
+        if (enemyEntries.size() === 0) {
+          Events.updateEnemies.broadcast(enemyEntries);
+          task.wait(CLIENT_UPDATE_INTERVAL * 5);
+          continue;
+        }
+
+        Events.updateEnemies.broadcast(enemyEntries);
+        task.wait(CLIENT_UPDATE_INTERVAL);
       }
+    });
   }
 
   public onTick(dt: number): void {
     const map = this.match.getMap();
     for (const [enemy, info] of this.matter.world.query(EnemyInfo)) {
-      const root = info.model.HumanoidRootPart;
-      const [_, enemySize] = info.model.GetBoundingBox();
-      const speed = <number>info.model.GetAttribute("Speed") * <number>info.model.GetAttribute("DefaultScale") * this.match.timeScale;
+      const speed = info.speed * info.scale * this.match.timeScale;
       this.matter.world.insert(enemy, info.patch({ distance: info.distance + speed * dt }));
-      info.model.SetAttribute("Health", info.health);
 
-      const path = this.match.getPath();
-      const cframe = path.getCFrameAtDistance(info.distance)
-        .sub(new Vector3(0, 1, 0))
-        .add(new Vector3(0, enemySize.Y / 2, 0));
-
-      root.CFrame = root.CFrame.Lerp(cframe, 0.2);
-      if (info.health === 0)
+      if (info.health <= 0)
         return this.despawn(enemy);
 
-      if (removeVectorY(cframe.Position).FuzzyEq(removeVectorY(map.EndPoint.Position))) {
+      const position = this.match.getPath().getPositionAtDistance(info.distance);
+      if (didEnemyCompletePath(position, map.EndPoint.Position)) {
         this.despawn(enemy);
         this.match.decrementHealth(info.health);
         Sound.SoundEffects.Damaged.Play();
@@ -88,12 +92,11 @@ export class EnemyService implements OnInit, OnTick, LogStart {
   public damage(enemy: EnemyEntity, amount: number, damageType: DamageType): number {
     if (!this.matter.world.contains(enemy)) return 0;
     const info = this.matter.world.get(enemy, EnemyInfo)!;
-    const maxHealth = <number>info.model.GetAttribute("MaxHealth");
     const healthBeforeDamage = info.health;
-    const newHealth = math.clamp(info.health - amount, 0, maxHealth);
+    const newHealth = math.clamp(info.health - amount, 0, info.maxHealth);
     this.matter.world.insert(enemy, info.patch({ health: newHealth }));
 
-    let damageDealt = math.clamp(healthBeforeDamage - newHealth, 0, maxHealth);
+    let damageDealt = math.clamp(healthBeforeDamage - newHealth, 0, info.maxHealth);
     damageDealt = this.applyResistance(enemy, damageType, damageDealt, EnemyTraitType.BulletResistance, DamageType.Bullet);
     damageDealt = this.applyResistance(enemy, damageType, damageDealt, EnemyTraitType.LaserResistance, DamageType.Laser);
 
@@ -108,7 +111,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     if (this.hasTrait(enemy, resistanceTrait) && damageType === resistedDamageType) {
       const effectiveness = this.getTraitEffectiveness(enemy, resistanceTrait);
       if (effectiveness === undefined)
-        throw Log.fatal(`${info.model.Name} was spawned with ${resistanceTrait} trait with no effectiveness`);
+        throw Log.fatal(`${info.name} was spawned with ${resistanceTrait} trait with no effectiveness`);
 
       const resistance = 1 - (effectiveness === 0 ? 0 : effectiveness / 100);
       resistance === 0 ? damageDealt = 0 : damageDealt /= resistance;
@@ -119,8 +122,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
   private heal(enemy: EnemyEntity, amount: number): void {
     if (!this.matter.world.contains(enemy)) return;
     const info = this.matter.world.get(enemy, EnemyInfo)!;
-    const maxHealth = <number>info.model.GetAttribute("MaxHealth");
-    this.matter.world.insert(enemy, info.patch({ health: math.clamp(info.health + amount, 0, maxHealth) }));
+    this.matter.world.insert(enemy, info.patch({ health: math.clamp(info.health + amount, 0, info.maxHealth) }));
   }
 
   private hasTrait(enemy: EnemyEntity, traitType: EnemyTraitType): boolean {
@@ -135,37 +137,32 @@ export class EnemyService implements OnInit, OnTick, LogStart {
   }
 
   private spawn(enemyName: EnemyName, traits: EnemyTrait[] = []): void {
-    const map = this.match.getMap();
-    const enemyModel = Assets.Enemies[enemyName].Clone();
-    const [_, size] = enemyModel.GetBoundingBox();
-    const spawnCFrame = map.StartPoint.CFrame.add(new Vector3(0, (size.Y / 2) - (map.StartPoint.Size.Y / 2), 0));
-    enemyModel.HumanoidRootPart.CFrame = spawnCFrame;
-    enemyModel.Parent = ENEMY_STORAGE;
-    growIn(enemyModel);
-
+    const enemyModel = Assets.Enemies[enemyName];
     const finalTraits = removeDuplicates(flatten([getEnemyBaseTraits(enemyModel), traits]))
       .filter(traits => "type" in traits);
 
+    const maxHealth = <number>enemyModel.GetAttribute("MaxHealth");
     const enemy = this.matter.world.spawn(
       EnemyInfo({
         traits: finalTraits,
         distance: 0,
-        isStealth: <boolean>enemyModel.GetAttribute("Stealth"),
-        health: <number>enemyModel.GetAttribute("MaxHealth"),
-        model: enemyModel
+        isStealth: <boolean>enemyModel.GetAttribute("Stealth") ?? false,
+        health: maxHealth,
+        maxHealth,
+        speed: <number>enemyModel.GetAttribute("Speed"),
+        scale: <number>enemyModel.GetAttribute("DefaultScale"),
+        height: enemyModel.GetBoundingBox()[0].Y,
+        name: <EnemyName>enemyModel.Name
       })
     );
 
-    enemyModel.SetAttribute("ID", enemy);
-    enemyModel.AddTag("Enemy");
     this.enemies.push(enemy);
   }
 
   private despawn(enemy: EnemyEntity): void {
     if (!this.matter.world.contains(enemy)) return;
     this.enemies.remove(this.enemies.indexOf(enemy));
-    const info = this.matter.world.get(enemy, EnemyInfo)!;
     this.matter.world.despawn(enemy);
-    info.model.Destroy();
+    Events.enemyDied.broadcast(enemy);
   }
 }

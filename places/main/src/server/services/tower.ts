@@ -23,6 +23,7 @@ import { NotificationStyle } from "common/shared/structs/notifications";
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {
   private readonly towers: TowerEntity[] = [];
+  private readonly lastTowerStatsUpdate: Record<TowerEntity, number> = {};
 
   public constructor(
     private readonly matter: MatterService,
@@ -65,8 +66,9 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     // TODO: handle damage types, splash damage, etc.
     const towerInfo = this.matter.world.get(tower, TowerInfo)!;
     const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!;
-    const enemyPosition = enemyInfo.model.GetPivot().Position;
-    const enemyVelocity = enemyInfo.model.HumanoidRootPart.AssemblyLinearVelocity;
+    const cframe = this.match.getPath().getCFrameAtDistance(enemyInfo.distance);
+    const enemyPosition = cframe.Position;
+    const enemyVelocity = cframe.LookVector.mul(enemyInfo.speed); // * Matter.useDeltaTime() (?)
     Events.towerAttacked.broadcast(tower, enemyPosition, enemyVelocity);
     this.matter.world.insert(tower, towerInfo.patch({ timeSinceAttack: 0 }));
 
@@ -111,12 +113,10 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       }));
 
       const target = this.getTarget(tower);
-      for (const [enemy] of this.matter.world.query(EnemyInfo)) {
-        if (enemy === target) {
+      for (const [enemy] of this.matter.world.query(EnemyInfo))
+        if (enemy === target)
           if (towerInfo.timeSinceAttack >= reloadTime / this.match.timeScale)
             this.attack(tower, enemy);
-        }
-      }
     }
   }
 
@@ -124,7 +124,14 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     for (const [tower, record] of this.matter.world.queryChanged(TowerInfo)) {
       if (!this.matter.world.contains(tower)) continue;
       if (record.new === undefined) continue;
-      Events.updateTowerStats.broadcast(tower, record.new);
+
+      const lastUpdate = this.lastTowerStatsUpdate[tower] ?? 0;
+      const timeSinceUpdate = os.time() - lastUpdate;
+      this.lastTowerStatsUpdate[tower] = lastUpdate;
+      if (timeSinceUpdate >= 0.1) {
+        Events.updateTowerStats.broadcast(tower, record.new);
+        this.lastTowerStatsUpdate[tower] = os.time();
+      }
     }
   }
 
@@ -191,8 +198,8 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     return enemies.find(enemy => {
       if (!this.matter.world.contains(enemy)) return false;
       const { range, minimumRange } = towerInfo.stats;
-      const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!; this.sortEnemiesBy(enemies, "distance", true)
-      const enemyPosition = enemyInfo.model.GetPivot().Position;
+      const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!; this.sortEnemiesBy(enemies, "distance", true);
+      const enemyPosition = this.match.getPath().getPositionAtDistance(enemyInfo.distance);
       const distanceFromTower = this.getDistance(towerInfo.cframe.Position, enemyPosition);
       return (distanceFromTower <= range && distanceFromTower >= (minimumRange ?? 0))
         && (enemyInfo.isStealth ? towerInfo.stats.canSeeStealth : true);

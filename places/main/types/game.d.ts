@@ -14,6 +14,7 @@ interface MapModel extends Model {
   StartPoint: Part;
 }
 
+type MapName = ExtractKeys<ReplicatedFirst["Assets"]["Maps"], MapModel>;
 type ProjectileName = ExtractKeys<ReplicatedFirst["Assets"]["VFX"]["Projectiles"], BasePart>;
 type EnemyName = ExtractKeys<ReplicatedFirst["Assets"]["Enemies"], EnemyModel>;
 type TowerName = ExtractKeys<ReplicatedFirst["Assets"]["Towers"], TowerFolder>;
