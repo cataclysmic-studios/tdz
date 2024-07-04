@@ -156,7 +156,7 @@ export function isSizePreviewOverlapping(sizePreview: typeof Assets.SizePreview)
     .some(region => sizeRegion.overlapsRegion(region));
 }
 
-export function createSizePreview(size: number, towerID?: number): typeof Assets.SizePreview {
+export function createSizePreview(size: number, towerID?: number): [typeof Assets.SizePreview, Promise<void>] {
   const sizePreview = Assets.SizePreview.Clone();
   const defaultTowerSize = sizePreview.Size.X;
   const sizeScale = size / defaultTowerSize;
@@ -169,11 +169,11 @@ export function createSizePreview(size: number, towerID?: number): typeof Assets
   sizePreview.Right.Position = new Vector3(0, 0, -sizePreview.Size.X / 2);
   sizePreview.SetAttribute("TowerID", towerID);
   sizePreview.Parent = PLACEMENT_STORAGE;
-  growIn(sizePreview);
+  const growPromise = growIn(sizePreview);
 
   sizePreviews.push(sizePreview);
   sizePreview.Destroying.Once(() => sizePreviews.remove(sizePreviews.indexOf(sizePreview)));
-  return sizePreview;
+  return [sizePreview, growPromise];
 }
 
 export function setSizePreviewColor(sizePreview: typeof Assets.SizePreview, color: Color3): typeof Assets.SizePreview {

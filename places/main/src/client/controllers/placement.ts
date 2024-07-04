@@ -10,7 +10,15 @@ import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player, PlayerGui } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
-import { createRangePreview, createSizePreview, createTowerModel, getTowerModelName, growIn, isSizePreviewOverlapping, setSizePreviewColor } from "shared/utility";
+import {
+  getTowerModelName,
+  createTowerModel,
+  createRangePreview,
+  createSizePreview,
+  isSizePreviewOverlapping,
+  setSizePreviewColor,
+  growIn
+} from "shared/utility";
 import { NotificationStyle } from "common/shared/structs/notifications";
 import { PLACEMENT_STORAGE, RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 import { TOWER_STATS } from "common/shared/towers";
@@ -90,7 +98,20 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const groundBelow = World.Raycast(towerCFrame.Position, new Vector3(0, -3.1 * towerScale, 0), raycastParams);
     const groundInside = World.Raycast(towerCFrame.Position, new Vector3(0, -1.1, 0), raycastParams);
     const inPlacableLocation = this.mouse.getTarget(undefined, mouseFilter)?.HasTag(isWaterTower ? "PlacableWater" : "PlacableGround") ?? false;
-    this.canPlace = inPlacableLocation && groundBelow?.Instance !== undefined && groundInside?.Instance === undefined && !isSizePreviewOverlapping(this.placementSizePreview);
+    const hitboxObstructions = this.placementSizePreview.GetTouchingParts()
+      .filter(part => {
+        const model = part.FindFirstAncestorOfClass("Model");
+        return model !== this.placementModel
+          && part !== groundBelow?.Instance
+          && model?.Name !== "RangePreview"
+          && part.Name !== "SizePreview";
+      });
+
+    this.canPlace = inPlacableLocation
+      && groundBelow?.Instance !== undefined
+      && groundInside?.Instance === undefined
+      && !isSizePreviewOverlapping(this.placementSizePreview)
+      && hitboxObstructions.isEmpty();
 
     const previewColor = RANGE_PREVIEW_COLORS[this.canPlace ? "CanPlace" : "CanNotPlace"];
     this.placementRangePreview.Circle.Color = previewColor;
@@ -108,7 +129,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     towerModel.SetAttribute("CurrentModelName", modelName);
 
     const size = <number>towerModel.GetAttribute("Size");
-    const sizePreview = createSizePreview(size, id);
+    const [sizePreview] = createSizePreview(size, id);
     setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"]);
     sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
 
@@ -135,7 +156,12 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementRangePreview = this.placementJanitor.Add(createRangePreview(range));
 
     const size = <number>this.placementModel.GetAttribute("Size");
-    this.placementSizePreview = this.placementJanitor.Add(createSizePreview(size));
+    const [sizePreview, growPromise] = createSizePreview(size);
+    this.placementSizePreview = this.placementJanitor.Add(sizePreview);
+    task.spawn(async () => {
+      await growPromise;
+      this.placementJanitor.Add(this.placementSizePreview!.Touched.Connect(() => { }), "Disconnect");
+    });
 
     for (const tower of this.components.getAllComponents<Tower>())
       task.spawn(() => {
