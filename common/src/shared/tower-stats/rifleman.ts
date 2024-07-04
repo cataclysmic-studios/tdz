@@ -20,7 +20,7 @@ const RiflemanStats = identity<[TowerStats, PathStats, PathStats]>([
       reloadTime: -0.1
     }, {
       price: 1000,
-      damage: 5,
+      damage: 3,
       range: 10,
       reloadTime: -0.3
     }, {
@@ -31,7 +31,7 @@ const RiflemanStats = identity<[TowerStats, PathStats, PathStats]>([
       price: 5100,
       damage: 20,
       range: 6,
-      reloadTime: -0.75
+      reloadTime: -0.7
     }
   ], [ // path 2
     {
