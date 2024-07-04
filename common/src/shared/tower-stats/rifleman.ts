@@ -6,7 +6,7 @@ const RiflemanStats = identity<[TowerStats, PathStats, PathStats]>([
     damageType: DamageType.Bullet,
     projectileType: ProjectileType.Bullet,
     damage: 3,
-    range: 14,
+    range: 5,
     reloadTime: 1.2,
     canSeeStealth: false
   },
@@ -16,17 +16,16 @@ const RiflemanStats = identity<[TowerStats, PathStats, PathStats]>([
       range: 2,
     }, {
       price: 260,
-      range: 6,
+      range: 2,
       reloadTime: -0.1
     }, {
       price: 1000,
       damage: 3,
-      range: 10,
+      range: 2,
       reloadTime: -0.3
     }, {
       price: 3120,
       damage: 10,
-      range: 6,
     }, {
       price: 5100,
       damage: 20,
@@ -40,17 +39,17 @@ const RiflemanStats = identity<[TowerStats, PathStats, PathStats]>([
     }, {
       price: 540,
       damage: 1,
-      range: 5
+      range: 1
     }, {
       price: 1200,
       damage: 10,
-      range: 5,
+      range: 2,
       reloadTime: -0.1,
       canSeeStealth: true
     }, {
       price: 3450,
       damage: 25,
-      range: 10,
+      range: 3,
       reloadTime: -0.1,
       canSeeStealth: true
     }, {
