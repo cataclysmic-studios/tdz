@@ -150,7 +150,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
     Events.updateHealthUI.broadcast(health, this.maxHealth);
 
     if (health === 0)
-      Log.info("You lost...")
+      Log.info("You lost...");
   }
 
   private getHealth(): number {

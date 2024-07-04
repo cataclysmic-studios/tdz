@@ -57,7 +57,7 @@ export class EnemyService implements OnInit, OnTick, LogStart {
       if (info.health === 0)
         return this.despawn(enemy);
 
-      if (removeVectorY(cframe.Position).FuzzyEq(removeVectorY(map.EndPoint.Position)), 0.01) {
+      if (removeVectorY(cframe.Position).FuzzyEq(removeVectorY(map.EndPoint.Position))) {
         this.despawn(enemy);
         this.match.decrementHealth(info.health);
         Sound.SoundEffects.Damaged.Play();
