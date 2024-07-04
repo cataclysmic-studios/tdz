@@ -1,6 +1,9 @@
 interface ReplicatedFirst extends Instance {
   Assets: Folder & {
-    RangePreview: MeshPart;
+    RangePreview: Model & {
+      Circle: MeshPart;
+      Ring: MeshPart;
+    };
     SizePreview: MeshPart & {
       Left: Attachment;
       Right: Attachment;

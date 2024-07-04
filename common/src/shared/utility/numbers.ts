@@ -5,6 +5,10 @@ const { floor, log, abs, clamp } = math;
 export const isNaN = (n: number) => n !== n;
 export const isEven = (n: number) => n % 2 === 0;
 
+export function fuzzyEquals(a: number, b: number, epsilon = 0.001): boolean {
+  return a <= b + epsilon && a >= b - epsilon;
+}
+
 export function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }

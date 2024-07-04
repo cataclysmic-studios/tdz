@@ -15,7 +15,7 @@ import { tween } from "common/shared/utility/ui";
 import { createRangePreview, getTowerModelName, setSizePreviewColor, upgradeTowerModel } from "shared/utility";
 import { findLeadShot } from "shared/projectile-utility";
 import { AttackVfxType, ProjectileImpactVfxType } from "shared/structs";
-import { ENEMY_STORAGE, PLACEMENT_STORAGE, PROJECTILE_SPEEDS } from "shared/constants";
+import { ENEMY_STORAGE, PLACEMENT_STORAGE, PROJECTILE_SPEEDS, RANGE_PREVIEW_COLORS } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
 import Log from "common/shared/logger";
@@ -25,6 +25,7 @@ import type { MouseController } from "../controllers/mouse";
 import type { CharacterController } from "../controllers/character";
 import type { SelectionController } from "client/controllers/selection";
 import type { TimeScaleController } from "client/controllers/time-scale";
+import { fuzzyEquals, lerp } from "common/shared/utility/numbers";
 
 type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
 
@@ -64,23 +65,21 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   private readonly defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
   private readonly defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;
   private readonly defaultRightAttachmentPosition = Assets.SizePreview.Right.Position;
-  private readonly selectionFillTransparency = 0.75;
-  private currentRangePreview?: MeshPart;
+  private readonly selectionFillTransparency = 0.7;
+  private currentRangePreview?: typeof Assets.RangePreview;
+  private highlight?: Highlight;
   private projectileCache!: PartCache;
   private caster!: Caster;
-  private highlight!: Highlight;
   private info!: Omit<TowerInfo, "patch">;
 
   public constructor(
     private readonly mouse: MouseController,
     private readonly character: CharacterController,
-    private readonly selection: SelectionController,
     private readonly timeScale: TimeScaleController
   ) { super(); }
 
   public async onStart(): Promise<void> {
     this.info = await Functions.getTowerInfo(this.attributes.ID);
-    this.loadHighlight();
     this.loadAnimations();
     this.loadProjectileCache();
 
@@ -112,7 +111,6 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
         const newModelName = getTowerModelName(info.upgrades)
         if (this.instance.GetAttribute("CurrentModelName") === newModelName) return;
         upgradeTowerModel(<TowerName>this.instance.Name, this.instance, info.upgrades, this.instance.GetPivot());
-        this.loadHighlight(this.selection.isSelected(this));
         this.loadAnimations();
         this.loadProjectileCache();
       }
@@ -131,10 +129,14 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
   public onRender(dt: number): void {
     this.updateInfoFrame();
+    if (this.currentRangePreview === undefined || this.currentRangePreview.Parent === undefined) {
+      this.currentRangePreview = undefined;
+      return;
+    }
 
-    if (this.currentRangePreview === undefined) return;
     const range = this.info.stats.range;
-    this.currentRangePreview.Size = this.currentRangePreview.Size.Lerp(new Vector3(range, this.currentRangePreview.Size.Y, range), 0.2);
+    const referenceRange = Assets.RangePreview.Circle.Size.X;
+    this.currentRangePreview.ScaleTo(lerp(this.currentRangePreview.GetScale(), range / referenceRange, 0.2));
   }
 
   private updateInfoFrame(disable = false): void {
@@ -149,7 +151,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
     if (targetModel !== this.instance) return;
     const { X, Y } = this.mouse.getPosition();
-    towerInfo.Position = UDim2.fromOffset(X, Y); // TODO: add traits frames
+    towerInfo.Position = UDim2.fromOffset(X, Y);
     towerInfo.Main.TowerName.Text = this.instance.Name.upper();
     towerInfo.OwnerName.Text = this.getPlayerNameFromID(this.info.ownerID);
     towerInfo.Level.Value.Text = `${this.info.upgrades[0]}-${this.info.upgrades[1]}`;
@@ -158,31 +160,40 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       towerInfo.Visible = true;
   }
 
-  public createRangePreview(): MeshPart {
+  public createRangePreview(): typeof Assets.RangePreview {
     const oldPreview = this.currentRangePreview;
     this.currentRangePreview = undefined;
     oldPreview?.Destroy();
 
     this.currentRangePreview = createRangePreview(this.info.stats.range);
+    this.currentRangePreview.Circle.Color = RANGE_PREVIEW_COLORS.CanPlace;
+    this.currentRangePreview.PivotTo(this.instance.GetPivot().sub(new Vector3(0, 0.8, 0)));
     return this.currentRangePreview;
   }
 
   public isHighlightEnabled(): boolean {
-    return this.highlight.Enabled;
+    return this.highlight?.Enabled ?? false;
   }
 
   public toggleHoverHighlight(on: boolean): void {
-    if (this.highlight === undefined) return;
-    if (this.highlight.FillTransparency === this.selectionFillTransparency) return; // if selection highlight is enabled dont turn off
-    this.highlight.Enabled = on;
-    this.highlight.FillTransparency = on ? 1 : 0;
+    if (this.highlight !== undefined && fuzzyEquals(this.highlight.FillTransparency, this.selectionFillTransparency)) return;
+    if (on) {
+      this.createHighlight();
+      this.highlight!.FillTransparency = 1;
+    } else {
+      this.highlight?.Destroy();
+      this.highlight = undefined;
+    }
   }
 
   public toggleSelectionHighlight(on: boolean): void {
-    if (this.highlight === undefined) return;
-    if (this.highlight.FillTransparency === 1) return; // if hover highlight is enabled dont turn off
-    this.highlight.Enabled = on;
-    this.highlight.FillTransparency = on ? this.selectionFillTransparency : 0;
+    if (on) {
+      this.createHighlight();
+      this.highlight!.FillTransparency = this.selectionFillTransparency;
+    } else {
+      this.highlight?.Destroy();
+      this.highlight = undefined;
+    }
   }
 
   public getSizePreview(): typeof Assets.SizePreview {
@@ -232,6 +243,16 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
   public isMine(): boolean {
     return this.getInfo().ownerID === Player.UserId;
+  }
+
+  private createHighlight(): void {
+    if (this.highlight !== undefined) return;
+    this.highlight = this.janitor.Add(new Instance("Highlight", this.instance));
+    this.highlight.Enabled = true;
+    this.highlight.FillTransparency = 0;
+    this.highlight.Adornee = this.instance;
+    this.highlight.FillColor = new Color3(1, 1, 1);
+    this.highlight.OutlineColor = new Color3(1, 1, 1);
   }
 
   private getPlayerNameFromID(id: number): string {
@@ -320,17 +341,6 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     const projectileTemplate = Assets.VFX.Projectiles[this.attributes.ProjectileName];
     this.projectileCache = new PartCacheModule(projectileTemplate, math.ceil(math.max(10 / (this.info.stats.reloadTime * 1.2), 10)));
     this.projectileCache.SetCacheParent(PLACEMENT_STORAGE);
-  }
-
-  private loadHighlight(loadSelected = false): void {
-    this.highlight?.Destroy();
-    this.highlight = this.janitor.Add(new Instance("Highlight", this.instance));
-    this.highlight.Enabled = false;
-    this.highlight.Adornee = this.instance;
-    this.highlight.FillColor = new Color3(1, 1, 1);
-    this.highlight.OutlineColor = new Color3(1, 1, 1);
-    if (loadSelected)
-      this.toggleSelectionHighlight(true);
   }
 
   private loadAnimations(): void {

@@ -137,11 +137,13 @@ export function animateTowerIdle(towerModel: TowerModel): void {
   idle.Play(0);
 }
 
-export function createRangePreview(range: number): MeshPart {
+export function createRangePreview(range: number): typeof Assets.RangePreview {
   const rangePreview = Assets.RangePreview.Clone();
-  rangePreview.Size = new Vector3(range, rangePreview.Size.Y, range);
+  const referenceRange = rangePreview.Circle.Size.X;
+  rangePreview.SetAttribute("DefaultScale", range / referenceRange)
   rangePreview.Parent = PLACEMENT_STORAGE;
-  growIn(rangePreview)
+
+  growIn(rangePreview);
   return rangePreview;
 }
 

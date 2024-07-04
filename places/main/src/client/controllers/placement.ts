@@ -30,7 +30,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   private readonly placementJanitor = new Janitor;
   private readonly swaySpring = new Spring;
   private placementModel?: TowerModel;
-  private placementRangePreview?: MeshPart;
+  private placementRangePreview?: typeof Assets.RangePreview;
   private placementSizePreview?: typeof Assets.SizePreview;
   private lastMouseWorldPosition = new Vector3;
   private canPlace = true;
@@ -77,7 +77,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
       .add(new Vector3(0, this.placementModel.GetScale() * 3, 0));
 
     this.placementModel.PivotTo(towerCFrame.mul(swayAngles));
-    this.placementRangePreview.CFrame = towerCFrame.sub(new Vector3(0, 0.8, 0));
+    this.placementRangePreview.PivotTo(towerCFrame.sub(new Vector3(0, 0.8, 0)));
     this.placementSizePreview.CFrame = towerCFrame.sub(new Vector3(0, 1, 0));
 
     const isWaterTower = <boolean>this.placementModel.GetAttribute("Water") ?? false;
@@ -93,7 +93,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.canPlace = inPlacableLocation && groundBelow?.Instance !== undefined && groundInside?.Instance === undefined && !isSizePreviewOverlapping(this.placementSizePreview);
 
     const previewColor = RANGE_PREVIEW_COLORS[this.canPlace ? "CanPlace" : "CanNotPlace"];
-    this.placementRangePreview.Color = previewColor;
+    this.placementRangePreview.Circle.Color = previewColor;
     this.placementSizePreview.Beam1.Color = new ColorSequence(previewColor);
     this.placementSizePreview.Beam2.Color = new ColorSequence(previewColor);
     this.lastDt = dt;
