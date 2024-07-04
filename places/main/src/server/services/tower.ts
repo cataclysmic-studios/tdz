@@ -70,7 +70,6 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     Events.towerAttacked.broadcast(tower, enemyPosition, enemyVelocity);
     this.matter.world.insert(tower, towerInfo.patch({ timeSinceAttack: 0 }));
 
-
     const projectileType = towerInfo.stats.projectileType;
     const speed = PROJECTILE_SPEEDS[projectileType];
     const towerPosition = towerInfo.cframe.Position;

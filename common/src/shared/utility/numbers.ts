@@ -1,6 +1,6 @@
 import Log from "../logger";
 
-const { floor, log, abs, clamp } = math;
+const { floor, round, log, abs, clamp } = math;
 
 export const isNaN = (n: number) => n !== n;
 export const isEven = (n: number) => n % 2 === 0;
@@ -15,6 +15,11 @@ export function lerp(a: number, b: number, t: number): number {
 
 export function doubleSidedLimit(n: number, limit: number) {
   return clamp(n, -limit, limit);
+}
+
+export function roundDecimal(n: number, decimals = 0): number {
+  const mult = 10 ** decimals;
+  return round(n * mult + 0.5) / mult;
 }
 
 /**

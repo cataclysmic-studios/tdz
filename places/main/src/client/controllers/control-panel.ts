@@ -1,6 +1,6 @@
 import { Controller, type OnStart } from "@flamework/core";
 import { Context as InputContext } from "@rbxts/gamejoy";
-import { RunService as Runtime } from "@rbxts/services";
+import { RunService as Runtime, Stats } from "@rbxts/services";
 import Object from "@rbxts/object-utils";
 import Iris from "@rbxts/iris";
 
@@ -11,6 +11,7 @@ import type Wave from "common/shared/classes/wave";
 
 import type { CameraController } from "./camera";
 import type { MouseController } from "./mouse";
+import { roundDecimal } from "common/shared/utility/numbers";
 
 @Controller()
 export class ControlPanelController implements OnStart {
@@ -48,10 +49,26 @@ export class ControlPanelController implements OnStart {
       if (!open) return;
       Iris.Window(["Control Panel"], { size: Iris.State(windowSize) });
 
+      this.renderStatsTab();
       this.renderCameraTab();
 
       Iris.End();
     });
+  }
+
+  private renderStatsTab(): void {
+    Iris.Tree(["Statistics"]);
+
+    const receive = Stats.DataReceiveKbps;
+    const send = Stats.DataSendKbps;
+    Iris.Text([`Network Receive: ${receive < 1 ? "<1" : math.floor(receive)} kb/s`]);
+    Iris.Text([`Network Send: ${send < 1 ? "<1" : math.floor(send)} kb/s`]);
+    Iris.Text([`Heartbeat Time: ${roundDecimal(Stats.HeartbeatTimeMs, 3)} ms`]);
+    Iris.Text([`Memory Usage (Signals): ${math.floor(Stats.GetMemoryUsageMbForTag("Signals"))} mb`]);
+    Iris.Text([`Memory Usage (Script): ${math.floor(Stats.GetMemoryUsageMbForTag("Script"))} mb`]);
+    Iris.Text([`Memory Usage (Total): ${math.floor(Stats.GetTotalMemoryUsageMb())} mb`]);
+
+    Iris.End();
   }
 
   private renderCameraTab(): void {
