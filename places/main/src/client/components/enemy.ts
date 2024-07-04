@@ -53,23 +53,25 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
 
   public onRender(dt: number): void {
     // TODO: call this function on tap for mobile
-    this.updateInfoFrame();
+    task.spawn(() => this.updateInfoFrame());
   }
 
   public onTick(dt: number): void {
     const root = this.instance.PrimaryPart;
     if (root === undefined || this.info === undefined) return;
 
-    this.adjustWalkAnimationSpeed();
-    const path = this.path.get();
-    const map = path.map;
-    const cframe = path.getCFrameAtDistance(this.info.distance)
-      .sub(new Vector3(0, 1, 0))
-      .add(new Vector3(0, this.info.scale * 3, 0));
+    task.spawn(() => {
+      this.adjustWalkAnimationSpeed();
+      const path = this.path.get();
+      const map = path.map;
+      const cframe = path.getCFrameAtDistance(this.info.distance)
+        .sub(new Vector3(0, 1, 0))
+        .add(new Vector3(0, this.info.scale * 3, 0));
 
-    root.CFrame = root.CFrame.Lerp(cframe, 4 * dt);
-    if (didEnemyCompletePath(cframe.Position, map.EndPoint.Position))
-      this.destroy();
+      root.CFrame = root.CFrame.Lerp(cframe, 0.05);
+      if (didEnemyCompletePath(cframe.Position, map.EndPoint.Position))
+        this.destroy();
+    });
   }
 
   public setInfo(info: Omit<EnemyInfo, "patch">): void {

@@ -24,7 +24,9 @@ import DestroyableComponent from "common/shared/base-components/destroyable";
 import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "common/client/controllers/character";
 import type { TimeScaleController } from "client/controllers/time-scale";
+import type { PathController } from "client/controllers/path";
 import { fuzzyEquals, lerp } from "common/shared/utility/numbers";
+import { DISTANCE_ACCURACY, SPEED_ACCURACY } from "shared/optimization-accuracies";
 
 type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
 
@@ -74,7 +76,8 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   public constructor(
     private readonly mouse: MouseController,
     private readonly character: CharacterController,
-    private readonly timeScale: TimeScaleController
+    private readonly timeScale: TimeScaleController,
+    private readonly path: PathController
   ) { super(); }
 
   public async onStart(): Promise<void> {
@@ -114,20 +117,23 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
         this.loadProjectileCache();
       }
     }));
-    this.janitor.Add(Events.towerAttacked.connect((id, enemyPosition, enemyVelocity) => {
+    this.janitor.Add(Events.towerAttacked.connect((id, distanceAndSpeed) => {
       if (id !== this.attributes.ID) return;
 
+      const { X: distance, Y: speed } = distanceAndSpeed.div(new Vector2int16(DISTANCE_ACCURACY, SPEED_ACCURACY));
+      const enemyCFrame = this.path.get().getCFrameAtDistance(distance);
+      const enemyVelocity = enemyCFrame.LookVector.mul(speed);
       const towerPosition = this.instance.GetPivot().Position;
-      this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyPosition.X, towerPosition.Y, enemyPosition.Z)));
+      this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyCFrame.X, towerPosition.Y, enemyCFrame.Z)));
       this.playAnimation("Attack");
       task.spawn(() => this.playAttackSound());
-      task.spawn(() => this.createAttackVFX(enemyPosition, enemyVelocity));
+      task.spawn(() => this.createAttackVFX(enemyCFrame.Position, enemyVelocity));
     }));
 
   }
 
   public onRender(dt: number): void {
-    this.updateInfoFrame();
+    task.spawn(() => this.updateInfoFrame());
     if (this.currentRangePreview === undefined || this.currentRangePreview.Parent === undefined) {
       this.currentRangePreview = undefined;
       return;

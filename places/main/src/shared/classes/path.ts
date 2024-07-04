@@ -54,7 +54,7 @@ export class Path {
 
       let position: Vector3;
       let tangent: Vector3;
-      if (this.isFacingSameDirection(direction0, direction1)) {
+      if (direction0.FuzzyEq(direction1)) {
         position = p0.add(p3.sub(p0).mul(t));
         tangent = p3.sub(p0).Unit;
       } else {
@@ -83,7 +83,7 @@ export class Path {
       const [p0, p3, direction0, direction1] = this.getNodeVectors(i - 1, i);
       let segmentLength = 0;
 
-      if (this.isFacingSameDirection(direction0, direction1))
+      if (direction0.FuzzyEq(direction1))
         segmentLength = p3.sub(p0).Magnitude;
       else {
         const bezier = this.createBezier(p0, p3, direction0, direction1);
@@ -143,11 +143,7 @@ export class Path {
     return this.getNodes()[0];
   }
 
-  private isFacingSameDirection(direction1: Vector3, direction2: Vector3): boolean {
-    return direction1.Dot(direction2) > 0.99;
-  }
-
   private getSegmentsPerBezier(): number {
-    return <number>this.map.GetAttribute("SegmentsPerBezier") ?? 10;
+    return <number>this.map.GetAttribute("SegmentsPerBezier") ?? 8;
   }
 }

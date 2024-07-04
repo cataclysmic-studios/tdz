@@ -1,5 +1,5 @@
 import { Service, type OnInit } from "@flamework/core";
-import { Workspace as World, RunService as Runtime } from "@rbxts/services";
+import { RunService as Runtime } from "@rbxts/services";
 import Object from "@rbxts/object-utils";
 import Matter from "@rbxts/matter";
 
@@ -19,6 +19,7 @@ import type { EnemyService } from "./enemy";
 import { findLeadShot, getTimeToReach } from "shared/projectile-utility";
 import { GRAVITATIONAL_PROJECTILE_TYPES, PROJECTILE_SPEEDS } from "shared/constants";
 import { NotificationStyle } from "common/shared/structs/notifications";
+import { DISTANCE_ACCURACY, SPEED_ACCURACY } from "shared/optimization-accuracies";
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {
@@ -69,7 +70,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     const cframe = this.match.getPath().getCFrameAtDistance(enemyInfo.distance);
     const enemyPosition = cframe.Position;
     const enemyVelocity = cframe.LookVector.mul(enemyInfo.speed); // * Matter.useDeltaTime() (?)
-    Events.towerAttacked.broadcast(tower, enemyPosition, enemyVelocity);
+    Events.towerAttacked.broadcast(tower, new Vector2int16(enemyInfo.distance * DISTANCE_ACCURACY, enemyInfo.speed * SPEED_ACCURACY));
     this.matter.world.insert(tower, towerInfo.patch({ timeSinceAttack: 0 }));
 
     const projectileType = towerInfo.stats.projectileType;
@@ -126,11 +127,11 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       if (record.new === undefined) continue;
 
       const lastUpdate = this.lastTowerStatsUpdate[tower] ?? 0;
-      const timeSinceUpdate = os.time() - lastUpdate;
+      const timeSinceUpdate = os.clock() - lastUpdate;
       this.lastTowerStatsUpdate[tower] = lastUpdate;
       if (timeSinceUpdate >= 0.1) {
         Events.updateTowerStats.broadcast(tower, record.new);
-        this.lastTowerStatsUpdate[tower] = os.time();
+        this.lastTowerStatsUpdate[tower] = os.clock();
       }
     }
   }

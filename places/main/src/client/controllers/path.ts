@@ -17,6 +17,7 @@ export class PathController implements OnInit {
       map.WaitForChild("PathNodes");
       map.WaitForChild("StartPoint");
       map.WaitForChild("EndPoint");
+      task.wait(1);
       this.path = new Path(map);
     });
   }
