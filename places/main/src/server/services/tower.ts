@@ -1,22 +1,24 @@
 import { Service, type OnInit } from "@flamework/core";
-import { RunService as Runtime } from "@rbxts/services";
+import { Workspace as World, RunService as Runtime } from "@rbxts/services";
 import Object from "@rbxts/object-utils";
 import Matter from "@rbxts/matter";
 
 import type { LogStart } from "common/shared/hooks";
 import type { OnPlayerJoin } from "common/server/hooks";
+import { CommonEvents } from "common/server/network";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
-import { getTowerStats } from "shared/utility";
+import { canPlaceTower, createSizePreview, createTowerModel, getTowerStats } from "shared/utility";
 import { TargetingType } from "shared/structs";
 import { EnemyEntity, EnemyInfo, TowerEntity, TowerInfo } from "shared/entity-components";
-import { ProjectileType, TOWER_STATS, type UpgradeLevel, type UpgradePath } from "common/shared/towers";
+import { TOWER_STATS, type UpgradeLevel, type UpgradePath } from "common/shared/towers";
 
 import type { MatterService } from "./matter";
 import type { MatchService } from "./match";
 import type { EnemyService } from "./enemy";
 import { findLeadShot, getTimeToReach } from "shared/projectile-utility";
 import { GRAVITATIONAL_PROJECTILE_TYPES, PROJECTILE_SPEEDS } from "shared/constants";
+import { NotificationStyle } from "common/shared/structs/notifications";
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {
@@ -199,6 +201,22 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
   }
 
   private spawnTower(player: Player, towerName: TowerName, cframe: CFrame, price: number): void {
+    const map = this.match.getMap();
+    const validationTower = createTowerModel(towerName, "Level0", cframe, false);
+    const [validationHitbox] = createSizePreview(<number>validationTower.GetAttribute("Size"), undefined, cframe.sub(new Vector3(0, 1, 0)), false);
+
+    const cleanupValidation = () => {
+      validationTower.Destroy();
+      validationHitbox.Destroy();
+    };
+
+    const raycastFilter = [player.Character!, validationTower, validationHitbox, map.PathNodes, map.StartPoint, map.EndPoint];
+    if (!canPlaceTower(validationTower, validationHitbox, raycastFilter)) {
+      CommonEvents.sendNotification(player, "Tower placement validation failed!", NotificationStyle.Error);
+      return cleanupValidation();
+    }
+
+    cleanupValidation();
     const stats = getTowerStats(towerName, [0, 0]);
     if (stats.price !== price)
       return player.Kick("yep you can stop doing that now");

@@ -17,7 +17,8 @@ import {
   createSizePreview,
   isSizePreviewOverlapping,
   setSizePreviewColor,
-  growIn
+  growIn,
+  canPlaceTower
 } from "shared/utility";
 import { NotificationStyle } from "common/shared/structs/notifications";
 import { PLACEMENT_STORAGE, RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
@@ -89,29 +90,8 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementSizePreview.CFrame = towerCFrame.sub(new Vector3(0, 1, 0));
 
     const isWaterTower = <boolean>this.placementModel.GetAttribute("Water") ?? false;
-    const raycastParams = new RaycastParamsBuilder()
-      .SetFilter(mouseFilter)
-      .SetIgnoreWater(true)
-      .Build();
-
-    const towerScale = this.placementModel.GetScale();
-    const groundBelow = World.Raycast(towerCFrame.Position, new Vector3(0, -3.1 * towerScale, 0), raycastParams);
-    const groundInside = World.Raycast(towerCFrame.Position, new Vector3(0, -1.1, 0), raycastParams);
     const inPlacableLocation = this.mouse.getTarget(undefined, mouseFilter)?.HasTag(isWaterTower ? "PlacableWater" : "PlacableGround") ?? false;
-    const hitboxObstructions = this.placementSizePreview.GetTouchingParts()
-      .filter(part => {
-        const model = part.FindFirstAncestorOfClass("Model");
-        return model !== this.placementModel
-          && part !== groundBelow?.Instance
-          && model?.Name !== "RangePreview"
-          && part.Name !== "SizePreview";
-      });
-
-    this.canPlace = inPlacableLocation
-      && groundBelow?.Instance !== undefined
-      && groundInside?.Instance === undefined
-      && !isSizePreviewOverlapping(this.placementSizePreview)
-      && hitboxObstructions.isEmpty();
+    this.canPlace = inPlacableLocation && canPlaceTower(this.placementModel, this.placementSizePreview, mouseFilter);
 
     const previewColor = RANGE_PREVIEW_COLORS[this.canPlace ? "CanPlace" : "CanNotPlace"];
     this.placementRangePreview.Circle.Color = previewColor;

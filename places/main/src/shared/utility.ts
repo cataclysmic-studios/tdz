@@ -1,5 +1,5 @@
 import { RunService as Runtime, Workspace as World, Players } from "@rbxts/services";
-import { TweenInfoBuilder } from "@rbxts/builders";
+import { RaycastParamsBuilder, TweenInfoBuilder } from "@rbxts/builders";
 import { startsWith } from "@rbxts/string-utils";
 import Object from "@rbxts/object-utils";
 
@@ -61,6 +61,33 @@ export function teleportPlayers(cframe: CFrame, ...players: Player[]): void {
   }
 }
 
+export function canPlaceTower(towerModel: TowerModel, sizePreview: typeof Assets.SizePreview, raycastFilter: Instance[]): boolean {
+  const raycastParams = new RaycastParamsBuilder()
+    .SetFilter(raycastFilter)
+    .SetIgnoreWater(true)
+    .Build();
+
+  const towerScale = <number>towerModel.GetAttribute("DefaultScale");
+  const towerCFrame = towerModel.GetPivot();
+  const groundBelow = World.Raycast(towerCFrame.Position, new Vector3(0, -3.1 * towerScale, 0), raycastParams);
+  const groundInside = World.Raycast(towerCFrame.Position, new Vector3(0, -1.1, 0), raycastParams);
+  const hitboxObstructions = sizePreview.GetTouchingParts()
+    .filter(part => {
+      const model = part.FindFirstAncestorOfClass("Model");
+      return model !== towerModel
+        && part !== groundBelow?.Instance
+        && model?.Name !== "RangePreview"
+        && part.Name !== "SizePreview";
+    });
+
+  const isWaterTower = <boolean>towerModel.GetAttribute("Water") ?? false;
+  const inPlacableLocation = groundBelow?.Instance.HasTag(isWaterTower ? "PlacableWater" : "PlacableGround") ?? false;
+  return inPlacableLocation
+    && groundInside?.Instance === undefined
+    && !isSizePreviewOverlapping(sizePreview)
+    && hitboxObstructions.isEmpty();
+}
+
 export function getTowerStats(towerName: TowerName, upgrades: UpgradeLevel): TowerStats {
   const [path1Level, path2Level] = upgrades;
   const allStats = TOWER_STATS[towerName];
@@ -113,14 +140,17 @@ export function upgradeTowerModel(towerName: TowerName, towerModel: TowerModel, 
   newModel.Destroy();
 }
 
-export function createTowerModel(towerName: TowerName, modelName: string, cframe: CFrame = new CFrame): TowerModel {
+export function createTowerModel(towerName: TowerName, modelName: TowerModelName, cframe: CFrame = new CFrame, animateIdle = true, grow = true): TowerModel {
   const towerModel = <TowerModel>Assets.Towers[<TowerName>towerName].WaitForChild(modelName).Clone();
   towerModel.Name = towerName;
   towerModel.PivotTo(cframe);
   towerModel.Parent = PLACEMENT_STORAGE;
 
-  animateTowerIdle(towerModel);
-  growIn(towerModel);
+  if (animateIdle)
+    animateTowerIdle(towerModel);
+  if (grow)
+    growIn(towerModel);
+
   return towerModel;
 }
 
@@ -156,10 +186,11 @@ export function isSizePreviewOverlapping(sizePreview: typeof Assets.SizePreview)
     .some(region => sizeRegion.overlapsRegion(region));
 }
 
-export function createSizePreview(size: number, towerID?: number): [typeof Assets.SizePreview, Promise<void>] {
+export function createSizePreview(size: number, towerID?: number, cframe = new CFrame, grow = true): [typeof Assets.SizePreview, Promise<void>] {
   const sizePreview = Assets.SizePreview.Clone();
   const defaultTowerSize = sizePreview.Size.X;
   const sizeScale = size / defaultTowerSize;
+  sizePreview.CFrame = cframe;
   sizePreview.Size = new Vector3(size, sizePreview.Size.Y, size);
   sizePreview.Beam1.CurveSize0 *= sizeScale;
   sizePreview.Beam1.CurveSize1 *= sizeScale;
@@ -169,7 +200,7 @@ export function createSizePreview(size: number, towerID?: number): [typeof Asset
   sizePreview.Right.Position = new Vector3(0, 0, -sizePreview.Size.X / 2);
   sizePreview.SetAttribute("TowerID", towerID);
   sizePreview.Parent = PLACEMENT_STORAGE;
-  const growPromise = growIn(sizePreview);
+  const growPromise = grow ? growIn(sizePreview) : new Promise<void>(resolve => resolve());
 
   sizePreviews.push(sizePreview);
   sizePreview.Destroying.Once(() => sizePreviews.remove(sizePreviews.indexOf(sizePreview)));
