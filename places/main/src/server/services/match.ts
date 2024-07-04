@@ -75,7 +75,10 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
 
     do task.wait(0.2); while (this.teleportData === undefined);
     const spawnPoint = this.mapModel.FindFirstChildOfClass("SpawnLocation")?.CFrame ?? this.mapModel.GetPivot();
-    teleportPlayers(spawnPoint, player);
+    if (player.Character === undefined)
+      player.CharacterAdded.Once(() => teleportPlayers(spawnPoint, player));
+    else
+      teleportPlayers(spawnPoint, player)
 
     const difficultyInfo = DIFFICULTY_INFO[this.teleportData.difficulty];
     this.setCash(player, this.getCash(player) ?? difficultyInfo.startingCash); // ?? in case they join back

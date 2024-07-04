@@ -10,8 +10,8 @@ import { TOWER_STATS } from "common/shared/towers";
 import { PLACEMENT_STORAGE } from "./constants";
 import { type EnemyTrait, EnemyTraitType } from "./structs";
 import type { TowerStats, PathStats, UpgradeLevel } from "./towers";
-import Log from "./logger";
 import CircularRegion from "./classes/circular-region";
+import Log from "./logger";
 
 export function getEnemyBaseTraits(enemyModel: EnemyModel): EnemyTrait[] {
   const traits: EnemyTrait[] = [];
@@ -57,7 +57,7 @@ export function adjustAllSoundSpeeds(timeScale: number): void {
 export function teleportPlayers(cframe: CFrame, ...players: Player[]): void {
   for (const player of players) {
     if (player.Character === undefined) continue;
-    (<CharacterModel>player.Character).HumanoidRootPart.CFrame = (cframe.add(new Vector3(0, 3, 0)));
+    (<CharacterModel>player.Character).HumanoidRootPart.CFrame = cframe.add(new Vector3(0, 3, 0));
   }
 }
 
