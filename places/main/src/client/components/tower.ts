@@ -150,6 +150,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     }
 
     if (targetModel !== this.instance) return;
+    if (this.info === undefined) return;
     const { X, Y } = this.mouse.getPosition();
     towerInfo.Position = UDim2.fromOffset(X, Y);
     towerInfo.Main.TowerName.Text = this.instance.Name.upper();
@@ -256,7 +257,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   }
 
   private getPlayerNameFromID(id: number): string {
-    const name = this.nameCache[id] ?? Players.GetNameFromUserIdAsync(this.info.ownerID);
+    const name = this.nameCache[id] ?? Players.GetNameFromUserIdAsync(id);
     this.nameCache[id] = name;
     return name;
   }
