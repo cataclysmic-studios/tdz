@@ -47,14 +47,17 @@ export class EnemyService implements OnInit, OnTick, LogStart {
     const map = this.match.getMap();
     for (const [enemy, info] of this.matter.world.query(EnemyInfo)) {
       const root = info.model.HumanoidRootPart;
+      const [_, enemySize] = info.model.GetBoundingBox();
       const speed = <number>info.model.GetAttribute("Speed") * <number>info.model.GetAttribute("DefaultScale") * this.match.timeScale;
       this.matter.world.insert(enemy, info.patch({ distance: info.distance + speed * dt }));
       info.model.SetAttribute("Health", info.health);
 
       const path = this.match.getPath();
-      const cframe = path.getCFrameAtDistance(info.distance);
-      root.CFrame = root.CFrame.Lerp(cframe, 0.2);
+      const cframe = path.getCFrameAtDistance(info.distance)
+        .sub(new Vector3(0, 1, 0))
+        .add(new Vector3(0, enemySize.Y / 2, 0));
 
+      root.CFrame = root.CFrame.Lerp(cframe, 0.2);
       if (info.health === 0)
         return this.despawn(enemy);
 
