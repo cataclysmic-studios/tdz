@@ -155,7 +155,7 @@ function applyUpgradePathStats(baseStats: TowerStats, pathLevel: number, pathSta
 }
 
 export function upgradeTowerModel(towerName: TowerName, towerModel: TowerModel, level: UpgradeLevel, cframe: CFrame): void {
-  const contentsFilter = (i: Instance): boolean => !i.IsA("Humanoid");
+  const contentsFilter = (i: Instance): boolean => !i.IsA("Humanoid") && !i.IsA("Highlight");
   const previousContents = towerModel.GetChildren().filter(contentsFilter);
   const newModelName = getTowerModelName(level);
   towerModel.SetAttribute("CurrentModelName", newModelName);
