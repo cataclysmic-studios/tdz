@@ -16,6 +16,7 @@ interface CommonServerEvents {
 
 interface CommonClientEvents {
   sendNotification(message: string, style: NotificationStyle, lifetime?: number, fadeTime?: number): void;
+  notifyFailedPurchase(cashNeeded: number): void;
   data: {
     updated(directory: string, value: unknown): void;
   };

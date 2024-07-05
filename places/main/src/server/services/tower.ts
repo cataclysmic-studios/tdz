@@ -40,7 +40,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
         part.CollisionGroup = "plrs";
 
     Events.placeTower.connect((player, towerName, cframe, price) => this.spawnTower(player, towerName, cframe, price));
-    Events.upgradeTower.connect((player, id, path, price) => this.upgrade(player, <TowerEntity>id, path, price));
+    Functions.requestTowerUpgrade.setCallback((player, id, path, price) => this.requestUpgrade(player, <TowerEntity>id, path, price));
     Functions.getTowerInfo.setCallback((_, id) => this.matter.world.get(<TowerEntity>id, TowerInfo)!);
 
     const loop = new Matter.Loop(this.matter.world);
@@ -89,7 +89,13 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     });
   }
 
-  public upgrade(player: Player, tower: TowerEntity, path: UpgradePath, price: number): void {
+  public requestUpgrade(player: Player, tower: TowerEntity, path: UpgradePath, price: number): void {
+    const cash = this.match.getCash(player);
+    if (cash < price) {
+      Events.playSoundEffect(player, "Error");
+      return CommonEvents.notifyFailedPurchase(player, math.max(price - cash, 0));
+    }
+
     if (!this.matter.world.contains(tower)) return;
     const info = this.matter.world.get(tower, TowerInfo)!;
     if (info.ownerID !== player.UserId)

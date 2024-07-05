@@ -1,10 +1,10 @@
 import { Component } from "@flamework/components";
 import { OnStart } from "@flamework/core";
-import { ContentProvider, SoundService as Sound } from "@rbxts/services";
+import { ContentProvider } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
 import Object from "@rbxts/object-utils";
 
-import { Events, Functions } from "client/network";
+import { Functions } from "client/network";
 import { Player, PlayerGui } from "common/shared/utility/client";
 import { toSuffixedNumber } from "common/shared/utility/numbers";
 import { TOWER_STATS, TOWER_UPGRADE_META, TowerMeta, TowerStats, UpgradePath } from "common/shared/towers";
@@ -13,7 +13,6 @@ import Log from "common/shared/logger";
 
 import { InputInfluenced } from "common/client/base-components/input-influenced";
 import type { SelectionController } from "client/controllers/selection";
-import type { NotificationController } from "common/client/controllers/notification";
 
 
 const MAX_PATH_LEVEL = 5;
@@ -30,21 +29,16 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
   private readonly updateJanitor = new Janitor;
   private currentID?: number;
   private currentInfo?: Omit<TowerInfo, "patch">;
-  private path1Debounce = false;
-  private path2Debounce = false;
+  private debounce = false;
 
   public constructor(
-    private readonly selection: SelectionController,
-    private readonly notification: NotificationController
+    private readonly selection: SelectionController
   ) { super(); }
 
   public onStart(): void {
     this.input
       .Bind("E", () => this.requestUpgrade(1))
       .Bind("R", () => this.requestUpgrade(2));
-
-    this.instance.GetPropertyChangedSignal("Visible")
-      .Connect(() => this.instance.Visible ? this.updateJanitor.Cleanup() : undefined);
 
     task.spawn(() => { // pre-load upgrade icons
       const allMeta = Object.values(TOWER_UPGRADE_META);
@@ -68,11 +62,6 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
 
     this.currentID = id;
     this.currentInfo = info;
-    this.updateJanitor.Add(() => {
-      this.currentID = undefined;
-      this.currentInfo = undefined;
-    });
-
     const [path1Level, path2Level] = info.upgrades;
     const nextPath1Meta = this.getMeta(1)!;
     const nextPath2Meta = this.getMeta(2)!;
@@ -94,19 +83,15 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     this.fillOutIndicator(path2, path2Level);
 
     if (info.ownerID !== Player.UserId) return;
-    this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Once(() => this.requestUpgrade(1)));
-    this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Once(() => this.requestUpgrade(2)));
+    this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(1)));
+    this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(2)));
   }
 
   private async requestUpgrade(path: UpgradePath): Promise<void> {
     if (this.currentID === undefined) return;
     if (this.currentInfo === undefined) return;
     if (!this.selection.isSelected()) return;
-
-    const debounceKey: "path1Debounce" | "path2Debounce" = `path${path}Debounce`;
-    if (this[debounceKey]) return;
-    this[debounceKey] = true;
-    task.delay(0.15, () => this[debounceKey] = false);
+    this.updateJanitor.Cleanup();
 
     const stats = this.getStats(path);
     if (stats === undefined)
@@ -114,14 +99,15 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
 
     const canUpgrade = this.canUpgrade(path);
     const price = stats.price!;
-    const [purchased, cashNeeded] = await Functions.spendCash(price);
     if (!canUpgrade) return;
-    if (!purchased) {
-      this.notification.failedPurchase(cashNeeded);
-      return Sound.SoundEffects.Error.Play();
-    }
+    if (this.debounce) return;
 
-    Events.upgradeTower(this.currentID, path, price);
+    const id = this.currentID;
+    task.spawn(async () => {
+      this.debounce = true;
+      await Functions.requestTowerUpgrade(id, path, price);
+      this.debounce = false;
+    });
   }
 
   private canUpgrade(path: UpgradePath): boolean {

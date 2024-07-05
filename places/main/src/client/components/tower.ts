@@ -109,8 +109,8 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       if (id !== this.attributes.ID) return;
 
       const hasChanges = this.info !== info;
-      this.info = info;
       if (hasChanges) {
+        this.info = info;
         this.infoUpdated.Fire(info);
         if (info.upgrades[0] === 0 && info.upgrades[1] === 0) return;
 

@@ -6,7 +6,6 @@ import type { EnemyInfo, TowerInfo } from "./entity-components";
 
 interface ServerEvents {
   placeTower(towerName: TowerName, cframe: CFrame, price: number): void;
-  upgradeTower(id: number, path: UpgradePath, price: number): void;
   loadTeleportData(teleportData: TeleportData): void;
   toggleDoubleSpeed(on: boolean): void;
   skipWave(): void;
@@ -24,9 +23,11 @@ interface ClientEvents {
   replicateTower(id: number, towerInfo: Omit<TowerInfo, "patch">): void;
   loadTowers(allTowers: Record<number, TowerInfo>): void;
   mapLoaded(mapName: MapName): void;
+  playSoundEffect(name: ExtractKeys<SoundService["SoundEffects"], Sound>): void;
 }
 
 interface ServerFunctions {
+  requestTowerUpgrade(id: number, path: UpgradePath, price: number): void;
   getTimeScale(): number;
   spendCash(price: number): [boolean, number];
   getTowerInfo(id: number): Omit<TowerInfo, "patch">;

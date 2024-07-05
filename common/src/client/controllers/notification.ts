@@ -29,9 +29,8 @@ export class NotificationController implements OnInit {
   private activeNotifications = 0;
 
   public onInit(): void {
-    CommonEvents.sendNotification.connect((message, style, lifetime, fadeTime) =>
-      this.send(message, style, lifetime, fadeTime)
-    );
+    CommonEvents.sendNotification.connect((message, style, lifetime, fadeTime) => this.send(message, style, lifetime, fadeTime));
+    CommonEvents.notifyFailedPurchase.connect(cashNeeded => this.failedPurchase(cashNeeded));
   }
 
   public send(message: string, style: NotificationStyle, lifetime = 4, fadeTime = 1): void {
