@@ -71,7 +71,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
         .sub(new Vector3(0, 1, 0))
         .add(new Vector3(0, this.info.scale * 3, 0));
 
-      root.CFrame = root.CFrame.Lerp(cframe, dt / 0.2);
+      root.CFrame = root.CFrame.Lerp(cframe, dt / 0.2 * this.timeScale.get());
       if (didEnemyCompletePath(cframe.Position, map.EndPoint.Position))
         this.destroy();
     });
