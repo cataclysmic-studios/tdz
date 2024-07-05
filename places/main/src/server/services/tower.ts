@@ -1,5 +1,6 @@
 import { Service, type OnInit } from "@flamework/core";
 import { RunService as Runtime } from "@rbxts/services";
+import { createBinarySerializer } from "@rbxts/flamework-binary-serializer";
 import Object from "@rbxts/object-utils";
 import Matter from "@rbxts/matter";
 
@@ -16,6 +17,7 @@ import { EnemyEntity, EnemyInfo, TowerEntity, TowerInfo } from "shared/entity-co
 import { TOWER_STATS, type UpgradeLevel, type UpgradePath } from "common/shared/towers";
 import { GRAVITATIONAL_PROJECTILE_TYPES, PROJECTILE_SPEEDS } from "shared/constants";
 import { SPEED_ACCURACY } from "shared/optimization-accuracies";
+import type { TowerInfoPacket } from "shared/packet-structs";
 
 import type { MatterService } from "./matter";
 import type { MatchService } from "./match";
@@ -132,7 +134,13 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       const timeSinceUpdate = os.clock() - lastUpdate;
       this.lastTowerStatsUpdate[tower] = lastUpdate;
       if (timeSinceUpdate >= 0.1) {
-        Events.updateTowerStats.broadcast(tower, record.new);
+        const serializer = createBinarySerializer<TowerInfoPacket>();
+        const packet = serializer.serialize({
+          id: tower,
+          towerInfo: record.new
+        });
+
+        Events.updateTowerStats.broadcast(packet);
         this.lastTowerStatsUpdate[tower] = os.clock();
       }
     }

@@ -1,5 +1,6 @@
 import { Service, type OnInit, type OnStart, type OnTick } from "@flamework/core";
 import { SoundService as Sound } from "@rbxts/services";
+import { createBinarySerializer } from "@rbxts/flamework-binary-serializer";
 import type { Entity } from "@rbxts/matter";
 
 import type { LogStart } from "common/shared/hooks";
@@ -10,6 +11,7 @@ import { didEnemyCompletePath, getEnemyBaseTraits } from "shared/utility";
 import { EnemyInfo } from "shared/entity-components";
 import { DamageType } from "common/shared/towers";
 import { type EnemySummonInfo, type EnemyTrait, EnemyTraitType } from "shared/structs";
+import type { EnemyEntriesRecordPacket } from "shared/packet-structs";
 import Log from "common/shared/logger";
 
 import type { MatterService } from "server/services/matter";
@@ -39,13 +41,15 @@ export class EnemyService implements OnInit, OnStart, OnTick, LogStart {
           .map<[EnemyEntity, EnemyInfo]>(enemy => [enemy, this.matter.world.get(enemy, EnemyInfo)!])
           .filter(([enemy]) => this.matter.world.contains(enemy));
 
+        const serializer = createBinarySerializer<EnemyEntriesRecordPacket>();
+        const serializedEntries = serializer.serialize(enemyEntries);
         if (enemyEntries.size() === 0) {
-          Events.updateEnemies.broadcast(enemyEntries);
+          Events.updateEnemies.broadcast(serializedEntries);
           task.wait(CLIENT_UPDATE_INTERVAL * 5);
           continue;
         }
 
-        Events.updateEnemies.broadcast(enemyEntries);
+        Events.updateEnemies.broadcast(serializedEntries);
         task.wait(CLIENT_UPDATE_INTERVAL);
       }
     });

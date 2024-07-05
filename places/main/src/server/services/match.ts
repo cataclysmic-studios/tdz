@@ -157,6 +157,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   }
 
   private setHealth(health: number): void {
+    if (this.completed) return;
     let healthClamped = max(health, 0)
     this.maxHealth = healthClamped > this.maxHealth ? healthClamped : this.maxHealth;
     healthClamped = min(health, this.maxHealth);

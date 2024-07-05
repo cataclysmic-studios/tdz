@@ -1,6 +1,10 @@
 interface Leaderstats extends Folder {
   readonly Cash: IntValue;
 }
+interface SerializedData {
+  buffer: buffer;
+  blobs: defined[];
+}
 
 interface EnemyModel extends CharacterModel {
   Animations: Folder & {

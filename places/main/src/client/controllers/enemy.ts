@@ -1,5 +1,6 @@
 import { Controller, type OnInit } from "@flamework/core";
 import type { Components } from "@flamework/components";
+import { createBinarySerializer } from "@rbxts/flamework-binary-serializer";
 import Object from "@rbxts/object-utils";
 
 import { Events } from "client/network";
@@ -7,6 +8,7 @@ import { Assets } from "common/shared/utility/instances";
 import { EnemyInfo } from "shared/entity-components";
 import { getRecordDifference, growIn } from "shared/utility";
 import { ENEMY_STORAGE } from "shared/constants";
+import type { EnemyEntriesRecordPacket } from "shared/packet-structs";
 
 import type { Enemy } from "client/components/enemy";
 import type { PathController } from "./path";
@@ -26,9 +28,11 @@ export class EnemyController implements OnInit {
       this.currentEnemyComponents[enemy]?.destroy();
       this.currentEnemyComponents[enemy] = undefined;
     });
-    Events.updateEnemies.connect(enemyRecordEntries => {
+    Events.updateEnemies.connect(({ buffer, blobs }) => {
       task.spawn(() => {
         const oldRecord = this.currentEnemyRecord;
+        const serializer = createBinarySerializer<EnemyEntriesRecordPacket>();
+        const enemyRecordEntries = serializer.deserialize(buffer, blobs);
         this.currentEnemyRecord = Object.fromEntries(enemyRecordEntries);
 
         for (const [id, enemy] of Object.entries(this.currentEnemyComponents))
