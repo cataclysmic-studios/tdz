@@ -36,19 +36,21 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
     private readonly path: PathController
   ) { super(); }
 
-  public async onStart(): Promise<void> {
+  public onStart(): void {
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(() => this.updateInfoFrame(true));
     this.janitor.Add(this.instance);
 
-    for (const part of this.instance.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart"))) {
-      part.CanCollide = false;
-      part.CollisionGroup = "plrs";
-    }
+    task.spawn(() => {
+      this.walkAnimation = this.janitor.Add(this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations.Walk));
+      this.walkAnimation.Priority = Enum.AnimationPriority.Idle;
+      this.walkAnimation.Play();
 
-    this.walkAnimation = this.janitor.Add(this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations.Walk));
-    this.walkAnimation.Priority = Enum.AnimationPriority.Idle;
-    this.walkAnimation.Play();
+      for (const part of this.instance.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart"))) {
+        part.CanCollide = false;
+        part.CollisionGroup = "plrs";
+      }
+    });
   }
 
   public onRender(dt: number): void {

@@ -37,7 +37,8 @@ export class Path {
   public getCFrameAtDistance(distance: number, endInstruction = EndOfPathInstruction.Stop): CFrame {
     if (distance <= 0)
       return this.getStartPoint().CFrame;
-    else if (distance >= this.totalLength)
+
+    if (distance >= this.totalLength)
       switch (endInstruction) {
         // distance is passed by value so it cannot be changed, unsure how to do anything like loop or reverse lol
         // oh well, not useful for this game anyways
@@ -45,28 +46,33 @@ export class Path {
           return this.getEndPoint().CFrame;
       }
 
-    for (const i of $range(1, this.segmentLengths.size() - 1)) {
-      if (distance > this.segmentLengths[i]) continue;
-
-      const segmentDistance = this.segmentLengths[i] - this.segmentLengths[i - 1];
-      const t = (distance - this.segmentLengths[i - 1]) / segmentDistance;
-      const [p0, p3, direction0, direction1] = this.getNodeVectors(i - 1, i);
-
-      let position: Vector3;
-      let tangent: Vector3;
-      if (direction0.FuzzyEq(direction1)) {
-        position = p0.add(p3.sub(p0).mul(t));
-        tangent = p3.sub(p0).Unit;
-      } else {
-        const bezier = this.createBezier(p0, p3, direction0, direction1);
-        position = bezier.getPoint(t);
-        tangent = bezier.getTangent(t);
-      }
-
-      return new CFrame(position, position.add(tangent));
+    let low = 0;
+    let high = this.segmentLengths.size() - 1;
+    while (low < high) {
+      const mid = math.floor((low + high) / 2);
+      if (this.segmentLengths[mid] < distance)
+        low = mid + 1;
+      else
+        high = mid;
     }
 
-    return this.getEndPoint().CFrame; // fallback in case of precision errors
+    const segmentIndex = low;
+    const segmentDistance = this.segmentLengths[segmentIndex] - this.segmentLengths[segmentIndex - 1];
+    const t = (distance - this.segmentLengths[segmentIndex - 1]) / segmentDistance;
+    const [p0, p3, direction0, direction1] = this.getNodeVectors(segmentIndex - 1, segmentIndex);
+
+    let position: Vector3;
+    let tangent: Vector3;
+    if (direction0.FuzzyEq(direction1)) {
+      position = p0.add(p3.sub(p0).mul(t));
+      tangent = p3.sub(p0).Unit;
+    } else {
+      const bezier = this.createBezier(p0, p3, direction0, direction1);
+      position = bezier.getPoint(t);
+      tangent = bezier.getTangent(t);
+    }
+
+    return new CFrame(position, position.add(tangent));
   }
 
   /**

@@ -14,7 +14,9 @@ import { Player, PlayerGui } from "common/shared/utility/client";
 import { tween } from "common/shared/utility/ui";
 import { createRangePreview, getTowerModelName, setSizePreviewColor, upgradeTowerModel } from "shared/utility";
 import { findLeadShot } from "shared/projectile-utility";
+import { fuzzyEquals, lerp } from "common/shared/utility/numbers";
 import { AttackVfxType, ProjectileImpactVfxType } from "shared/structs";
+import { SPEED_ACCURACY } from "shared/optimization-accuracies";
 import { ENEMY_STORAGE, PLACEMENT_STORAGE, PROJECTILE_SPEEDS, RANGE_PREVIEW_COLORS } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
@@ -25,8 +27,6 @@ import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "common/client/controllers/character";
 import type { TimeScaleController } from "client/controllers/time-scale";
 import type { PathController } from "client/controllers/path";
-import { fuzzyEquals, lerp } from "common/shared/utility/numbers";
-import { DISTANCE_ACCURACY, SPEED_ACCURACY } from "shared/optimization-accuracies";
 
 type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
 
@@ -118,11 +118,11 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       }
     }));
     this.janitor.Add(Events.towerAttacked.connect(idDistanceAndSpeed => {
-      const { X: id, Y: distance, Z: speed } = idDistanceAndSpeed.div(new Vector3int16(1, DISTANCE_ACCURACY, SPEED_ACCURACY));
+      const { X: id, Y: distance, Z: speed } = idDistanceAndSpeed.div(new Vector3int16(1, 1, SPEED_ACCURACY));
       if (id !== this.attributes.ID) return;
 
       const enemyCFrame = this.path.get().getCFrameAtDistance(distance);
-      const enemyVelocity = enemyCFrame.LookVector.mul(speed);
+      const enemyVelocity = enemyCFrame.LookVector.mul(speed + 3);
       const towerPosition = this.instance.GetPivot().Position;
       this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyCFrame.X, towerPosition.Y, enemyCFrame.Z)));
       this.playAnimation("Attack");

@@ -9,17 +9,17 @@ import { CommonEvents } from "common/server/network";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
 import { canPlaceTower, createSizePreview, createTowerModel, getTowerStats } from "shared/utility";
+import { findLeadShot, getTimeToReach } from "shared/projectile-utility";
+import { NotificationStyle } from "common/shared/structs/notifications";
 import { TargetingType } from "shared/structs";
 import { EnemyEntity, EnemyInfo, TowerEntity, TowerInfo } from "shared/entity-components";
 import { TOWER_STATS, type UpgradeLevel, type UpgradePath } from "common/shared/towers";
+import { GRAVITATIONAL_PROJECTILE_TYPES, PROJECTILE_SPEEDS } from "shared/constants";
+import { SPEED_ACCURACY } from "shared/optimization-accuracies";
 
 import type { MatterService } from "./matter";
 import type { MatchService } from "./match";
 import type { EnemyService } from "./enemy";
-import { findLeadShot, getTimeToReach } from "shared/projectile-utility";
-import { GRAVITATIONAL_PROJECTILE_TYPES, PROJECTILE_SPEEDS } from "shared/constants";
-import { NotificationStyle } from "common/shared/structs/notifications";
-import { DISTANCE_ACCURACY, SPEED_ACCURACY } from "shared/optimization-accuracies";
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {
@@ -70,7 +70,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     const cframe = this.match.getPath().getCFrameAtDistance(enemyInfo.distance);
     const enemyPosition = cframe.Position;
     const enemyVelocity = cframe.LookVector.mul(enemyInfo.speed); // * Matter.useDeltaTime() (?)
-    Events.towerAttacked.broadcast(new Vector3int16(tower, enemyInfo.distance * DISTANCE_ACCURACY, enemyInfo.speed * SPEED_ACCURACY));
+    Events.towerAttacked.broadcast(new Vector3int16(tower, enemyInfo.distance, enemyInfo.speed * SPEED_ACCURACY));
     this.matter.world.insert(tower, towerInfo.patch({ timeSinceAttack: 0 }));
 
     const projectileType = towerInfo.stats.projectileType;
@@ -115,9 +115,11 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
 
       const target = this.getTarget(tower);
       for (const [enemy] of this.matter.world.query(EnemyInfo))
-        if (enemy === target)
-          if (towerInfo.timeSinceAttack >= reloadTime / this.match.timeScale)
-            this.attack(tower, enemy);
+        task.spawn(() => {
+          if (enemy === target)
+            if (towerInfo.timeSinceAttack >= reloadTime / this.match.timeScale)
+              this.attack(tower, enemy);
+        });
     }
   }
 
@@ -153,18 +155,14 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
 
     const towerInfo = this.matter.world.get(tower, TowerInfo)!;
     switch (towerInfo.targeting) {
-      case TargetingType.First: {
+      case TargetingType.First:
         return this.findTargetableEnemy(towerInfo, this.sortEnemiesBy(enemies, "distance", true));
-      }
-      case TargetingType.Last: {
+      case TargetingType.Last:
         return this.findTargetableEnemy(towerInfo, this.sortEnemiesBy(enemies, "distance", false));
-      }
-      case TargetingType.Strong: {
+      case TargetingType.Strong:
         return this.findTargetableEnemy(towerInfo, this.sortEnemiesBy(enemies, "health", true));
-      }
-      case TargetingType.Weak: {
+      case TargetingType.Weak:
         return this.findTargetableEnemy(towerInfo, this.sortEnemiesBy(enemies, "health", false));
-      }
       case TargetingType.Close: {
         return this.findTargetableEnemy(towerInfo, enemies.sort((a, b) => {
           if (!this.matter.world.contains(a)) return false;
@@ -196,15 +194,16 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
   }
 
   private findTargetableEnemy(towerInfo: TowerInfo, enemies: EnemyEntity[]): Maybe<EnemyEntity> {
-    return enemies.find(enemy => {
-      if (!this.matter.world.contains(enemy)) return false;
-      const { range, minimumRange } = towerInfo.stats;
-      const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!; this.sortEnemiesBy(enemies, "distance", true);
-      const enemyPosition = this.match.getPath().getPositionAtDistance(enemyInfo.distance);
-      const distanceFromTower = this.getDistance(towerInfo.cframe.Position, enemyPosition);
-      return (distanceFromTower <= range && distanceFromTower >= (minimumRange ?? 0))
-        && (enemyInfo.isStealth ? towerInfo.stats.canSeeStealth : true);
-    });
+    return enemies
+      .filter(enemy => this.matter.world.contains(enemy))
+      .find(enemy => {
+        const { range, minimumRange } = towerInfo.stats;
+        const enemyInfo = this.matter.world.get(enemy, EnemyInfo)!;
+        const enemyPosition = this.match.getPath().getPositionAtDistance(enemyInfo.distance);
+        const distanceFromTower = this.getDistance(towerInfo.cframe.Position, enemyPosition);
+        return (distanceFromTower <= range && distanceFromTower >= (minimumRange ?? 0))
+          && (enemyInfo.isStealth ? towerInfo.stats.canSeeStealth : true);
+      });
   }
 
   private spawnTower(player: Player, towerName: TowerName, cframe: CFrame, price: number): void {

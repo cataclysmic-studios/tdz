@@ -16,7 +16,7 @@ import type { Difficulty } from "common/shared/structs/difficulty";
 import Object from "@rbxts/object-utils";
 import Log from "common/shared/logger";
 
-const { max, clamp } = math;
+const { max, min } = math;
 
 const INTERMISSION_LENGTH = 8;
 
@@ -157,11 +157,14 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   }
 
   private setHealth(health: number): void {
-    this.maxHealth = health > this.maxHealth ? health : this.maxHealth;
-    this.health = clamp(health, 0, this.maxHealth);
-    Events.updateHealthUI.broadcast(health, this.maxHealth);
+    let healthClamped = max(health, 0)
+    this.maxHealth = healthClamped > this.maxHealth ? healthClamped : this.maxHealth;
+    healthClamped = min(health, this.maxHealth);
 
-    if (health === 0)
+    this.health = healthClamped;
+    Events.updateHealthUI.broadcast(healthClamped, this.maxHealth);
+
+    if (healthClamped <= 0)
       this.complete(false);
   }
 

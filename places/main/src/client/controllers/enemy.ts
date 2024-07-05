@@ -27,38 +27,41 @@ export class EnemyController implements OnInit {
       this.currentEnemyComponents[enemy] = undefined;
     });
     Events.updateEnemies.connect(enemyRecordEntries => {
-      const oldRecord = this.currentEnemyRecord;
-      this.currentEnemyRecord = Object.fromEntries(enemyRecordEntries);
+      task.spawn(() => {
+        const oldRecord = this.currentEnemyRecord;
+        this.currentEnemyRecord = Object.fromEntries(enemyRecordEntries);
 
-      for (const [id, enemy] of Object.entries(this.currentEnemyComponents))
-        enemy.setInfo(this.currentEnemyRecord[id]);
+        for (const [id, enemy] of Object.entries(this.currentEnemyComponents))
+          enemy.setInfo(this.currentEnemyRecord[id]);
 
-      const oldRecordEntries = Object.entries(oldRecord);
-      const hasAllEnemies = oldRecordEntries.size() > 0
-        && Object.keys(enemyRecordEntries).every(key => Object.keys(oldRecord).includes(key));
+        const oldRecordEntries = Object.entries(oldRecord);
+        const hasAllEnemies = oldRecordEntries.size() > 0
+          && Object.keys(enemyRecordEntries).every(key => Object.keys(oldRecord).includes(key));
 
-      if (hasAllEnemies) return;
-      if (Object.entries(enemyRecordEntries).size() === 0) return;
+        if (hasAllEnemies) return;
+        if (Object.entries(enemyRecordEntries).size() === 0) return;
 
-      // we have new enemies
-      const path = this.path.get();
-      if (path === undefined) return;
+        // we have new enemies
+        const path = this.path.get();
+        if (path === undefined) return;
 
-      const map = path.map;
-      const newEnemiesRecord = getRecordDifference(oldRecord, this.currentEnemyRecord);
-      const newEnemyEntries = Object.entries(newEnemiesRecord);
-      for (const [enemy, info] of newEnemyEntries) {
-        const enemyModel = Assets.Enemies[info.name].Clone();
-        const spawnCFrame = map.StartPoint.CFrame.add(new Vector3(0, (info.height / 2) - (map.StartPoint.Size.Y / 2), 0));
-        enemyModel.SetAttribute("ID", enemy);
-        enemyModel.HumanoidRootPart.CFrame = spawnCFrame;
-        enemyModel.Parent = ENEMY_STORAGE;
+        const map = path.map;
+        const newEnemiesRecord = getRecordDifference(oldRecord, this.currentEnemyRecord);
+        const newEnemyEntries = Object.entries(newEnemiesRecord);
+        for (const [enemy, info] of newEnemyEntries)
+          task.spawn(() => {
+            const enemyModel = Assets.Enemies[info.name].Clone();
+            const spawnCFrame = map.StartPoint.CFrame.add(new Vector3(0, (info.height / 2) - (map.StartPoint.Size.Y / 2), 0));
+            enemyModel.SetAttribute("ID", enemy);
+            enemyModel.HumanoidRootPart.CFrame = spawnCFrame;
+            enemyModel.Parent = ENEMY_STORAGE;
 
-        growIn(enemyModel);
-        const enemyComponent = this.components.addComponent<Enemy>(enemyModel);
-        this.currentEnemyComponents[enemy] = enemyComponent;
-        enemyComponent.setInfo(info);
-      }
+            growIn(enemyModel);
+            const enemyComponent = this.components.addComponent<Enemy>(enemyModel);
+            this.currentEnemyComponents[enemy] = enemyComponent;
+            enemyComponent.setInfo(info);
+          });
+      })
     });
   }
 }
