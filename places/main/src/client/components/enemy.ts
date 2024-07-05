@@ -37,6 +37,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
   ) { super(); }
 
   public onStart(): void {
+    this.instance.AddTag("Enemy");
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(() => this.updateInfoFrame(true));
     this.janitor.Add(this.instance);
