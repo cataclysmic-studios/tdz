@@ -1,6 +1,7 @@
 import { Service, type OnInit, type OnStart } from "@flamework/core";
 import { Workspace as World, SoundService as Sound, Players } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
+import Object from "@rbxts/object-utils";
 import Signal from "@rbxts/signal";
 
 import type { LogStart } from "common/shared/hooks";
@@ -13,12 +14,12 @@ import { Timer } from "server/timer";
 import { DIFFICULTY_INFO } from "shared/constants";
 import type { TeleportData } from "shared/structs";
 import type { Difficulty } from "common/shared/structs/difficulty";
-import Object from "@rbxts/object-utils";
 import Log from "common/shared/logger";
 
 const { max, min } = math;
 
 const INTERMISSION_LENGTH = 8;
+const GROUP_MEMBER_BONUS = 125;
 
 @Service({ loadOrder: 1 })
 export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeave, LogStart {
@@ -83,7 +84,8 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
       teleportPlayers(spawnPoint, player)
 
     const difficultyInfo = DIFFICULTY_INFO[this.teleportData.difficulty];
-    this.setCash(player, this.getCash(player) ?? difficultyInfo.startingCash); // ?? in case they join back
+    const startingCash = difficultyInfo.startingCash + (player.IsInGroup(3510882) ? GROUP_MEMBER_BONUS : 0);
+    this.setCash(player, this.getCash(player) ?? startingCash); // ?? in case they join back
     Events.mapLoaded.broadcast(<MapName>this.mapModel.Name);
   }
 
