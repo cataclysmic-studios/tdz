@@ -110,7 +110,8 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     newUpgrades[path - 1]++;
     this.matter.world.insert(tower, info.patch({
       upgrades: newUpgrades,
-      stats: getTowerStats(info.name, newUpgrades)
+      stats: getTowerStats(info.name, newUpgrades),
+      worth: info.worth + price
     }));
   }
 
@@ -141,12 +142,8 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       this.lastTowerStatsUpdate[tower] = lastUpdate;
       if (timeSinceUpdate >= 0.1) {
         const serializer = createBinarySerializer<TowerInfoPacket>();
-        const packet = serializer.serialize({
-          id: tower,
-          towerInfo: record.new
-        });
-
-        Events.updateTowerStats.broadcast(packet);
+        const packet = serializer.serialize(record.new);
+        Events.updateTowerStats.broadcast(tower, packet);
         this.lastTowerStatsUpdate[tower] = os.clock();
       }
     }

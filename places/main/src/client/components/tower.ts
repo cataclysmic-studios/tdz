@@ -103,9 +103,9 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.janitor.Add(this.instance);
     this.janitor.Add(() => this.updateInfoFrame(true));
     this.janitor.Add(this.timeScale.changed.Connect(() => this.adjustAnimationSpeeds()));
-    this.janitor.Add(Events.updateTowerStats.connect(({ buffer, blobs }) => {
+    this.janitor.Add(Events.updateTowerStats.connect((id, { buffer, blobs }) => {
       const serializer = createBinarySerializer<TowerInfoPacket>();
-      const { id, towerInfo: info } = serializer.deserialize(buffer, blobs);
+      const info = serializer.deserialize(buffer, blobs);
       if (id !== this.attributes.ID) return;
 
       const hasChanges = this.info !== info;

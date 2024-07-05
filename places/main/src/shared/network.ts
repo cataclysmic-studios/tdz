@@ -13,7 +13,7 @@ interface ServerEvents {
 
 interface ClientEvents {
   updateTimerUI: Networking.Unreliable<(remainingTime: number) => void>;
-  updateTowerStats: Networking.Unreliable<(packet: SerializedData) => void>;
+  updateTowerStats: Networking.Unreliable<(id: number, towerInfoPacket: SerializedData) => void>;
   towerAttacked: Networking.Unreliable<(idDistanceAndSpeed: Vector3int16) => void>; // TODO: use Vector3int16 and include id too, also use bitpacking on ID (11 bits)
   enemyDied(id: number): void;
   updateEnemies(enemyRecordEntries: SerializedData): void;
