@@ -14,6 +14,7 @@ export const enum DamageType {
   Ice = "Ice",
   Fire = "Fire",
   Melee = "Melee",
+  Explosion = "Explosion",
   God = "God"
 }
 

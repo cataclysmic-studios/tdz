@@ -2,9 +2,10 @@ import { Networking } from "@flamework/networking";
 
 import type { TeleportData } from "./structs";
 import type { UpgradePath } from "./towers";
-import type { EnemyInfo, TowerInfo } from "./entity-components";
+import type { TowerInfo } from "./entity-components";
 
 interface ServerEvents {
+  sellTower(id: number): void;
   placeTower(towerName: TowerName, cframe: CFrame, price: number): void;
   loadTeleportData(teleportData: TeleportData): void;
   toggleDoubleSpeed(on: boolean): void;
@@ -15,6 +16,7 @@ interface ClientEvents {
   updateTimerUI: Networking.Unreliable<(remainingTime: number) => void>;
   updateTowerStats: Networking.Unreliable<(id: number, towerInfoPacket: SerializedData) => void>;
   towerAttacked: Networking.Unreliable<(idDistanceAndSpeed: Vector3int16) => void>; // TODO: use Vector3int16 and include id too, also use bitpacking on ID (11 bits)
+  towerSold(id: number): void;
   enemyDied(id: number): void;
   updateEnemies(enemyRecordEntries: SerializedData): void;
   updateHealthUI(health: number, maxHealth: number): void; // TODO: use Vector2int16
@@ -31,7 +33,6 @@ interface ServerFunctions {
   getTimeScale(): number;
   spendCash(price: number): [boolean, number];
   getTowerInfo(id: number): Omit<TowerInfo, "patch">;
-  getEnemyInfo(id: number): Omit<EnemyInfo, "patch">;
 }
 
 interface ClientFunctions { }

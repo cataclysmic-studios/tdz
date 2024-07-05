@@ -1,10 +1,10 @@
-import { Service, type OnInit, type OnStart, type OnTick } from "@flamework/core";
+import { Service, type OnStart, type OnTick } from "@flamework/core";
 import { SoundService as Sound } from "@rbxts/services";
 import { createBinarySerializer } from "@rbxts/flamework-binary-serializer";
 import type { Entity } from "@rbxts/matter";
 
 import type { LogStart } from "common/shared/hooks";
-import { Events, Functions } from "server/network";
+import { Events } from "server/network";
 import { Assets } from "common/shared/utility/instances";
 import { flatten, removeDuplicates } from "common/shared/utility/array";
 import { didEnemyCompletePath, getEnemyBaseTraits } from "shared/utility";
@@ -22,17 +22,13 @@ type EnemyEntity = Entity<[EnemyInfo]>;
 const CLIENT_UPDATE_INTERVAL = 0.1;
 
 @Service()
-export class EnemyService implements OnInit, OnStart, OnTick, LogStart {
+export class EnemyService implements OnStart, OnTick, LogStart {
   public readonly enemies: EnemyEntity[] = [];
 
   public constructor(
     private readonly matter: MatterService,
     private readonly match: MatchService
   ) { }
-
-  public onInit(): void {
-    Functions.getEnemyInfo.setCallback((_, id) => this.matter.world.get(<EnemyEntity>id, EnemyInfo)!);
-  }
 
   public onStart(): void {
     task.spawn(() => {
@@ -105,7 +101,7 @@ export class EnemyService implements OnInit, OnStart, OnTick, LogStart {
     damageDealt = this.applyResistance(enemy, damageType, damageDealt, EnemyTraitType.LaserResistance, DamageType.Laser);
 
     if (!this.hasTrait(enemy, EnemyTraitType.NoCash))
-      this.match.incrementAllCash(damageDealt);
+      this.match.incrementAllCash(math.floor(damageDealt));
 
     return damageDealt;
   }

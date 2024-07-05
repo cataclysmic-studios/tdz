@@ -4,7 +4,7 @@ import { ContentProvider } from "@rbxts/services";
 import { Janitor } from "@rbxts/janitor";
 import Object from "@rbxts/object-utils";
 
-import { Functions } from "client/network";
+import { Events, Functions } from "client/network";
 import { Player, PlayerGui } from "common/shared/utility/client";
 import { toSuffixedNumber } from "common/shared/utility/numbers";
 import { TOWER_STATS, TOWER_UPGRADE_META, TowerMeta, TowerStats, UpgradePath } from "common/shared/towers";
@@ -13,6 +13,7 @@ import Log from "common/shared/logger";
 
 import { InputInfluenced } from "common/client/base-components/input-influenced";
 import type { SelectionController } from "client/controllers/selection";
+import { Tower } from "../tower";
 
 
 const MAX_PATH_LEVEL = 5;
@@ -55,10 +56,13 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     });
   }
 
-  public updateInfo(id: number, info: Omit<TowerInfo, "patch">): void {
+  public updateInfo(tower: Tower): void {
+    const id = tower.attributes.ID;
+    const info = tower.getInfo();
     this.updateJanitor.Cleanup();
     this.instance.Info.Damage.Title.Text = toSuffixedNumber(info.totalDamage);
     this.instance.Info.Worth.Title.Text = `$${toSuffixedNumber(info.worth)}`;
+    this.instance.Sell.Price.Text = `$${toSuffixedNumber(math.floor(info.worth / 2))}`;
 
     this.currentID = id;
     this.currentInfo = info;
@@ -85,6 +89,10 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     if (info.ownerID !== Player.UserId) return;
     this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(1)));
     this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(2)));
+    this.updateJanitor.Add(this.instance.Sell.MouseButton1Click.Once(() => {
+      tower.destroy();
+      Events.sellTower(id);
+    }));
   }
 
   private async requestUpgrade(path: UpgradePath): Promise<void> {

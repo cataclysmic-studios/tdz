@@ -65,8 +65,8 @@ export class SelectionController implements OnInit, OnStart, OnTick, LogStart {
     if (!upgradesUI.Viewport.HasTag("TowerViewport"))
       upgradesUI.Viewport.AddTag("TowerViewport");
 
-    this.selectionJanitor.Add(tower.infoUpdated.Connect(info => this.upgrades.updateInfo(tower.attributes.ID, info)));
-    this.upgrades.updateInfo(tower.attributes.ID, tower.getInfo());
+    this.selectionJanitor.Add(tower.infoUpdated.Connect(() => this.upgrades.updateInfo(tower)));
+    this.upgrades.updateInfo(tower);
     upgradesUI.Visible = true;
   }
 

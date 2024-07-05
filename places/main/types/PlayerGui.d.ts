@@ -85,6 +85,9 @@ interface PlayerGui extends BasePlayerGui {
         };
       };
       TowerUpgrades: ImageLabel & {
+        Sell: ImageButton & {
+          Price: TextLabel;
+        };
         Info: Frame & {
           Worth: Frame & {
             UIListLayout: UIListLayout;

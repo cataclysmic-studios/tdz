@@ -39,7 +39,8 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       for (const part of towerFolder.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart")))
         part.CollisionGroup = "plrs";
 
-    Events.placeTower.connect((player, towerName, cframe, price) => this.spawnTower(player, towerName, cframe, price));
+    Events.placeTower.connect((player, towerName, cframe, price) => this.spawn(player, towerName, cframe, price));
+    Events.sellTower.connect((player, tower) => this.sell(player, <TowerEntity>tower));
     Functions.requestTowerUpgrade.setCallback((player, id, path, price) => this.requestUpgrade(player, <TowerEntity>id, path, price));
     Functions.getTowerInfo.setCallback((_, id) => this.matter.world.get(<TowerEntity>id, TowerInfo)!);
 
@@ -205,7 +206,21 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     })?.[0];
   }
 
-  private spawnTower(player: Player, towerName: TowerName, cframe: CFrame, price: number): void {
+  private sell(player: Player, tower: TowerEntity): void {
+    if (!this.matter.world.contains(tower)) return;
+
+    const info = this.matter.world.get(tower, TowerInfo)!;
+    this.match.incrementCash(player, math.floor(info.worth / 2)); // sell for 50% of worth
+    this.despawn(tower);
+    // TODO: play sound
+  }
+
+  private despawn(tower: TowerEntity): void {
+    this.towers.remove(this.towers.indexOf(tower));;
+    this.matter.world.despawn(tower);
+  }
+
+  private spawn(player: Player, towerName: TowerName, cframe: CFrame, price: number): void {
     const map = this.match.getMap();
     const validationTower = createTowerModel(towerName, "Level0", cframe, false);
     const [validationHitbox] = createSizePreview(<number>validationTower.GetAttribute("Size"), undefined, cframe.sub(new Vector3(0, 1, 0)), false);

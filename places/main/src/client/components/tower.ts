@@ -1,6 +1,7 @@
 import type { OnStart, OnRender } from "@flamework/core";
 import { Component } from "@flamework/components";
 import { Workspace as World, Players } from "@rbxts/services";
+import { createBinarySerializer } from "@rbxts/flamework-binary-serializer";
 import { RaycastParamsBuilder, TweenInfoBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
 import FastCast, { Caster } from "@rbxts/fastcast";
@@ -20,15 +21,15 @@ import { SPEED_ACCURACY } from "shared/optimization-accuracies";
 import { ENEMY_STORAGE, PLACEMENT_STORAGE, PROJECTILE_SPEEDS, RANGE_PREVIEW_COLORS } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
+import type { TowerInfoPacket } from "shared/packet-structs";
 import Log from "common/shared/logger";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
 import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "common/client/controllers/character";
 import type { TimeScaleController } from "client/controllers/time-scale";
+import type { SelectionController } from "client/controllers/selection";
 import type { PathController } from "client/controllers/path";
-import { createBinarySerializer } from "@rbxts/flamework-binary-serializer";
-import { TowerInfoPacket } from "shared/packet-structs";
 
 type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
 
@@ -79,6 +80,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     private readonly mouse: MouseController,
     private readonly character: CharacterController,
     private readonly timeScale: TimeScaleController,
+    private readonly selection: SelectionController,
     private readonly path: PathController
   ) { super(); }
 
@@ -101,8 +103,17 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
     this.janitor.LinkToInstance(this.instance, true);
     this.janitor.Add(this.instance);
-    this.janitor.Add(() => this.updateInfoFrame(true));
+    this.janitor.Add(() => {
+      // TODO: play sell sound
+      this.selection.deselect();
+      this.getSizePreview().Destroy();
+      this.updateInfoFrame(true)
+    });
     this.janitor.Add(this.timeScale.changed.Connect(() => this.adjustAnimationSpeeds()));
+    this.janitor.Add(Events.towerSold.connect(id => {
+      if (id !== this.attributes.ID) return;
+      this.destroy();
+    }));
     this.janitor.Add(Events.updateTowerStats.connect((id, { buffer, blobs }) => {
       const serializer = createBinarySerializer<TowerInfoPacket>();
       const info = serializer.deserialize(buffer, blobs);
@@ -175,7 +186,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.currentRangePreview = undefined;
     oldPreview?.Destroy();
 
-    this.currentRangePreview = createRangePreview(this.info.stats.range);
+    this.currentRangePreview = this.janitor.Add(createRangePreview(this.info.stats.range));
     this.currentRangePreview.Circle.Color = RANGE_PREVIEW_COLORS.CanPlace;
     this.currentRangePreview.PivotTo(this.instance.GetPivot().sub(new Vector3(0, 0.8, 0)));
     return this.currentRangePreview;
