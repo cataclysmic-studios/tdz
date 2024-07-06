@@ -12,8 +12,7 @@ import Signal from "@rbxts/signal";
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
 import { Player, PlayerGui } from "common/shared/utility/client";
-import { tween } from "common/shared/utility/ui";
-import { createRangePreview, getTowerModelName, setSizePreviewColor, upgradeTowerModel } from "shared/utility";
+import { createRangePreview, getTowerModelName, resetSizePreviewHeight, setSizePreviewHeight, setSizePreviewColor, upgradeTowerModel } from "shared/utility";
 import { findLeadShot } from "shared/projectile-utility";
 import { fuzzyEquals, lerp } from "common/shared/utility/numbers";
 import { AttackVfxType, ProjectileImpactVfxType } from "shared/structs";
@@ -65,10 +64,6 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
   private readonly nameCache: Record<number, string> = {};
   private readonly loadedAnimations: Partial<Record<AnimationName, AnimationTrack>> = {};
-  private readonly sizePreviewTweenInfo = new TweenInfoBuilder().SetTime(0.08);
-  private readonly defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
-  private readonly defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;
-  private readonly defaultRightAttachmentPosition = Assets.SizePreview.Right.Position;
   private readonly selectionFillTransparency = 0.7;
   private currentRangePreview?: typeof Assets.RangePreview;
   private highlight?: Highlight;
@@ -224,7 +219,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
   }
 
   public resetSizePreviewHeight(): Janitor {
-    return this.setSizePreviewHeight(this.defaultSizePreviewHeight);
+    return resetSizePreviewHeight(this.getSizePreview());
   }
 
   /**
@@ -232,24 +227,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
    * @returns Janitor containing all tweens
    */
   public setSizePreviewHeight(height: number): Janitor {
-    const tweenJanitor = new Janitor;
-    const sizePreview = this.getSizePreview();
-    const difference = height - this.defaultSizePreviewHeight;
-
-    tweenJanitor.Add(tween(sizePreview.Beam1, this.sizePreviewTweenInfo, {
-      Width0: height, Width1: height
-    }), "Cancel");
-    tweenJanitor.Add(tween(sizePreview.Beam2, this.sizePreviewTweenInfo, {
-      Width0: height, Width1: height
-    }), "Cancel");
-    tweenJanitor.Add(tween(sizePreview.Left, this.sizePreviewTweenInfo, {
-      Position: this.defaultLeftAttachmentPosition.add(new Vector3(0, difference / 2, 0))
-    }), "Cancel");
-    tweenJanitor.Add(tween(sizePreview.Right, this.sizePreviewTweenInfo, {
-      Position: this.defaultRightAttachmentPosition.add(new Vector3(0, difference / 2, 0))
-    }), "Cancel");
-
-    return tweenJanitor;
+    return setSizePreviewHeight(this.getSizePreview(), height);
   }
 
   public setSizePreviewColor(color: Color3): void {

@@ -1,7 +1,7 @@
 import { Controller, type OnInit, type OnRender, type OnStart } from "@flamework/core";
 import { Components } from "@flamework/components";
-import { Workspace as World, SoundService as Sound, CollectionService as Collection } from "@rbxts/services";
-import { RaycastParamsBuilder } from "@rbxts/builders";
+import { SoundService as Sound, CollectionService as Collection } from "@rbxts/services";
+import { TweenInfoBuilder } from "@rbxts/builders";
 import { Janitor } from "@rbxts/janitor";
 import Object from "@rbxts/object-utils";
 
@@ -15,10 +15,11 @@ import {
   createTowerModel,
   createRangePreview,
   createSizePreview,
-  isSizePreviewOverlapping,
   setSizePreviewColor,
-  growIn,
-  canPlaceTower
+  growIn, shrinkOut,
+  canPlaceTower,
+  setSizePreviewHeight,
+  fadeOutParts
 } from "shared/utility";
 import { NotificationStyle } from "common/shared/structs/notifications";
 import { PLACEMENT_STORAGE, RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
@@ -109,7 +110,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     towerModel.SetAttribute("CurrentModelName", modelName);
 
     const size = <number>towerModel.GetAttribute("Size");
-    const [sizePreview] = createSizePreview(size, id);
+    const sizePreview = createSizePreview(size, id);
     setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"]);
     sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
 
@@ -130,17 +131,29 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.selection.deselect();
     this.placing = true;
     this.yOrientation.zeroize();
-    this.placementModel = this.placementJanitor.Add(createTowerModel(towerName, "Level0"));
+    this.placementModel = createTowerModel(towerName, "Level0");
 
     const [{ range }] = TOWER_STATS[towerName];
-    this.placementRangePreview = this.placementJanitor.Add(createRangePreview(range));
+    this.placementRangePreview = createRangePreview(range);
 
     const size = <number>this.placementModel.GetAttribute("Size");
-    const [sizePreview, growPromise] = createSizePreview(size);
-    this.placementSizePreview = this.placementJanitor.Add(sizePreview);
-    task.spawn(async () => {
-      await growPromise;
-      this.placementJanitor.Add(this.placementSizePreview!.Touched.Connect(() => { }), "Disconnect");
+    this.placementSizePreview = createSizePreview(size);
+    this.placementJanitor.Add(() => {
+      if (this.placementModel !== undefined)
+        fadeOutParts(this.placementModel);
+      if (this.placementSizePreview !== undefined)
+        setSizePreviewHeight(this.placementSizePreview, 0, new TweenInfoBuilder().SetTime(0.12));
+      if (this.placementRangePreview !== undefined) {
+        fadeOutParts(this.placementRangePreview!);
+        shrinkOut(this.placementRangePreview!, 0.2).then(() => {
+          this.placementSizePreview?.Destroy();
+          this.placementSizePreview = undefined;
+          this.placementRangePreview?.Destroy();
+          this.placementRangePreview = undefined;
+          this.placementModel?.Destroy();
+          this.placementModel = undefined;
+        });
+      }
     });
 
     for (const tower of this.components.getAllComponents<Tower>())
@@ -159,7 +172,6 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   public exitPlacement(): void {
     this.placementJanitor.Cleanup();
     this.placing = false;
-    this.placementModel = undefined;
   }
 
   private async confirmPlacement(): Promise<void> {

@@ -14,6 +14,7 @@ import type { TowerInfo } from "./entity-components";
 import type { TowerStats, PathStats, UpgradeLevel, UpgradePath } from "./towers";
 import CircularRegion from "./classes/circular-region";
 import Log from "./logger";
+import { Janitor } from "@rbxts/janitor";
 
 export function canUpgrade(info: Omit<TowerInfo, "patch">, path: UpgradePath): boolean {
   const pathLevel = info.upgrades[path - 1];
@@ -222,6 +223,24 @@ export function animateTowerIdle(towerModel: TowerModel): void {
   idle.Play(0);
 }
 
+export function fadeOutParts(model: Model | Folder): void {
+  const parts = model.GetDescendants()
+    .filter((i): i is BasePart | Highlight | Decal => {
+      return ((i.IsA("BasePart") || i.IsA("Decal")) && i.Transparency !== 1)
+        || (i.IsA("Highlight") && (i.FillTransparency !== 1 || i.OutlineTransparency !== 1));
+    });
+
+  for (const part of parts)
+    task.spawn(() => {
+      const goal = part.IsA("BasePart") || part.IsA("Decal") ? { Transparency: 1 } : {
+        FillTransparency: 1,
+        OutlineTransparency: 1
+      };
+
+      tween(part, new TweenInfoBuilder().SetTime(0.1), <never>goal); // hack lol
+    });
+}
+
 export function createRangePreview(range: number): typeof Assets.RangePreview {
   const rangePreview = Assets.RangePreview.Clone();
   const referenceRange = rangePreview.Circle.Size.X;
@@ -241,7 +260,7 @@ export function isSizePreviewOverlapping(sizePreview: typeof Assets.SizePreview)
     .some(region => sizeRegion.overlapsRegion(region));
 }
 
-export function createSizePreview(size: number, towerID?: number, cframe = new CFrame, grow = true): [typeof Assets.SizePreview, Promise<void>] {
+export function createSizePreview(size: number, towerID?: number, cframe = new CFrame, grow = true): typeof Assets.SizePreview {
   const sizePreview = Assets.SizePreview.Clone();
   const defaultTowerSize = sizePreview.Size.X;
   const sizeScale = size / defaultTowerSize;
@@ -255,11 +274,39 @@ export function createSizePreview(size: number, towerID?: number, cframe = new C
   sizePreview.Right.Position = new Vector3(0, 0, -sizePreview.Size.X / 2);
   sizePreview.SetAttribute("TowerID", towerID);
   sizePreview.Parent = PLACEMENT_STORAGE;
-  const growPromise = grow ? growIn(sizePreview) : new Promise<void>(resolve => resolve());
+  if (grow)
+    growIn(sizePreview);
 
   sizePreviews.push(sizePreview);
   sizePreview.Destroying.Once(() => sizePreviews.remove(sizePreviews.indexOf(sizePreview)));
-  return [sizePreview, growPromise];
+  return sizePreview;
+}
+
+const defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
+const defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;
+const defaultRightAttachmentPosition = Assets.SizePreview.Right.Position;
+export function resetSizePreviewHeight(sizePreview: typeof Assets.SizePreview, tweenInfo = new TweenInfoBuilder().SetTime(0.08)): Janitor {
+  return setSizePreviewHeight(sizePreview, defaultSizePreviewHeight, tweenInfo);
+}
+
+export function setSizePreviewHeight(sizePreview: typeof Assets.SizePreview, height: number, tweenInfo = new TweenInfoBuilder().SetTime(0.08)): Janitor {
+  const tweenJanitor = new Janitor;
+  const difference = height - defaultSizePreviewHeight;
+
+  tweenJanitor.Add(tween(sizePreview.Beam1, tweenInfo, {
+    Width0: height, Width1: height
+  }), "Cancel");
+  tweenJanitor.Add(tween(sizePreview.Beam2, tweenInfo, {
+    Width0: height, Width1: height
+  }), "Cancel");
+  tweenJanitor.Add(tween(sizePreview.Left, tweenInfo, {
+    Position: defaultLeftAttachmentPosition.add(new Vector3(0, difference / 2, 0))
+  }), "Cancel");
+  tweenJanitor.Add(tween(sizePreview.Right, tweenInfo, {
+    Position: defaultRightAttachmentPosition.add(new Vector3(0, difference / 2, 0))
+  }), "Cancel");
+
+  return tweenJanitor;
 }
 
 export function setSizePreviewColor(sizePreview: typeof Assets.SizePreview, color: Color3): typeof Assets.SizePreview {
@@ -275,20 +322,49 @@ export function createWeld(part0: BasePart, part1: BasePart): WeldConstraint {
   return weld;
 }
 
-// TODO: fade out model function
-
-const growInTweenInfo = new TweenInfoBuilder().SetTime(0.1);
 /**
  * Smoothly scale a model/part to its original size from nothing
  * @param model Model or part to scale
  * @param point The point of the model to scale from
  */
-export async function growIn(model: Model | BasePart): Promise<void> {
+export async function shrinkOut(model: Model | BasePart, speed = 0.1): Promise<void> {
+  const scaleValue = new Instance("NumberValue");
+  scaleValue.Value = <number>model.GetAttribute("DefaultScale") ?? 1;
+
+  const defaultSize = model.IsA("BasePart") ? model.Size : undefined;
+  const t = tween(scaleValue, new TweenInfoBuilder().SetTime(speed), { Value: 0.01 });
+  return new Promise(resolve => {
+    while (t.PlaybackState === Enum.PlaybackState.Playing) {
+      if (model.IsA("Model"))
+        model.ScaleTo(scaleValue.Value);
+      else
+        model.Size = defaultSize!.mul(scaleValue.Value);
+
+      Runtime.Stepped.Wait();
+    }
+
+    if (model.IsA("Model"))
+      model.ScaleTo(scaleValue.Value);
+    else
+      model.Size = defaultSize!.mul(scaleValue.Value);
+
+    model.Destroy()
+    scaleValue.Destroy();
+    resolve();
+  });
+}
+
+/**
+ * Smoothly scale a model/part to its original size from nothing
+ * @param model Model or part to scale
+ * @param point The point of the model to scale from
+ */
+export async function growIn(model: Model | BasePart, speed = 0.1): Promise<void> {
   const scaleValue = new Instance("NumberValue");
   scaleValue.Value = 0.01;
 
   const defaultSize = model.IsA("BasePart") ? model.Size : undefined;
-  const t = tween(scaleValue, growInTweenInfo, { Value: <number>model.GetAttribute("DefaultScale") ?? 1 });
+  const t = tween(scaleValue, new TweenInfoBuilder().SetTime(speed), { Value: <number>model.GetAttribute("DefaultScale") ?? 1 });
   return new Promise(resolve => {
     while (t.PlaybackState === Enum.PlaybackState.Playing) {
       if (model.IsA("Model"))

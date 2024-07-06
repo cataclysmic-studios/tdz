@@ -250,8 +250,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
   private spawn(player: Player, towerName: TowerName, cframe: CFrame, price: number): void {
     const map = this.match.getMap();
     const validationTower = createTowerModel(towerName, "Level0", cframe, false);
-    const [validationHitbox] = createSizePreview(<number>validationTower.GetAttribute("Size"), undefined, cframe.sub(new Vector3(0, 1, 0)), false);
-
+    const validationHitbox = createSizePreview(<number>validationTower.GetAttribute("Size"), undefined, cframe.sub(new Vector3(0, 1, 0)), false);
     const cleanupValidation = () => {
       validationTower.Destroy();
       validationHitbox.Destroy();
