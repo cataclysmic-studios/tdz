@@ -17,11 +17,11 @@ import { createRangePreview, getTowerModelName, setSizePreviewColor, upgradeTowe
 import { findLeadShot } from "shared/projectile-utility";
 import { fuzzyEquals, lerp } from "common/shared/utility/numbers";
 import { AttackVfxType, ProjectileImpactVfxType } from "shared/structs";
-import { SPEED_ACCURACY } from "shared/optimization-accuracies";
+import { DISTANCE_ACCURACY, SPEED_ACCURACY } from "shared/optimization-accuracies";
 import { ENEMY_STORAGE, PLACEMENT_STORAGE, PROJECTILE_SPEEDS, RANGE_PREVIEW_COLORS } from "shared/constants";
 import type { TowerStats } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
-import type { TowerInfoPacket } from "shared/packet-structs";
+import { TowerAttackPacket, type TowerInfoPacket } from "shared/packet-structs";
 import Log from "common/shared/logger";
 
 import DestroyableComponent from "common/shared/base-components/destroyable";
@@ -132,12 +132,13 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
         this.loadProjectileCache();
       }
     }));
-    this.janitor.Add(Events.towerAttacked.connect(idDistanceAndSpeed => {
-      const { X: id, Y: distance, Z: speed } = idDistanceAndSpeed.div(new Vector3int16(1, 1, SPEED_ACCURACY));
+    this.janitor.Add(Events.towerAttacked.connect((id, { buffer, blobs }) => {
       if (id !== this.attributes.ID) return;
 
-      const enemyCFrame = this.path.get().getCFrameAtDistance(distance);
-      const enemyVelocity = enemyCFrame.LookVector.mul(speed + 3);
+      const serializer = createBinarySerializer<TowerAttackPacket>();
+      const { enemyDistance, enemySpeed } = serializer.deserialize(buffer, blobs);
+      const enemyCFrame = this.path.get().getCFrameAtDistance(enemyDistance / DISTANCE_ACCURACY);
+      const enemyVelocity = enemyCFrame.LookVector.mul(enemySpeed / SPEED_ACCURACY + 3);
       const towerPosition = this.instance.GetPivot().Position;
       this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyCFrame.X, towerPosition.Y, enemyCFrame.Z)));
       this.playAnimation("Attack");

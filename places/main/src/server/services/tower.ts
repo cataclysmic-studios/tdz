@@ -16,8 +16,8 @@ import { TargetingType } from "shared/structs";
 import { EnemyEntity, EnemyInfo, TowerEntity, TowerInfo } from "shared/entity-components";
 import { TOWER_STATS, type UpgradeLevel, type UpgradePath } from "common/shared/towers";
 import { GRAVITATIONAL_PROJECTILE_TYPES, PROJECTILE_SPEEDS } from "shared/constants";
-import { SPEED_ACCURACY } from "shared/optimization-accuracies";
-import type { TowerInfoPacket } from "shared/packet-structs";
+import { DISTANCE_ACCURACY, SPEED_ACCURACY } from "shared/optimization-accuracies";
+import { TowerAttackPacket, type TowerInfoPacket } from "shared/packet-structs";
 
 import type { MatterService } from "./matter";
 import type { MatchService } from "./match";
@@ -73,7 +73,13 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     const cframe = this.match.getPath().getCFrameAtDistance(enemyInfo.distance);
     const enemyPosition = cframe.Position;
     const enemyVelocity = cframe.LookVector.mul(enemyInfo.speed); // * Matter.useDeltaTime() (?)
-    Events.towerAttacked.broadcast(new Vector3int16(tower, enemyInfo.distance, enemyInfo.speed * SPEED_ACCURACY));
+    const serializer = createBinarySerializer<TowerAttackPacket>();
+    const attackPacket = serializer.serialize({
+      enemyDistance: enemyInfo.distance * DISTANCE_ACCURACY,
+      enemySpeed: enemyInfo.speed * SPEED_ACCURACY
+    });
+
+    Events.towerAttacked.broadcast(tower, attackPacket);
     this.matter.world.insert(tower, towerInfo.patch({ timeSinceAttack: 0 }));
 
     const projectileType = towerInfo.stats.projectileType;
