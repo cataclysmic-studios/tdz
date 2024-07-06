@@ -23,6 +23,7 @@ const GROUP_MEMBER_BONUS = 125;
 
 @Service({ loadOrder: 1 })
 export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeave, LogStart {
+  public readonly completed = new Signal<(won: boolean) => void>;
   public readonly cashChanged = new Signal<(player: Player, newCash: number) => void>;
   public readonly timeScaleChanged = new Signal<(timeScale: number) => void>;
   public readonly intermissionFinished = new Signal<(difficulty: Difficulty) => void>;
@@ -38,7 +39,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   private playersLoaded: Partial<Record<number, true>> = {};
   private maxHealth = 0;
   private health = 0;
-  private completed = false;
+  private over = false;
 
   public onInit(): void {
     Events.loadTeleportData.connect((_, teleportData) => {
@@ -80,7 +81,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
       this.playersLoaded[player.UserId] = true;
 
     do task.wait(0.2); while (this.teleportData === undefined);
-    const spawnPoint = this.mapModel.FindFirstChildOfClass("SpawnLocation")?.CFrame ?? this.mapModel.GetPivot().add(new Vector3(0, 10, 0));
+    const spawnPoint = (<SpawnLocation>this.mapModel.WaitForChild("SpawnLocation", 5))?.CFrame ?? this.mapModel.GetPivot().add(new Vector3(0, 10, 0));
     if (player.Character === undefined)
       player.CharacterAdded.Once(() => teleportPlayers(spawnPoint, player));
     else
@@ -102,11 +103,12 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   }
 
   public isComplete(): boolean {
-    return this.completed;
+    return this.over;
   }
 
   public complete(won: boolean): void {
-    this.completed = true;
+    this.over = true;
+    this.completed.Fire(won);
     Log.info(won ? "You won!" : "You lost...");
     // TODO: rewards, win/lose UI, music, etc.
   }
@@ -170,7 +172,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   }
 
   private setHealth(health: number): void {
-    if (this.completed) return;
+    if (this.over) return;
     let healthClamped = max(health, 0)
     this.maxHealth = healthClamped > this.maxHealth ? healthClamped : this.maxHealth;
     healthClamped = min(health, this.maxHealth);

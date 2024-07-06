@@ -67,7 +67,11 @@ export class WavesService implements OnInit, LogStart {
         summoning = false;
       });
 
-      while ((!this.skipped || summoning) && (!timerEnded && this.enemy.areEnemiesAlive())) task.wait(0.2);
+      while (true) {
+        if (this.skipped) break;
+        if (!summoning && (timerEnded || !this.enemy.areEnemiesAlive())) break;
+        task.wait(0.2);
+      }
       if (waveTimer.isActive())
         this.match.destroyCurrentTimer();
 

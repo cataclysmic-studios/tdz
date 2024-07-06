@@ -95,7 +95,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     ), "Disconnect");
     this.janitor.Add(this.caster.CastTerminating.Connect(cast => {
       try {
-        this.projectileCache.ReturnPart(<BasePart>cast.RayInfo.CosmeticBulletObject)
+        this.projectileCache.ReturnPart(<BasePart>cast.RayInfo.CosmeticBulletObject);
       } catch (err) {
         Log.warning("Failed to return projectile to part cache.");
       }
@@ -114,11 +114,12 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       if (id !== this.attributes.ID) return;
       this.destroy();
     }));
+
+    const serializer = createBinarySerializer<TowerInfoPacket>();
     this.janitor.Add(Events.updateTowerStats.connect((id, { buffer, blobs }) => {
-      const serializer = createBinarySerializer<TowerInfoPacket>();
-      const info = serializer.deserialize(buffer, blobs);
       if (id !== this.attributes.ID) return;
 
+      const info = serializer.deserialize(buffer, blobs);
       const hasChanges = this.info !== info;
       if (hasChanges) {
         this.info = info;

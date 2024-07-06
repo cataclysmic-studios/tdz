@@ -9,6 +9,7 @@ import type { OnPlayerJoin } from "common/server/hooks";
 import { CommonEvents } from "common/server/network";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
+import { shuffle } from "common/shared/utility/array";
 import { canPlaceTower, canUpgrade, createSizePreview, createTowerModel, getTowerStats } from "shared/utility";
 import { findLeadShot, getTimeToReach } from "shared/projectile-utility";
 import { NotificationStyle } from "common/shared/structs/notifications";
@@ -22,12 +23,13 @@ import { TowerAttackPacket, type TowerInfoPacket } from "shared/packet-structs";
 import type { MatterService } from "./matter";
 import type { MatchService } from "./match";
 import type { EnemyService } from "./enemy";
-import { shuffle } from "common/shared/utility/array";
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {
   private readonly towers: TowerEntity[] = [];
   private readonly lastTowerStatsUpdate: Record<TowerEntity, number> = {};
+  private readonly attackSerializer = createBinarySerializer<TowerAttackPacket>();
+  private readonly infoSerializer = createBinarySerializer<TowerInfoPacket>();
 
   public constructor(
     private readonly matter: MatterService,
@@ -47,15 +49,20 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     Functions.getTowerInfo.setCallback((_, id) => this.matter.world.get(<TowerEntity>id, TowerInfo)!);
 
     const loop = new Matter.Loop(this.matter.world);
-    loop.scheduleSystems([
-      {
-        system: () => this.updateStatsSystem(),
-        priority: math.huge
-      }, {
-        system: () => this.attackSystem(Matter.useDeltaTime()),
-        priority: math.huge
-      }
-    ]);
+    const systems = [{
+      system: () => this.attackSystem(Matter.useDeltaTime()),
+      priority: 1
+    }, {
+      system: () => this.updateStatsSystem(),
+      priority: math.huge
+    }];
+
+    this.match.completed.Once(() => {
+      for (const system of systems)
+        loop.evictSystem(system);
+    });
+
+    loop.scheduleSystems(systems);
     loop.begin({
       default: Runtime.Heartbeat
     });
@@ -75,8 +82,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     const cframe = this.match.getPath().getCFrameAtDistance(enemyInfo.distance);
     const enemyPosition = cframe.Position;
     const enemyVelocity = cframe.LookVector.mul(enemyInfo.speed); // * Matter.useDeltaTime() (?)
-    const serializer = createBinarySerializer<TowerAttackPacket>();
-    const attackPacket = serializer.serialize({
+    const attackPacket = this.attackSerializer.serialize({
       enemyDistance: enemyInfo.distance * DISTANCE_ACCURACY,
       enemySpeed: enemyInfo.speed * SPEED_ACCURACY
     });
@@ -165,8 +171,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
       const timeSinceUpdate = os.clock() - lastUpdate;
       this.lastTowerStatsUpdate[tower] = lastUpdate;
       if (timeSinceUpdate >= 0.1) {
-        const serializer = createBinarySerializer<TowerInfoPacket>();
-        const packet = serializer.serialize(record.new);
+        const packet = this.infoSerializer.serialize(record.new);
         Events.updateTowerStats.broadcast(tower, packet);
         this.lastTowerStatsUpdate[tower] = os.clock();
       }

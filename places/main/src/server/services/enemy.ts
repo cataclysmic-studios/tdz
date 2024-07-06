@@ -31,20 +31,29 @@ export class EnemyService implements OnStart, OnTick, LogStart {
   ) { }
 
   public onStart(): void {
+    const serializer = createBinarySerializer<EnemyEntriesRecordPacket>();
+    let lastEntriesSize = 0;
+    let sentFastUpdate = false;
+
     task.spawn(() => {
-      while (!this.match.isComplete()) {
+      while (true) {
         const enemyEntries = this.enemies
           .map<[EnemyEntity, EnemyInfo]>(enemy => [enemy, this.matter.world.get(enemy, EnemyInfo)!])
           .filter(([enemy]) => this.matter.world.contains(enemy));
 
-        const serializer = createBinarySerializer<EnemyEntriesRecordPacket>();
         const serializedEntries = serializer.serialize(enemyEntries);
         if (enemyEntries.size() === 0) {
+          // when there's no enemies to update, do it 5x slower
           Events.updateEnemies.broadcast(serializedEntries);
-          task.wait(CLIENT_UPDATE_INTERVAL * 5);
+          sentFastUpdate = !sentFastUpdate && lastEntriesSize !== 0;
+          lastEntriesSize = enemyEntries.size();
+
+          task.wait(CLIENT_UPDATE_INTERVAL * (sentFastUpdate ? 1 : 5));
           continue;
         }
 
+        sentFastUpdate = false;
+        lastEntriesSize = enemyEntries.size();
         Events.updateEnemies.broadcast(serializedEntries);
         task.wait(CLIENT_UPDATE_INTERVAL);
       }
@@ -84,6 +93,7 @@ export class EnemyService implements OnStart, OnTick, LogStart {
 
   public summon({ enemyName, amount, interval, traits }: EnemySummonInfo): void {
     for (let i = 0; i < amount; i++) {
+      if (this.match.isComplete()) break;
       this.spawn(enemyName, traits);
       task.wait(interval / this.match.timeScale);
     }
