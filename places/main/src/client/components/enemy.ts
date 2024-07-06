@@ -66,7 +66,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
     if (root === undefined || this.info === undefined) return;
 
     for (const part of this.parts) {
-      if (["Left Eye", "Right Eye", "HumanoidRootPart", "Handle"].includes(part.Name)) continue;
+      if (["Left Eye", "Right Eye", "HumanoidRootPart", "Face Decals"].includes(part.Name)) continue;
       const i = this.parts.indexOf(part);
       part.Transparency = this.info.isStealth ? 0.4 : this.defaultTransparencies[i];
     }
