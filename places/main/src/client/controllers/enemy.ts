@@ -28,11 +28,12 @@ export class EnemyController implements OnInit {
       this.currentEnemyComponents[enemy]?.destroy();
       this.currentEnemyComponents[enemy] = undefined;
     });
+
+    const enemyRecordSerializer = createBinarySerializer<EnemyEntriesRecordPacket>();
     Events.updateEnemies.connect(({ buffer, blobs }) => {
       task.spawn(() => {
         const oldRecord = this.currentEnemyRecord;
-        const serializer = createBinarySerializer<EnemyEntriesRecordPacket>();
-        const enemyRecordEntries = serializer.deserialize(buffer, blobs);
+        const enemyRecordEntries = enemyRecordSerializer.deserialize(buffer, blobs);
         this.currentEnemyRecord = Object.fromEntries(enemyRecordEntries);
 
         for (const [id, enemy] of Object.entries(this.currentEnemyComponents))
@@ -61,7 +62,7 @@ export class EnemyController implements OnInit {
             enemyModel.Parent = ENEMY_STORAGE;
 
             growIn(enemyModel);
-            if (enemyModel.FindFirstChild("HumanoidRootPart") === undefined || enemyModel.GetAttribute("ID") === undefined) return;
+            while (enemyModel.GetAttribute("ID") === undefined) task.wait(0.1);
             const enemyComponent = this.components.addComponent<Enemy>(enemyModel);
             this.currentEnemyComponents[enemy] = enemyComponent;
             enemyComponent.setInfo(info);

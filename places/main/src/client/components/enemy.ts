@@ -19,10 +19,7 @@ interface Attributes {
 }
 
 @Component({
-  tag: "Enemy",
-  defaults: {
-    Health: 0
-  }
+  tag: "Enemy"
 })
 export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implements OnStart, OnTick, OnRender {
   private readonly currentTraitFrames: ImageLabel[] = [];

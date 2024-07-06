@@ -120,9 +120,12 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     towerModel.AddTag("Tower");
   }
 
-  public enterPlacement(towerName: TowerName): void {
-    if (this.placing)
-      this.exitPlacement();
+  public async enterPlacement(towerName: TowerName): Promise<void> {
+    if (this.placing) {
+      const exitPromise = this.placementJanitor.AddPromise(this.exitPlacement());
+      const [status] = exitPromise.awaitStatus();
+      if (status === "Cancelled") return;
+    }
 
     const tooltip = PlayerGui.Main.Main.ExitPlacementTip;
     tooltip.Visible = true;
@@ -152,6 +155,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
           this.placementRangePreview = undefined;
           this.placementModel?.Destroy();
           this.placementModel = undefined;
+          this.placing = false;
         });
       }
     });
@@ -169,9 +173,12 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
       });
   }
 
-  public exitPlacement(): void {
+  public async exitPlacement(): Promise<void> {
     this.placementJanitor.Cleanup();
-    this.placing = false;
+    return new Promise(resolve => {
+      while (this.placing) task.wait(0.1);
+      resolve();
+    });
   }
 
   private async confirmPlacement(): Promise<void> {

@@ -110,11 +110,11 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       this.destroy();
     }));
 
-    const serializer = createBinarySerializer<TowerInfoPacket>();
+    const infoSerializer = createBinarySerializer<TowerInfoPacket>();
     this.janitor.Add(Events.updateTowerStats.connect((id, { buffer, blobs }) => {
       if (id !== this.attributes.ID) return;
 
-      const info = serializer.deserialize(buffer, blobs);
+      const info = infoSerializer.deserialize(buffer, blobs);
       const hasChanges = this.info !== info;
       if (hasChanges) {
         this.info = info;
@@ -128,11 +128,12 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
         this.loadProjectileCache();
       }
     }));
+
+    const attackSerializer = createBinarySerializer<TowerAttackPacket>();
     this.janitor.Add(Events.towerAttacked.connect((id, { buffer, blobs }) => {
       if (id !== this.attributes.ID) return;
 
-      const serializer = createBinarySerializer<TowerAttackPacket>();
-      const { enemyDistance, enemySpeed } = serializer.deserialize(buffer, blobs);
+      const { enemyDistance, enemySpeed } = attackSerializer.deserialize(buffer, blobs);
       const enemyCFrame = this.path.get().getCFrameAtDistance(enemyDistance / DISTANCE_ACCURACY);
       const enemyVelocity = enemyCFrame.LookVector.mul(enemySpeed / SPEED_ACCURACY + 3);
       const towerPosition = this.instance.GetPivot().Position;
