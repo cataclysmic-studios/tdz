@@ -89,6 +89,9 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     if (info.ownerID !== Player.UserId) return;
     this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(1)));
     this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(2)));
+    this.updateJanitor.Add(this.instance.NextTargeting.MouseButton1Click.Once(() => {
+
+    }));
     this.updateJanitor.Add(this.instance.Sell.MouseButton1Click.Once(() => {
       tower.destroy();
       Events.sellTower(id);

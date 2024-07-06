@@ -61,6 +61,7 @@ export class EnemyController implements OnInit {
             enemyModel.Parent = ENEMY_STORAGE;
 
             growIn(enemyModel);
+            if (enemyModel.FindFirstChild("HumanoidRootPart") === undefined || enemyModel.GetAttribute("ID") === undefined) return;
             const enemyComponent = this.components.addComponent<Enemy>(enemyModel);
             this.currentEnemyComponents[enemy] = enemyComponent;
             enemyComponent.setInfo(info);

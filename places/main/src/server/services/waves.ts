@@ -50,22 +50,24 @@ export class WavesService implements OnInit, LogStart {
 
       let timerEnded = false;
       const waveTimer = this.match.startTimer(toSeconds(wave.length));
+      this.waveJanitor.Add(waveTimer.ended.Once(() => timerEnded = true));
       const countConnection = this.waveJanitor.Add(waveTimer.counted.Connect(remainingTime => {
         if (remainingTime >= waveTimer.length - 15) return;
         countConnection.Disconnect();
         Events.updateSkipWaveUI.broadcast(true, 0, this.match.getPlayerCount());
       }));
-      this.waveJanitor.Add(waveTimer.ended.Once(() => timerEnded = true));
 
+      let summoning = true;
       task.spawn(() => {
         for (const summonInfo of wave.enemies) {
           this.enemy.summon(summonInfo);
           if (summonInfo.length === -1) continue;
           task.wait(summonInfo.length / this.match.timeScale);
         }
+        summoning = false;
       });
 
-      while (!this.skipped && !timerEnded && this.enemy.areEnemiesAlive()) task.wait(0.2);
+      while ((!this.skipped || summoning) && (!timerEnded && this.enemy.areEnemiesAlive())) task.wait(0.2);
       if (waveTimer.isActive())
         this.match.destroyCurrentTimer();
 

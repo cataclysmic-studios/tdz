@@ -2,7 +2,7 @@ import type { DataType } from "@rbxts/flamework-binary-serializer";
 
 import type { EnemyInfo, TowerInfo } from "./entity-components";
 
-export type EnemyEntriesRecordPacket = [DataType.u16, DataType.Packed<Omit<EnemyInfo, "patch">>][];
+export type EnemyEntriesRecordPacket = [DataType.u16, Omit<EnemyInfo, "patch">][];
 export type TowerInfoPacket = Omit<TowerInfo, "patch">;
 export interface TowerAttackPacket {
   enemyDistance: DataType.u8;
