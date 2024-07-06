@@ -130,6 +130,10 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
     this.incrementHealth(-amount);
   }
 
+  public decrementCash(player: Player, amount: number): void {
+    this.incrementCash(player, -amount);
+  }
+
   public incrementAllCash(amount: number): void {
     for (const [id, cash] of Object.entries(this.playerCash))
       this.playerCash[id] = max(cash + amount, 0);
@@ -180,10 +184,6 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
 
   private getHealth(): number {
     return this.health;
-  }
-
-  private decrementCash(player: Player, amount: number): void {
-    this.incrementCash(player, -amount);
   }
 
   private setCash(player: Player, cash: number): void {

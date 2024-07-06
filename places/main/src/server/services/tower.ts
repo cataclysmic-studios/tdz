@@ -108,6 +108,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     if (pathLevelStats.price !== price)
       return player.Kick("you're not slick buddy");
 
+    this.match.decrementCash(player, price);
     newUpgrades[path - 1]++;
     this.matter.world.insert(tower, info.patch({
       upgrades: newUpgrades,
