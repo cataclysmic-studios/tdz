@@ -16,6 +16,7 @@ import Log from "common/shared/logger";
 import { InputInfluenced } from "common/client/base-components/input-influenced";
 import type { SelectionController } from "client/controllers/selection";
 import { Tower } from "../tower";
+import { TargetingType } from "shared/structs";
 
 const INDICATOR_UNFILLED_BG = Color3.fromRGB(41, 44, 32);
 const INDICATOR_UNFILLED_STROKE = Color3.fromRGB(7, 21, 10);
@@ -59,10 +60,14 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
   public updateInfo(tower: Tower): void {
     const id = tower.attributes.ID;
     const info = tower.getInfo();
+    const isMyTower = info.ownerID === Player.UserId;
     this.updateJanitor.Cleanup();
     this.instance.Info.Damage.Title.Text = toSuffixedNumber(info.totalDamage);
     this.instance.Info.Worth.Title.Text = `$${toSuffixedNumber(info.worth)}`;
     this.instance.Sell.Price.Text = `$${toSuffixedNumber(math.floor(info.worth / 2))}`;
+    this.instance.TargetingType.Text = TargetingType[info.targeting].upper();
+    this.instance.NextTargeting.Visible = isMyTower;
+    this.instance.LastTargeting.Visible = isMyTower;
 
     this.currentID = id;
     this.currentInfo = info;
@@ -75,8 +80,8 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     const canUpgradePath2 = this.canUpgrade(2);
     const path1 = this.instance.Upgrades.Path1;
     const path2 = this.instance.Upgrades.Path2;
-    path1.Upgrade.Visible = canUpgradePath1;
-    path2.Upgrade.Visible = canUpgradePath2;
+    path1.Upgrade.Visible = isMyTower && canUpgradePath1;
+    path2.Upgrade.Visible = isMyTower && canUpgradePath2;
     path1.UpgradeName.Text = nextPath1Meta.name;
     path2.UpgradeName.Text = nextPath2Meta.name;
     path1.Icon.Image = nextPath1Meta.icon;
@@ -86,12 +91,11 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     this.fillOutIndicator(path1, path1Level);
     this.fillOutIndicator(path2, path2Level);
 
-    if (info.ownerID !== Player.UserId) return;
+    if (!isMyTower) return;
     this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(1)));
     this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(2)));
-    this.updateJanitor.Add(this.instance.NextTargeting.MouseButton1Click.Once(() => {
-
-    }));
+    this.updateJanitor.Add(this.instance.NextTargeting.MouseButton1Click.Once(() => Events.cycleTowerTargeting(id, 1)));
+    this.updateJanitor.Add(this.instance.LastTargeting.MouseButton1Click.Once(() => Events.cycleTowerTargeting(id, -1)));
     this.updateJanitor.Add(this.instance.Sell.MouseButton1Click.Once(() => {
       tower.destroy();
       Events.sellTower(id);

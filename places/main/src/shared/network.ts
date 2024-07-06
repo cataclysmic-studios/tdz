@@ -7,6 +7,7 @@ import type { TowerInfo } from "./entity-components";
 interface ServerEvents {
   sellTower(id: number): void;
   placeTower(towerName: TowerName, cframe: CFrame, price: number): void;
+  cycleTowerTargeting(id: number, increment: -1 | 1): void;
   loadTeleportData(teleportData: TeleportData): void;
   toggleDoubleSpeed(on: boolean): void;
   voteSkipWave(votedSkip: boolean): void;

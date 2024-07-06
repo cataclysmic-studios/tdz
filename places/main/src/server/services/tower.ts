@@ -41,6 +41,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
 
     Events.placeTower.connect((player, towerName, cframe, price) => this.spawn(player, towerName, cframe, price));
     Events.sellTower.connect((player, tower) => this.sell(player, <TowerEntity>tower));
+    Events.cycleTowerTargeting.connect((player, id, increment) => this.cycleTargeting(player, <TowerEntity>id, increment));
     Functions.requestTowerUpgrade.setCallback((player, id, path) => this.requestUpgrade(player, <TowerEntity>id, path));
     Functions.getTowerInfo.setCallback((_, id) => this.matter.world.get(<TowerEntity>id, TowerInfo)!);
 
@@ -94,6 +95,18 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
         timeSinceAttack: 0
       }));
     });
+  }
+
+  public cycleTargeting(player: Player, tower: TowerEntity, increment: -1 | 1): void {
+    if (!this.matter.world.contains(tower)) return;
+
+    const info = this.matter.world.get(tower, TowerInfo)!;
+    if (info.ownerID !== player.UserId)
+      return player.Kick("wtf r u even doing");
+
+    const targetingTypeCount = Object.keys(TargetingType).size();
+    const newTargeting = <TargetingType>(info.targeting + increment) % targetingTypeCount;
+    this.matter.world.insert(tower, info.patch({ targeting: newTargeting }));
   }
 
   public requestUpgrade(player: Player, tower: TowerEntity, path: UpgradePath): void {

@@ -10,7 +10,7 @@ export const enum ProjectileImpactVfxType {
   Explosion = "Explosion"
 }
 
-export const enum TargetingType {
+export enum TargetingType {
   First,
   Last,
   Close,
