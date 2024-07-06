@@ -65,7 +65,7 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     this.instance.Info.Damage.Title.Text = toSuffixedNumber(info.totalDamage);
     this.instance.Info.Worth.Title.Text = `$${toSuffixedNumber(info.worth)}`;
     this.instance.Sell.Price.Text = `$${toSuffixedNumber(math.floor(info.worth / 2))}`;
-    this.instance.TargetingType.Text = TargetingType[info.targeting].upper();
+    this.instance.TargetingType.Text = TargetingType[math.floor(info.targeting)].upper();
     this.instance.NextTargeting.Visible = isMyTower;
     this.instance.LastTargeting.Visible = isMyTower;
 

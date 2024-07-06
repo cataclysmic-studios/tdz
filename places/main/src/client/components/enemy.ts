@@ -26,6 +26,8 @@ interface Attributes {
 })
 export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implements OnStart, OnTick, OnRender {
   private readonly currentTraitFrames: ImageLabel[] = [];
+  private readonly parts = this.instance.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart"));
+  private readonly defaultTransparencies = this.parts.map(part => part.Transparency);
   private walkAnimation!: AnimationTrack;
   private info!: Omit<EnemyInfo, "patch">;
 
@@ -47,7 +49,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
       this.walkAnimation.Priority = Enum.AnimationPriority.Idle;
       this.walkAnimation.Play();
 
-      for (const part of this.instance.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart"))) {
+      for (const part of this.parts) {
         part.CanCollide = false;
         part.CollisionGroup = "plrs";
       }
@@ -62,6 +64,12 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
   public onTick(dt: number): void {
     const root = this.instance.PrimaryPart;
     if (root === undefined || this.info === undefined) return;
+
+    for (const part of this.parts) {
+      if (["Left Eye", "Right Eye", "HumanoidRootPart", "Handle"].includes(part.Name)) continue;
+      const i = this.parts.indexOf(part);
+      part.Transparency = this.info.isStealth ? 0.4 : this.defaultTransparencies[i];
+    }
 
     task.spawn(() => {
       this.adjustWalkAnimationSpeed();

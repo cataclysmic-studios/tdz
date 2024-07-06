@@ -69,6 +69,15 @@ export class EnemyService implements OnStart, OnTick, LogStart {
     }
   }
 
+  public revealStealth(enemies: EnemyEntity[] = this.enemies): void {
+    for (const enemy of enemies)
+      task.spawn(() => {
+        if (!this.matter.world.contains(enemy)) return;
+        const info = this.matter.world.get(enemy, EnemyInfo)!;
+        this.matter.world.insert(enemy, info.patch({ isStealth: false }));
+      });
+  }
+
   public areEnemiesAlive(): boolean {
     return this.enemies.size() > 0;
   }
