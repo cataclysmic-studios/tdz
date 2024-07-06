@@ -22,6 +22,7 @@ import { TowerAttackPacket, type TowerInfoPacket } from "shared/packet-structs";
 import type { MatterService } from "./matter";
 import type { MatchService } from "./match";
 import type { EnemyService } from "./enemy";
+import { shuffle } from "common/shared/utility/array";
 
 @Service()
 export class TowerService implements OnInit, OnPlayerJoin, LogStart {
@@ -183,8 +184,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
   private getTarget(tower: TowerEntity): Maybe<EnemyEntity> {
     if (!this.matter.world.contains(tower)) return undefined;
 
-    const enemies = this.enemy.enemies;
-    const enemyInfos = enemies.filter(enemy => this.matter.world.contains(enemy))
+    const enemyInfos = this.enemy.enemies.filter(enemy => this.matter.world.contains(enemy))
       .map<[EnemyEntity, EnemyInfo]>(enemy => [enemy, this.matter.world.get(enemy, EnemyInfo)!]);
 
     const towerInfo = this.matter.world.get(tower, TowerInfo)!;
@@ -206,7 +206,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
         }));
       }
       case TargetingType.Random:
-        return enemies[math.random(0, enemies.size() - 1)];
+        return this.findTargetableEnemy(towerInfo, shuffle(enemyInfos));
     }
   }
 
