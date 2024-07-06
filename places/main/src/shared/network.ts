@@ -30,7 +30,7 @@ interface ClientEvents {
 }
 
 interface ServerFunctions {
-  requestTowerUpgrade(id: number, path: UpgradePath, price: number): void;
+  requestTowerUpgrade(id: number, path: UpgradePath): void;
   getTimeScale(): number;
   spendCash(price: number): [boolean, number];
   getTowerInfo(id: number): Omit<TowerInfo, "patch">;

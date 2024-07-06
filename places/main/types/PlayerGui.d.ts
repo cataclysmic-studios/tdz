@@ -106,6 +106,9 @@ interface PlayerGui extends BasePlayerGui {
         };
       };
       TowerUpgrades: ImageLabel & {
+        TargetingType: TextLabel;
+        NextTargeting: ImageButton;
+        LastTargeting: ImageButton;
         Sell: ImageButton & {
           Price: TextLabel;
         };

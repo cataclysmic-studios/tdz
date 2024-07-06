@@ -7,7 +7,9 @@ import Object from "@rbxts/object-utils";
 import { Events, Functions } from "client/network";
 import { Player, PlayerGui } from "common/shared/utility/client";
 import { toSuffixedNumber } from "common/shared/utility/numbers";
-import { TOWER_STATS, TOWER_UPGRADE_META, TowerMeta, TowerStats, UpgradePath } from "common/shared/towers";
+import { TOWER_STATS, TOWER_UPGRADE_META } from "common/shared/towers";
+import { MAX_PATH_LEVEL } from "shared/constants";
+import type { TowerMeta, TowerStats, UpgradePath } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
 import Log from "common/shared/logger";
 
@@ -15,8 +17,6 @@ import { InputInfluenced } from "common/client/base-components/input-influenced"
 import type { SelectionController } from "client/controllers/selection";
 import { Tower } from "../tower";
 
-
-const MAX_PATH_LEVEL = 5;
 const INDICATOR_UNFILLED_BG = Color3.fromRGB(41, 44, 32);
 const INDICATOR_UNFILLED_STROKE = Color3.fromRGB(7, 21, 10);
 const INDICATOR_FILLED_BG = Color3.fromRGB(97, 229, 128);
@@ -106,14 +106,13 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
       return Log.warning(`Something went wrong: Upgrades.getStats(${path}) returned undefined`);
 
     const canUpgrade = this.canUpgrade(path);
-    const price = stats.price!;
     if (!canUpgrade) return;
     if (this.debounce) return;
 
     const id = this.currentID;
     task.spawn(async () => {
       this.debounce = true;
-      await Functions.requestTowerUpgrade(id, path, price);
+      await Functions.requestTowerUpgrade(id, path);
       this.debounce = false;
     });
   }

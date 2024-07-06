@@ -9,7 +9,7 @@ import type { OnPlayerJoin } from "common/server/hooks";
 import { CommonEvents } from "common/server/network";
 import { Events, Functions } from "server/network";
 import { Assets } from "common/shared/utility/instances";
-import { canPlaceTower, createSizePreview, createTowerModel, getTowerStats } from "shared/utility";
+import { canPlaceTower, canUpgrade, createSizePreview, createTowerModel, getTowerStats } from "shared/utility";
 import { findLeadShot, getTimeToReach } from "shared/projectile-utility";
 import { NotificationStyle } from "common/shared/structs/notifications";
 import { TargetingType } from "shared/structs";
@@ -41,7 +41,7 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
 
     Events.placeTower.connect((player, towerName, cframe, price) => this.spawn(player, towerName, cframe, price));
     Events.sellTower.connect((player, tower) => this.sell(player, <TowerEntity>tower));
-    Functions.requestTowerUpgrade.setCallback((player, id, path, price) => this.requestUpgrade(player, <TowerEntity>id, path, price));
+    Functions.requestTowerUpgrade.setCallback((player, id, path) => this.requestUpgrade(player, <TowerEntity>id, path));
     Functions.getTowerInfo.setCallback((_, id) => this.matter.world.get(<TowerEntity>id, TowerInfo)!);
 
     const loop = new Matter.Loop(this.matter.world);
@@ -96,23 +96,25 @@ export class TowerService implements OnInit, OnPlayerJoin, LogStart {
     });
   }
 
-  public requestUpgrade(player: Player, tower: TowerEntity, path: UpgradePath, price: number): void {
+  public requestUpgrade(player: Player, tower: TowerEntity, path: UpgradePath): void {
+    if (!this.matter.world.contains(tower)) return;
+
+    const info = this.matter.world.get(tower, TowerInfo)!;
+    if (info.ownerID !== player.UserId)
+      return player.Kick("wtf r u even doing");
+
+    if (!canUpgrade(info, path))
+      return CommonEvents.sendNotification(player, `Failed to upgrade ${info.name} path ${path}.`, NotificationStyle.Error);
+
+    const newUpgrades = table.clone<UpgradeLevel>(info.upgrades);
+    const pathLevel = newUpgrades[path - 1];
+    const pathLevelStats = TOWER_STATS[info.name][path][<number>pathLevel];
+    const price = pathLevelStats.price!;
     const cash = this.match.getCash(player);
     if (cash < price) {
       Events.playSoundEffect(player, "Error");
       return CommonEvents.notifyFailedPurchase(player, math.max(price - cash, 0));
     }
-
-    if (!this.matter.world.contains(tower)) return;
-    const info = this.matter.world.get(tower, TowerInfo)!;
-    if (info.ownerID !== player.UserId)
-      return player.Kick("wtf r u even doing");
-
-    const newUpgrades = table.clone<UpgradeLevel>(info.upgrades);
-    const pathLevel = newUpgrades[path - 1];
-    const pathLevelStats = TOWER_STATS[info.name][path][<number>pathLevel];
-    if (pathLevelStats.price !== price)
-      return player.Kick("you're not slick buddy");
 
     this.match.decrementCash(player, price);
     newUpgrades[path - 1]++;

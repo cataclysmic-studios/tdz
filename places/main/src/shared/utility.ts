@@ -8,11 +8,24 @@ import { tween } from "common/shared/utility/ui";
 import { flatten } from "common/shared/utility/array";
 import { removeVectorY } from "common/shared/utility/3D";
 import { TOWER_STATS } from "common/shared/towers";
-import { PLACEMENT_STORAGE } from "./constants";
+import { MAX_PATH_LEVEL, PLACEMENT_STORAGE } from "./constants";
 import { type EnemyTrait, EnemyTraitType } from "./structs";
-import type { TowerStats, PathStats, UpgradeLevel } from "./towers";
+import type { TowerInfo } from "./entity-components";
+import type { TowerStats, PathStats, UpgradeLevel, UpgradePath } from "./towers";
 import CircularRegion from "./classes/circular-region";
 import Log from "./logger";
+
+export function canUpgrade(info: Omit<TowerInfo, "patch">, path: UpgradePath): boolean {
+  const pathLevel = info.upgrades[path - 1];
+  return pathLevel !== MAX_PATH_LEVEL && !isLocked(info, path);
+}
+
+export function isLocked(info: Omit<TowerInfo, "patch">, path: UpgradePath): boolean {
+  const [path1Level, path2Level] = info.upgrades;
+  const pathLevel = path === 1 ? path1Level : path2Level;
+  const otherPathLevel = path === 1 ? path2Level : path1Level;
+  return otherPathLevel >= 3 && pathLevel === 2;
+}
 
 export function getRecordDifference<K extends string | number | symbol, V>(record1: Record<K, V>, record2: Record<K, V>): Partial<Record<K, V>> {
   const difference: Partial<Record<K, V>> = {};

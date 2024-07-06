@@ -7,6 +7,7 @@ import { DifficultyInfo, EnemyTraitType, TeleportData } from "./structs";
 
 export const MIN_TIME_SCALE = 0.5;
 export const MAX_TIME_SCALE = 10;
+export const MAX_PATH_LEVEL = 5;
 
 export const TRAIT_ICONS: Record<EnemyTraitType, string> = {
   [EnemyTraitType.NoCash]: "rbxassetid://18324545188",
