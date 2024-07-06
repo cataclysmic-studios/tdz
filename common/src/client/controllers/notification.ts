@@ -26,11 +26,16 @@ const PALETTES: Record<NotificationStyle, StylePalette> = {
 
 @Controller()
 export class NotificationController implements OnInit {
+  public readonly defaultContainerPosition = PlayerGui.Main.Main.NotificationContainer.Position;
   private activeNotifications = 0;
 
   public onInit(): void {
     CommonEvents.sendNotification.connect((message, style, lifetime, fadeTime) => this.send(message, style, lifetime, fadeTime));
     CommonEvents.notifyFailedPurchase.connect(cashNeeded => this.failedPurchase(cashNeeded));
+  }
+
+  public moveContainer(position: UDim2): void {
+    PlayerGui.Main.Main.NotificationContainer.Position = position;
   }
 
   public send(message: string, style: NotificationStyle, lifetime = 4, fadeTime = 1): void {

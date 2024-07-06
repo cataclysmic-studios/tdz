@@ -35,6 +35,7 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   private path!: Path;
   private currentTimer?: Timer;
   private timerJanitor = new Janitor;
+  private playersLoaded: Partial<Record<number, true>> = {};
   private maxHealth = 0;
   private health = 0;
   private completed = false;
@@ -75,6 +76,8 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   public onPlayerJoin(player: Player): void {
     const janitor = new Janitor;
     this.playerJanitors[player.UserId] = janitor;
+    if (!this.playersLoaded[player.UserId])
+      this.playersLoaded[player.UserId] = true;
 
     do task.wait(0.2); while (this.teleportData === undefined);
     const spawnPoint = this.mapModel.FindFirstChildOfClass("SpawnLocation")?.CFrame ?? this.mapModel.GetPivot().add(new Vector3(0, 10, 0));
@@ -92,6 +95,10 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   public onPlayerLeave(player: Player): void {
     this.playerJanitors[player.UserId]?.Destroy();
     this.playerJanitors[player.UserId] = undefined;
+  }
+
+  public getPlayerCount(): number {
+    return Object.keys(this.playersLoaded).size();
   }
 
   public isComplete(): boolean {

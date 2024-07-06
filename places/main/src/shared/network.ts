@@ -9,18 +9,19 @@ interface ServerEvents {
   placeTower(towerName: TowerName, cframe: CFrame, price: number): void;
   loadTeleportData(teleportData: TeleportData): void;
   toggleDoubleSpeed(on: boolean): void;
-  skipWave(): void;
+  voteSkipWave(votedSkip: boolean): void;
 }
 
 interface ClientEvents {
   updateTimerUI: Networking.Unreliable<(remainingTime: number) => void>;
   updateTowerStats: Networking.Unreliable<(id: number, towerInfoPacket: SerializedData) => void>;
-  towerAttacked: Networking.Unreliable<(idDistanceAndSpeed: Vector3int16) => void>; // TODO: use Vector3int16 and include id too, also use bitpacking on ID (11 bits)
+  towerAttacked: Networking.Unreliable<(idDistanceAndSpeed: Vector3int16) => void>; // TODO: use createBinarySerializer
   towerSold(id: number): void;
   enemyDied(id: number): void;
   updateEnemies(enemyRecordEntries: SerializedData): void;
-  updateHealthUI(health: number, maxHealth: number): void; // TODO: use Vector2int16
+  updateHealthUI(health: number, maxHealth: number): void;
   updateWaveUI(wave: number): void;
+  updateSkipWaveUI(enabled: boolean, skipVotes: number, playerCount: number): void;
   timeScaleUpdated(timeScale: number): void;
   replicateTower(id: number, towerInfo: Omit<TowerInfo, "patch">): void;
   loadTowers(allTowers: Record<number, TowerInfo>): void;

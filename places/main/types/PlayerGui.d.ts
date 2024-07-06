@@ -2,6 +2,27 @@ interface PlayerGui extends BasePlayerGui {
   Main: ScreenGui & {
     Main: Frame & {
       ExitPlacementTip: TextLabel;
+      SkipWave: ImageLabel & {
+        Title: TextLabel;
+        VoteCount: TextLabel;
+        VoteNo: ImageButton & {
+          UIGradient: UIGradient;
+          UICorner: UICorner;
+          UIStroke: UIStroke;
+          UIAspectRatioConstraint: UIAspectRatioConstraint;
+          Icon: ImageLabel;
+        };
+        UICorner: UICorner;
+        UIStroke: UIStroke;
+        VoteYes: ImageButton & {
+          UIGradient: UIGradient;
+          UICorner: UICorner;
+          UIStroke: UIStroke;
+          UIAspectRatioConstraint: UIAspectRatioConstraint;
+          Icon: ImageLabel;
+        };
+        UIGradient: UIGradient;
+      };
       NotificationContainer: Frame & {
         UIListLayout: UIListLayout;
       };
