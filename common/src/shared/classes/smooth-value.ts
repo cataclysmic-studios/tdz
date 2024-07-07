@@ -21,6 +21,10 @@ export default class SmoothValue {
     this.target -= amount;
   }
 
+  public getTarget(): number {
+    return this.target;
+  }
+
   public setTarget(target: number): void {
     this.target = target;
   }

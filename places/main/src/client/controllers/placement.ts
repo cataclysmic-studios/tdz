@@ -203,7 +203,10 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
 
     const towerName = <TowerName>this.placementModel.Name;
     const sway = this.getSway(this.lastDt);
-    const cframe = this.placementModel.GetPivot().mul(sway.Inverse());
+    const cframe = this.placementModel.GetPivot()
+      .mul(sway.Inverse())
+      .mul(CFrame.Angles(0, math.rad(this.yOrientation.getTarget()), 0));
+
     const [{ price }] = TOWER_STATS[towerName];
     const [purchased, cashNeeded] = await Functions.spendCash(price);
     if (!purchased) {
