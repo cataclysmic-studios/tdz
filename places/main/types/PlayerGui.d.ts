@@ -1,7 +1,6 @@
 interface PlayerGui extends BasePlayerGui {
   Main: ScreenGui & {
     Main: Frame & {
-      ExitPlacementTip: TextLabel;
       SkipWave: ImageLabel & {
         Title: TextLabel;
         VoteCount: TextLabel;

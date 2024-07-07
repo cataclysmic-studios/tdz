@@ -135,7 +135,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
       if (status === "Cancelled") return;
     }
 
-    const tooltip = PlayerGui.Main.Main.ExitPlacementTip;
+    const [tooltip] = <TextLabel[]>Collection.GetTagged("ExitPlacementTip");
     tooltip.Visible = true;
     this.placementJanitor.Add(() => tooltip.Visible = false);
     this.selection.deselect();
