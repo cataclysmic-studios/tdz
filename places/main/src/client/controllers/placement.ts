@@ -43,7 +43,6 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   private placementRangePreview?: typeof Assets.RangePreview;
   private placementSizePreview?: typeof Assets.SizePreview;
   private lastMouseWorldPosition = new Vector3;
-  private canPlace = true;
   private placing = false;
   private yOrientation = new SmoothValue(0, 8);
   private lastDt = 0;
@@ -81,8 +80,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.swaySpring.shove(new Vector3(doubleSidedLimit(delta.X, 30), 0, doubleSidedLimit(delta.Z, 30)));
 
     const swayAngles = this.getSway(dt);
-    const [map] = <MapModel[]>Collection.GetTagged("Map");
-    const mouseFilter = [this.character.get()!, PLACEMENT_STORAGE, map.PathNodes, map.StartPoint, map.EndPoint];
+    const mouseFilter = this.getMouseFilter();
     const towerCFrame = new CFrame(this.mouse.getWorldPosition(undefined, mouseFilter))
       .add(new Vector3(0, this.placementModel.GetScale() * 3, 0));
 
@@ -90,15 +88,27 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementRangePreview.PivotTo(towerCFrame.sub(new Vector3(0, 0.8, 0)));
     this.placementSizePreview.CFrame = towerCFrame.sub(new Vector3(0, 1, 0));
 
-    const isWaterTower = <boolean>this.placementModel.GetAttribute("Water") ?? false;
-    const inPlacableLocation = this.mouse.getTarget(undefined, mouseFilter)?.HasTag(isWaterTower ? "PlacableWater" : "PlacableGround") ?? false;
-    this.canPlace = inPlacableLocation && canPlaceTower(this.placementModel, this.placementSizePreview, mouseFilter);
-
-    const previewColor = RANGE_PREVIEW_COLORS[this.canPlace ? "CanPlace" : "CanNotPlace"];
+    const previewColor = RANGE_PREVIEW_COLORS[this.getCanPlace() ? "CanPlace" : "CanNotPlace"];
     this.placementRangePreview.Circle.Color = previewColor;
     this.placementSizePreview.Beam1.Color = new ColorSequence(previewColor);
     this.placementSizePreview.Beam2.Color = new ColorSequence(previewColor);
     this.lastDt = dt;
+  }
+
+  private getCanPlace(): boolean {
+    if (!this.placing) return false;
+    if (this.placementModel === undefined) return false;
+    if (this.placementSizePreview === undefined) return false;
+
+    const mouseFilter = this.getMouseFilter();
+    const isWaterTower = <boolean>this.placementModel.GetAttribute("Water") ?? false;
+    const inPlacableLocation = this.mouse.getTarget(undefined, mouseFilter)?.HasTag(isWaterTower ? "PlacableWater" : "PlacableGround") ?? false;
+    return inPlacableLocation && canPlaceTower(this.placementModel, this.placementSizePreview, mouseFilter);
+  }
+
+  private getMouseFilter(): Instance[] {
+    const [map] = <MapModel[]>Collection.GetTagged("Map");
+    return [this.character.get()!, PLACEMENT_STORAGE, map.PathNodes, map.StartPoint, map.EndPoint];
   }
 
   public place(id: number, towerInfo: Omit<TowerInfo, "patch">): void {
@@ -110,11 +120,9 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     towerModel.SetAttribute("CurrentModelName", modelName);
 
     const size = <number>towerModel.GetAttribute("Size");
-    const sizePreview = createSizePreview(size, id);
+    const sizePreview = createSizePreview(size, id, towerModel.GetPivot().sub(new Vector3(0, 1, 0)));
     setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS[myTower ? "MyTowers" : "NotMyTowers"]);
-    sizePreview.CFrame = towerModel.GetPivot().sub(new Vector3(0, 1, 0));
 
-    growIn(sizePreview);
     growIn(towerModel);
     Sound.SoundEffects.Place.Play();
     towerModel.AddTag("Tower");
@@ -130,17 +138,20 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     const tooltip = PlayerGui.Main.Main.ExitPlacementTip;
     tooltip.Visible = true;
     this.placementJanitor.Add(() => tooltip.Visible = false);
-
     this.selection.deselect();
-    this.placing = true;
     this.yOrientation.zeroize();
-    this.placementModel = createTowerModel(towerName, "Level0");
+
+    const placementModel = createTowerModel(towerName, "Level0");
+    const size = <number>placementModel.GetAttribute("Size");
+    const sizePreview = createSizePreview(size);
+    const touchConnection = sizePreview.Touched.Connect(() => { });
 
     const [{ range }] = TOWER_STATS[towerName];
     this.placementRangePreview = createRangePreview(range);
+    this.placementModel = placementModel;
+    this.placementSizePreview = sizePreview;
+    this.placing = true;
 
-    const size = <number>this.placementModel.GetAttribute("Size");
-    this.placementSizePreview = createSizePreview(size);
     this.placementJanitor.Add(() => {
       if (this.placementModel !== undefined)
         fadeOutParts(this.placementModel);
@@ -156,6 +167,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
           this.placementModel?.Destroy();
           this.placementModel = undefined;
           this.placing = false;
+          touchConnection.Disconnect();
         });
       }
     });
@@ -184,7 +196,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   private async confirmPlacement(): Promise<void> {
     if (!this.placing) return;
     if (this.placementModel === undefined) return;
-    if (!this.canPlace) {
+    if (!this.getCanPlace()) {
       this.notification.send("You cannot place towers here.", NotificationStyle.Error);
       return Sound.SoundEffects.Error.Play();
     }
