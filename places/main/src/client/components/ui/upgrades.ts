@@ -42,6 +42,15 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
       .Bind("E", () => this.requestUpgrade(1))
       .Bind("R", () => this.requestUpgrade(2));
 
+    this.instance.NextTargeting.MouseButton1Click.Connect(() => {
+      if (this.currentID === undefined) return;
+      Events.cycleTowerTargeting(this.currentID, 1);
+    });
+    this.instance.LastTargeting.MouseButton1Click.Connect(() => {
+      if (this.currentID === undefined) return;
+      Events.cycleTowerTargeting(this.currentID, -1);
+    });
+
     task.spawn(() => { // pre-load upgrade icons
       const allMeta = Object.values(TOWER_UPGRADE_META);
       const allUpgradeIcons: string[] = [];
@@ -94,8 +103,6 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     if (!isMyTower) return;
     this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(1)));
     this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(2)));
-    this.updateJanitor.Add(this.instance.NextTargeting.MouseButton1Click.Once(() => Events.cycleTowerTargeting(id, 1)));
-    this.updateJanitor.Add(this.instance.LastTargeting.MouseButton1Click.Once(() => Events.cycleTowerTargeting(id, -1)));
     this.updateJanitor.Add(this.instance.Sell.MouseButton1Click.Once(() => {
       tower.destroy();
       Events.sellTower(id);
