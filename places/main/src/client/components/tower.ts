@@ -2,12 +2,12 @@ import type { OnStart, OnRender } from "@flamework/core";
 import { Component } from "@flamework/components";
 import { Workspace as World, Players } from "@rbxts/services";
 import { createBinarySerializer } from "@rbxts/flamework-binary-serializer";
-import { RaycastParamsBuilder, TweenInfoBuilder } from "@rbxts/builders";
-import { Janitor } from "@rbxts/janitor";
+import { RaycastParamsBuilder } from "@rbxts/builders";
+import { Trash } from "@rbxts/trash";
 import FastCast, { Caster } from "@rbxts/fastcast";
 import type { PartCache } from "@rbxts/partcache/out/class";
 import PartCacheModule from "@rbxts/partcache";
-import Signal from "@rbxts/signal";
+import Signal from "@rbxts/lemon-signal";
 
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
@@ -29,6 +29,7 @@ import type { CharacterController } from "common/client/controllers/character";
 import type { TimeScaleController } from "client/controllers/time-scale";
 import type { SelectionController } from "client/controllers/selection";
 import type { PathController } from "client/controllers/path";
+import { $nameof } from "rbxts-transform-debug";
 
 type AnimationName = ExtractKeys<TowerModel["Animations"], Animation>;
 
@@ -53,7 +54,7 @@ type Attributes = BaseAttributes & ({
 });
 
 @Component({
-  tag: "Tower",
+  tag: $nameof<Tower>(),
   defaults: {
     WeaponName: "Weapon"
   }
@@ -85,33 +86,32 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.loadProjectileCache();
 
     this.caster = new FastCast;
-    this.janitor.Add(this.caster.LengthChanged.Connect((_, lastPoint, rayDirection, displacement, segmentVelocity, projectile) =>
-      this.updateProjectile(<BasePart>projectile, lastPoint, rayDirection, displacement, segmentVelocity)
-    ), "Disconnect");
-    this.janitor.Add(this.caster.CastTerminating.Connect(cast => {
+    this.trash.add(this.caster.LengthChanged.Connect((_, lastPoint, rayDirection, displacement, segmentVelocity, projectile) =>
+      this.updateProjectile(projectile as BasePart, lastPoint, rayDirection, displacement, segmentVelocity)
+    ));
+    this.trash.add(this.caster.CastTerminating.Connect(cast => {
       try {
-        this.projectileCache.ReturnPart(<BasePart>cast.RayInfo.CosmeticBulletObject);
+        this.projectileCache.ReturnPart(cast.RayInfo.CosmeticBulletObject as BasePart);
       } catch (err) {
         Log.warning("Failed to return projectile to part cache.");
       }
-    }), "Disconnect");
+    }));
 
-    this.janitor.LinkToInstance(this.instance, true);
-    this.janitor.Add(this.instance);
-    this.janitor.Add(() => {
+    this.trash.linkToInstance(this.instance, { allowMultiple: true, trackInstance: false });
+    this.trash.add(() => {
       // TODO: play sell sound
       this.selection.deselect();
       this.getSizePreview().Destroy();
       this.updateInfoFrame(true)
     });
-    this.janitor.Add(this.timeScale.changed.Connect(() => this.adjustAnimationSpeeds()));
-    this.janitor.Add(Events.towerSold.connect(id => {
+    this.trash.add(this.timeScale.changed.Connect(() => this.adjustAnimationSpeeds()));
+    this.trash.add(Events.towerSold.connect(id => {
       if (id !== this.attributes.ID) return;
       this.destroy();
     }));
 
     const infoSerializer = createBinarySerializer<TowerInfoPacket>();
-    this.janitor.Add(Events.updateTowerStats.connect((id, { buffer, blobs }) => {
+    this.trash.add(Events.updateTowerStats.connect((id, { buffer, blobs }) => {
       if (id !== this.attributes.ID) return;
 
       const info = infoSerializer.deserialize(buffer, blobs);
@@ -130,7 +130,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     }));
 
     const attackSerializer = createBinarySerializer<TowerAttackPacket>();
-    this.janitor.Add(Events.towerAttacked.connect((id, { buffer, blobs }) => {
+    this.trash.add(Events.towerAttacked.connect((id, { buffer, blobs }) => {
       if (id !== this.attributes.ID) return;
 
       const { enemyDistance, enemySpeed } = attackSerializer.deserialize(buffer, blobs);
@@ -139,20 +139,19 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
       const towerPosition = this.instance.GetPivot().Position;
       this.instance.PivotTo(CFrame.lookAt(towerPosition, new Vector3(enemyCFrame.X, towerPosition.Y, enemyCFrame.Z)));
       this.playAnimation("Attack");
-      task.spawn(() => this.playAttackSound());
-      task.spawn(() => this.createAttackVFX(enemyCFrame.Position, enemyVelocity));
+      this.playAttackSound();
+      this.createAttackVFX(enemyCFrame.Position, enemyVelocity)
     }));
-
   }
 
-  public onRender(dt: number): void {
-    task.spawn(() => this.updateInfoFrame());
+  public onRender(): void {
+    this.updateInfoFrame()
     if (this.currentRangePreview === undefined || this.currentRangePreview.Parent === undefined) {
       this.currentRangePreview = undefined;
       return;
     }
 
-    const range = this.info.stats.range;
+    const { range } = this.info.stats;
     const referenceRange = Assets.RangePreview.Circle.Size.X;
     this.currentRangePreview.ScaleTo(lerp(this.currentRangePreview.GetScale(), range / referenceRange, 0.2));
   }
@@ -184,7 +183,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     this.currentRangePreview = undefined;
     oldPreview?.Destroy();
 
-    this.currentRangePreview = this.janitor.Add(createRangePreview(this.info.stats.range));
+    this.currentRangePreview = this.trash.add(createRangePreview(this.info.stats.range));
     this.currentRangePreview.Circle.Color = RANGE_PREVIEW_COLORS.CanPlace;
     this.currentRangePreview.PivotTo(this.instance.GetPivot().sub(new Vector3(0, 0.8, 0)));
     return this.currentRangePreview;
@@ -219,7 +218,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     return PLACEMENT_STORAGE.GetChildren().find((i): i is typeof Assets.SizePreview => i.IsA("MeshPart") && i.Name === "SizePreview" && i.GetAttribute("TowerID") === this.attributes.ID)!;
   }
 
-  public resetSizePreviewHeight(): Janitor {
+  public resetSizePreviewHeight(): Trash {
     return resetSizePreviewHeight(this.getSizePreview());
   }
 
@@ -227,7 +226,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
    * @param height Height to set the size preview to
    * @returns Janitor containing all tweens
    */
-  public setSizePreviewHeight(height: number): Janitor {
+  public setSizePreviewHeight(height: number): Trash {
     return setSizePreviewHeight(this.getSizePreview(), height);
   }
 
@@ -249,7 +248,7 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
 
   private createHighlight(): void {
     if (this.highlight !== undefined) return;
-    this.highlight = this.janitor.Add(new Instance("Highlight", this.instance));
+    this.highlight = this.trash.add(new Instance("Highlight", this.instance));
     this.highlight.Enabled = true;
     this.highlight.FillTransparency = 0;
     this.highlight.Adornee = this.instance;

@@ -1,5 +1,6 @@
 import type { OnStart } from "@flamework/core";
 import { Component } from "@flamework/components";
+import { $nameof } from "rbxts-transform-debug";
 
 import { PlayerGui } from "../../../shared/utility/client";
 
@@ -13,7 +14,7 @@ interface Attributes {
 }
 
 @Component({
-  tag: "PageRoute",
+  tag: $nameof<PageRoute>(),
   ancestorWhitelist: [PlayerGui],
   defaults: {
     PageRoute_Exclusive: true,
@@ -26,7 +27,7 @@ export class PageRoute extends DestroyableComponent<Attributes, GuiButton> imple
   ) { super(); }
 
   public onStart(): void {
-    this.janitor.Add(this.instance.MouseButton1Click.Connect(() => this.page.set(
+    this.trash.add(this.instance.MouseButton1Click.Connect(() => this.page.set(
       this.attributes.PageRoute_Destination,
       this.instance.FindFirstAncestorOfClass("ScreenGui")!,
       this.attributes.PageRoute_Exclusive,

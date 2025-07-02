@@ -1,10 +1,11 @@
 import { OnStart } from "@flamework/core";
 import { Component } from "@flamework/components";
 import { TweenInfoBuilder } from "@rbxts/builders";
-import { Janitor } from "@rbxts/janitor";
+import { Trash } from "@rbxts/trash";
 
 import { tween } from "../../../../shared/utility/ui";
 import ButtonTweenAnimation from "../../../base-components/button-tween-animation";
+import { getChildrenOfType } from "@rbxts/instance-utility";
 
 interface Attributes {
   CircularStrokeAnimation_PrimaryColor: Color3;
@@ -29,11 +30,11 @@ const { EasingStyle } = Enum;
 export class CircularStrokeAnimation extends ButtonTweenAnimation<Attributes> implements OnStart {
   protected override readonly includeClick = false;
 
-  private readonly defaultStrokes = this.instance.GetChildren().filter((i): i is UIStroke => i.IsA("UIStroke"));
-  private readonly defaultStrokeParents = this.defaultStrokes.map(stroke => stroke.Parent!);
+  private readonly defaultStrokes = getChildrenOfType(this.instance, "UIStroke");
+  private readonly defaultStrokeParents = this.defaultStrokes.mapFiltered(stroke => stroke.Parent);
   private readonly circularStroke = new Instance("UIStroke");
   private readonly gradient = new Instance("UIGradient", this.circularStroke);
-  private readonly changedJanitor = new Janitor;
+  private readonly changedTrash = this.trash.add(new Trash);
 
   protected readonly tweenInfo = new TweenInfoBuilder()
     .SetEasingStyle(EasingStyle.Linear)
@@ -57,18 +58,18 @@ export class CircularStrokeAnimation extends ButtonTweenAnimation<Attributes> im
   }
 
   public active(): void {
-    this.changedJanitor.Cleanup();
+    this.changedTrash.purge();
     for (const stroke of this.defaultStrokes)
       stroke.Parent = undefined;
 
     this.gradient.Rotation = -180;
     this.circularStroke.Parent = this.instance;
     this.circularStroke.Thickness = this.attributes.CircularStrokeAnimation_Thickness;
-    this.changedJanitor.Add(tween(this.gradient, this.tweenInfo, { Rotation: 180 }), "Cancel");
+    this.changedTrash.add(tween(this.gradient, this.tweenInfo, { Rotation: 180 }), "Cancel");
   }
 
   public inactive(): void {
-    this.changedJanitor.Cleanup();
+    this.changedTrash.purge();
     this.circularStroke.Parent = undefined;
     this.defaultStrokes.forEach((stroke, i) => stroke.Parent = this.defaultStrokeParents[i]);
     this.gradient.Rotation = -180;

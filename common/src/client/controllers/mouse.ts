@@ -1,24 +1,24 @@
-import { Controller, type OnInit, type OnRender } from "@flamework/core";
+import { Controller, type OnStart, type OnRender } from "@flamework/core";
 import { UserInputService as UIS, Workspace as World } from "@rbxts/services";
 import { RaycastParamsBuilder } from "@rbxts/builders";
-import { Context as InputContext } from "@rbxts/gamejoy";
-import { Action, Axis, Union } from "@rbxts/gamejoy/out/Actions";
-import Signal from "@rbxts/signal";
+import { AxisActionBuilder, StandardActionBuilder } from "@rbxts/mechanism";
+import Signal from "@rbxts/lemon-signal";
 
 import { Player } from "../../shared/utility/client";
+import { INPUT_MANAGER } from "../../shared/constants";
 
 const { abs } = math;
 
 const MOUSE_RAY_DISTANCE = 1000;
 
 @Controller()
-export class MouseController implements OnInit, OnRender {
-  public readonly lmbUp = new Signal<() => void>;
-  public readonly rmbUp = new Signal<() => void>;
-  public readonly mmbUp = new Signal<() => void>;
-  public readonly lmbDown = new Signal<() => void>;
-  public readonly rmbDown = new Signal<() => void>;
-  public readonly mmbDown = new Signal<() => void>;
+export class MouseController implements OnStart, OnRender {
+  public readonly lmbUp = new Signal;
+  public readonly rmbUp = new Signal;
+  public readonly mmbUp = new Signal;
+  public readonly lmbDown = new Signal;
+  public readonly rmbDown = new Signal;
+  public readonly mmbDown = new Signal;
   public readonly moved = new Signal<(position: Vector2, delta: Vector2) => void>;
   public readonly scrolled = new Signal<(delta: number) => void>;
 
@@ -28,48 +28,45 @@ export class MouseController implements OnInit, OnRender {
   public behavior: Enum.MouseBehavior = Enum.MouseBehavior.Default;
 
   private readonly playerMouse = Player.GetMouse();
-  private readonly clickAction = new Union(["MouseButton1", "Touch"]);
-  private readonly rightClickAction = new Action("MouseButton2");
-  private readonly middleClickAction = new Action("MouseButton3");
-  private readonly moveAction = new Axis("MouseMovement");
-  private readonly scrollAction = new Axis("MouseWheel");
-  private readonly input = new InputContext({
-    ActionGhosting: 0,
-    Process: false,
-    RunSynchronously: false
-  });
 
-  public onInit(): void {
+  public onStart(): void {
     // Mouse controls
-    this.input
-      .Bind(this.clickAction, () => {
-        this.isLmbDown = true;
-        this.lmbDown.Fire();
-      })
-      .BindEvent("onLmbRelease", this.clickAction.Released, () => {
-        this.isLmbDown = false
-      });
 
-    this.input
-      .Bind(this.rightClickAction, () => {
-        this.isRmbDown = true;
-        this.rmbDown.Fire();
-      })
-      .BindEvent("onRmbRelease", this.rightClickAction.Released, () => {
-        this.isRmbDown = false
-      });
+    const clickAction = new StandardActionBuilder("MouseButton1", "Touch");
+    const rightClickAction = new StandardActionBuilder("MouseButton2");
+    const middleClickAction = new StandardActionBuilder("MouseButton3");
+    const moveAction = new AxisActionBuilder("MouseMovement");
+    const scrollAction = new AxisActionBuilder("MouseWheel");
+    clickAction.activated.Connect(() => {
+      this.isLmbDown = true;
+      this.lmbDown.Fire();
+    });
+    clickAction.deactivated.Connect(() =>
+      this.isLmbDown = false
+    );
+    rightClickAction.activated.Connect(() => {
+      this.isRmbDown = true;
+      this.rmbDown.Fire();
+    });
+    rightClickAction.deactivated.Connect(() =>
+      this.isRmbDown = false
+    );
+    middleClickAction.activated.Connect(() => {
+      this.isMmbDown = true;
+      this.mmbDown.Fire();
+    });
+    middleClickAction.deactivated.Connect(() =>
+      this.isMmbDown = false
+    );
+    scrollAction.updated.Connect(() => this.scrolled.Fire(-scrollAction.position.Z));
+    moveAction.updated.Connect(() => this.moved.Fire(this.getPosition(), this.getDelta()));
 
-    this.input
-      .Bind(this.scrollAction, () => this.scrolled.Fire(-this.scrollAction.Position.Z))
-      .Bind(this.middleClickAction, () => {
-        this.isMmbDown = true;
-        this.mmbDown.Fire();
-      })
-      .BindEvent("onMmbRelease", this.middleClickAction.Released, () => {
-        this.isMmbDown = false
-      });
-
-    this.input.Bind(this.moveAction, () => this.moved.Fire(this.getPosition(), this.getDelta()))
+    INPUT_MANAGER
+      .bind(clickAction)
+      .bind(rightClickAction)
+      .bind(middleClickAction)
+      .bind(scrollAction)
+      .bind(moveAction);
 
     // Touch controls
     UIS.TouchPinch.Connect((_, scale) => this.scrolled.Fire((scale < 1 ? 1 : -1) * abs(scale - 2)));
@@ -77,7 +74,7 @@ export class MouseController implements OnInit, OnRender {
     UIS.TouchEnded.Connect(() => this.isLmbDown = false);
   }
 
-  public onRender(dt: number): void {
+  public onRender(): void {
     if (this.behavior === Enum.MouseBehavior.Default) return;
 
     UIS.MouseBehavior = this.behavior;
@@ -112,13 +109,13 @@ export class MouseController implements OnInit, OnRender {
 
   private createRay(distance: number, filter: Instance[] = []): Maybe<RaycastResult> {
     const { X, Y } = UIS.GetMouseLocation();
-    const { Origin, Direction } = World.CurrentCamera!.ViewportPointToRay(X, Y);
+    const ray = World.CurrentCamera!.ViewportPointToRay(X, Y);
 
     const raycastParams = new RaycastParamsBuilder()
       .SetIgnoreWater(true)
       .AddToFilter(...filter)
       .Build();
 
-    return World.Raycast(Origin, Direction.mul(distance), raycastParams);
+    return World.Raycast(ray.Origin, ray.Direction.mul(distance), raycastParams);
   }
 }

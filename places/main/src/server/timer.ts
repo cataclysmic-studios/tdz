@@ -1,7 +1,7 @@
-import Destroyable from "common/shared/classes/destroyable";
+import Destroyable from "@rbxts/destroyable";
 
 import type { MatchService } from "./services/match";
-import Signal from "@rbxts/signal";
+import Signal from "@rbxts/lemon-signal";
 
 export class Timer extends Destroyable {
   public readonly counted = new Signal<(remainingTime: number) => void>;
@@ -15,10 +15,10 @@ export class Timer extends Destroyable {
   ) {
     super();
     this.timeScale = match.timeScale;
-    this.janitor.Add(match.timeScaleChanged.Connect(timeScale => this.timeScale = timeScale));
-    this.janitor.Add(this.counted);
-    this.janitor.Add(this.ended);
-    this.janitor.Add(() => this.timeElapsed = 999_999); // so isActive never returns true if it was destroyed
+    this.trash.add(match.timeScaleChanged.Connect(timeScale => this.timeScale = timeScale));
+    this.trash.add(this.counted);
+    this.trash.add(this.ended);
+    this.trash.add(() => this.timeElapsed = 999_999); // so isActive never returns true if it was destroyed
     this.start();
   }
 
@@ -28,7 +28,7 @@ export class Timer extends Destroyable {
 
   private start(): void {
     this.counted.Fire(this.length);
-    this.janitor.Add(task.spawn(() => {
+    this.trash.add(task.spawn(() => {
       while (this.isActive()) {
         task.wait(1 / this.timeScale);
         this.timeElapsed++;

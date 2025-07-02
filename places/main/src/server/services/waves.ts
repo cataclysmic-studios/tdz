@@ -1,6 +1,6 @@
 import { Service, type OnInit } from "@flamework/core";
 import { SoundService as Sound } from "@rbxts/services";
-import { Janitor } from "@rbxts/janitor";
+import { Trash } from "@rbxts/trash";
 import Object from "@rbxts/object-utils";
 
 import type { LogStart } from "common/shared/hooks";
@@ -17,7 +17,7 @@ import type { EnemyService } from "./enemy";
 
 @Service()
 export class WavesService implements OnInit, LogStart {
-  private readonly waveJanitor = new Janitor;
+  private readonly waveTrash = new Trash;
   private skipVotes: Record<number, boolean> = {};
   private skipped = false;
 
@@ -44,14 +44,14 @@ export class WavesService implements OnInit, LogStart {
     for (const wave of waves) {
       this.skipVotes = {};
       this.skipped = false;
-      this.waveJanitor.Cleanup();
+      this.waveTrash.purge();
       const waveNumber = waves.indexOf(wave) + 1;
       Events.updateWaveUI.broadcast(waveNumber);
 
       let timerEnded = false;
       const waveTimer = this.match.startTimer(toSeconds(wave.length));
-      this.waveJanitor.Add(waveTimer.ended.Once(() => timerEnded = true));
-      const countConnection = this.waveJanitor.Add(waveTimer.counted.Connect(remainingTime => {
+      this.waveTrash.add(waveTimer.ended.Once(() => timerEnded = true));
+      const countConnection = this.waveTrash.add(waveTimer.counted.Connect(remainingTime => {
         if (remainingTime >= waveTimer.length - 15) return;
         countConnection.Disconnect();
         Events.updateSkipWaveUI.broadcast(true, 0, this.match.getPlayerCount());
@@ -81,7 +81,7 @@ export class WavesService implements OnInit, LogStart {
       // TODO: play sound
 
       const intermissionTimer = this.match.startTimer(4);
-      this.waveJanitor.Add(intermissionTimer.counted.Connect(() => Sound.SoundEffects.Tick.Play()));
+      this.waveTrash.add(intermissionTimer.counted.Connect(() => Sound.SoundEffects.Tick.Play()));
       while (this.match.hasActiveTimer()) task.wait(0.2);
     }
 

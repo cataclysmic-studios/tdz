@@ -1,5 +1,5 @@
 import { Service } from "@flamework/core";
-import { Janitor } from "@rbxts/janitor";
+import { Trash } from "@rbxts/trash";
 
 import type { OnPlayerJoin, OnPlayerLeave } from "common/server/hooks";
 
@@ -7,17 +7,17 @@ import type { MatchService } from "./match";
 
 @Service({ loadOrder: 0 })
 export class LeaderstatsService implements OnPlayerJoin, OnPlayerLeave {
-  private readonly playerJanitors: Partial<Record<number, Janitor>> = {};
+  private readonly playerJanitors: Partial<Record<number, Trash>> = {};
 
   public constructor(
     private readonly match: MatchService
   ) { }
 
   public onPlayerJoin(player: Player): void {
-    const janitor = new Janitor;
-    this.playerJanitors[player.UserId] = janitor;
+    const trash = new Trash;
+    this.playerJanitors[player.UserId] = trash;
 
-    janitor.Add(this.match.cashChanged.Connect((p, cash) => {
+    trash.add(this.match.cashChanged.Connect((p, cash) => {
       if (p !== player) return;
       const leaderstats = this.get(player);
       leaderstats.Cash.Value = cash;
@@ -25,12 +25,13 @@ export class LeaderstatsService implements OnPlayerJoin, OnPlayerLeave {
   }
 
   public onPlayerLeave(player: Player): void {
-    this.playerJanitors[player.UserId]?.Destroy();
-    this.playerJanitors[player.UserId] = undefined;
+    const id = player.UserId;
+    this.playerJanitors[id]?.destroy();
+    this.playerJanitors[id] = undefined;
   }
 
   private get(player: Player): Leaderstats {
-    const leaderstats = <Leaderstats>player.FindFirstChild("leaderstats") ?? new Instance("Folder", player);
+    const leaderstats = (player.FindFirstChild("leaderstats") ?? new Instance("Folder", player)) as Leaderstats;
     leaderstats.Name = "leaderstats";
 
     if (leaderstats.FindFirstChild("Cash") === undefined) {

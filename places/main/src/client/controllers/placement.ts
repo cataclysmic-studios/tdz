@@ -2,13 +2,14 @@ import { Controller, type OnInit, type OnRender, type OnStart } from "@flamework
 import { Components } from "@flamework/components";
 import { SoundService as Sound, CollectionService as Collection } from "@rbxts/services";
 import { TweenInfoBuilder } from "@rbxts/builders";
-import { Janitor } from "@rbxts/janitor";
+import { StandardActionBuilder } from "@rbxts/mechanism";
+import { Trash } from "@rbxts/trash";
 import Object from "@rbxts/object-utils";
 
 import type { LogStart } from "common/shared/hooks";
 import { Events, Functions } from "client/network";
 import { Assets } from "common/shared/utility/instances";
-import { Player, PlayerGui } from "common/shared/utility/client";
+import { Player } from "common/shared/utility/client";
 import { doubleSidedLimit } from "common/shared/utility/numbers";
 import {
   getTowerModelName,
@@ -25,24 +26,24 @@ import { NotificationStyle } from "common/shared/structs/notifications";
 import { PLACEMENT_STORAGE, RANGE_PREVIEW_COLORS, SIZE_PREVIEW_COLORS } from "shared/constants";
 import { TOWER_STATS } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
-import Spring from "common/shared/classes/spring";
 import SmoothValue from "common/shared/classes/smooth-value";
+import Spring from "common/shared/classes/spring";
 
-import { InputInfluenced } from "common/client/classes/input-influenced";
 import type { Tower } from "client/components/tower";
 import type { MouseController } from "common/client/controllers/mouse";
 import type { CharacterController } from "common/client/controllers/character";
 import type { NotificationController } from "common/client/controllers/notification";
 import type { SelectionController } from "./selection";
+import { INPUT_MANAGER } from "common/shared/constants";
 
 @Controller()
-export class PlacementController extends InputInfluenced implements OnInit, OnStart, OnRender, LogStart {
-  private readonly placementJanitor = new Janitor;
+export class PlacementController implements OnInit, OnStart, OnRender, LogStart {
+  private readonly placementTrash = new Trash;
   private readonly swaySpring = new Spring;
   private placementModel?: TowerModel;
   private placementRangePreview?: typeof Assets.RangePreview;
   private placementSizePreview?: typeof Assets.SizePreview;
-  private lastMouseWorldPosition = new Vector3;
+  private lastMouseWorldPosition = Vector3.zero;
   private placing = false;
   private yOrientation = new SmoothValue(0, 8);
   private lastDt = 0;
@@ -53,7 +54,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     private readonly character: CharacterController,
     private readonly notification: NotificationController,
     private readonly selection: SelectionController
-  ) { super(); }
+  ) { }
 
   public onInit(): void {
     Events.replicateTower.connect((id, towerInfo) => this.place(id, towerInfo));
@@ -64,10 +65,17 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   }
 
   public onStart(): void {
-    this.input
-      .Bind("Q", () => this.exitPlacement())
-      .Bind("R", () => this.yOrientation.incrementTarget(90))
-      .Bind("MouseButton1", () => this.confirmPlacement());
+    const exitAction = new StandardActionBuilder("Q");
+    const rotateAction = new StandardActionBuilder("R");
+    const confirmAction = new StandardActionBuilder("MouseButton1");
+    exitAction.activated.Connect(() => this.exitPlacement());
+    rotateAction.activated.Connect(() => this.yOrientation.incrementTarget(90));
+    confirmAction.activated.Connect(() => this.confirmPlacement());
+
+    INPUT_MANAGER
+      .bind(exitAction)
+      .bind(rotateAction)
+      .bind(confirmAction);
   }
 
   public onRender(dt: number): void {
@@ -75,8 +83,9 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     if (this.placementRangePreview === undefined) return;
     if (this.placementSizePreview === undefined) return;
 
-    const delta = this.mouse.getWorldPosition().sub(this.lastMouseWorldPosition).mul(12);
-    this.lastMouseWorldPosition = this.mouse.getWorldPosition();
+    const mouseWorldPosition = this.mouse.getWorldPosition();
+    const delta = mouseWorldPosition.sub(this.lastMouseWorldPosition).mul(12);
+    this.lastMouseWorldPosition = mouseWorldPosition;
     this.swaySpring.shove(new Vector3(doubleSidedLimit(delta.X, 30), 0, doubleSidedLimit(delta.Z, 30)));
 
     const swayAngles = this.getSway(dt);
@@ -86,7 +95,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
 
     this.placementModel.PivotTo(towerCFrame.mul(swayAngles));
     this.placementRangePreview.PivotTo(towerCFrame.sub(new Vector3(0, 0.8, 0)));
-    this.placementSizePreview.CFrame = towerCFrame.sub(new Vector3(0, 1, 0));
+    this.placementSizePreview.CFrame = towerCFrame.sub(Vector3.yAxis);
 
     const previewColor = RANGE_PREVIEW_COLORS[this.getCanPlace() ? "CanPlace" : "CanNotPlace"];
     this.placementRangePreview.Circle.Color = previewColor;
@@ -107,7 +116,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   }
 
   private getMouseFilter(): Instance[] {
-    const [map] = <MapModel[]>Collection.GetTagged("Map");
+    const [map] = Collection.GetTagged("Map") as MapModel[];
     return [this.character.get()!, PLACEMENT_STORAGE, map.PathNodes, map.StartPoint, map.EndPoint];
   }
 
@@ -130,19 +139,19 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
 
   public async enterPlacement(towerName: TowerName): Promise<void> {
     if (this.placing) {
-      const exitPromise = this.placementJanitor.AddPromise(this.exitPlacement());
+      const exitPromise = this.placementTrash.add(this.exitPlacement());
       const [status] = exitPromise.awaitStatus();
       if (status === "Cancelled") return;
     }
 
     const [tooltip] = <TextLabel[]>Collection.GetTagged("ExitPlacementTip");
     tooltip.Visible = true;
-    this.placementJanitor.Add(() => tooltip.Visible = false);
+    this.placementTrash.add(() => tooltip.Visible = false);
     this.selection.deselect();
     this.yOrientation.zeroize();
 
     const placementModel = createTowerModel(towerName, "Level0");
-    const size = <number>placementModel.GetAttribute("Size");
+    const size = placementModel.GetAttribute<number>("Size")!;
     const sizePreview = createSizePreview(size);
     const touchConnection = sizePreview.Touched.Connect(() => { });
 
@@ -152,11 +161,11 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
     this.placementSizePreview = sizePreview;
     this.placing = true;
 
-    this.placementJanitor.Add(() => {
+    this.placementTrash.add(() => {
       if (this.placementModel !== undefined)
         fadeOutParts(this.placementModel);
       if (this.placementSizePreview !== undefined)
-        setSizePreviewHeight(this.placementSizePreview, 0, new TweenInfoBuilder().SetTime(0.12));
+        setSizePreviewHeight(this.placementSizePreview, 0, new TweenInfo(0.12));
       if (this.placementRangePreview !== undefined) {
         fadeOutParts(this.placementRangePreview!);
         shrinkOut(this.placementRangePreview!, 0.2).then(() => {
@@ -178,7 +187,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
         const originalColor = sizePreview.Beam1.Color;
         setSizePreviewColor(sizePreview, SIZE_PREVIEW_COLORS.Selected);
 
-        this.placementJanitor.Add(() => {
+        this.placementTrash.add(() => {
           sizePreview.Beam1.Color = originalColor;
           sizePreview.Beam2.Color = originalColor;
         });
@@ -186,7 +195,7 @@ export class PlacementController extends InputInfluenced implements OnInit, OnSt
   }
 
   public async exitPlacement(): Promise<void> {
-    this.placementJanitor.Cleanup();
+    this.placementTrash.purge();
     return new Promise(resolve => {
       while (this.placing) task.wait(0.1);
       resolve();

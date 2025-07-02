@@ -1,5 +1,6 @@
 import { RunService as Runtime, Workspace as World, Players } from "@rbxts/services";
 import { RaycastParamsBuilder, TweenInfoBuilder } from "@rbxts/builders";
+import { Trash } from "@rbxts/trash";
 import { startsWith } from "@rbxts/string-utils";
 import Object from "@rbxts/object-utils";
 
@@ -14,7 +15,8 @@ import type { TowerInfo } from "./entity-components";
 import type { TowerStats, PathStats, UpgradeLevel, UpgradePath } from "./towers";
 import CircularRegion from "./classes/circular-region";
 import Log from "./logger";
-import { Janitor } from "@rbxts/janitor";
+
+const DEFAULT_SIZE_PREVIEW_TWEEN_INFO = new TweenInfo(0.08);
 
 export function canUpgrade(info: Omit<TowerInfo, "patch">, path: UpgradePath): boolean {
   const pathLevel = info.upgrades[path - 1];
@@ -157,7 +159,7 @@ export function getTowerStats(towerName: TowerName, upgrades: UpgradeLevel): Tow
   return upgradedStats;
 }
 
-function applyUpgradePathStats(baseStats: TowerStats, pathLevel: number, pathStats: PathStats): void {
+function applyUpgradePathStats(baseStats: Writable<TowerStats>, pathLevel: number, pathStats: PathStats): void {
   for (let i = 0; i < pathLevel; i++) {
     const statsAddition = pathStats[i];
     for (const [name, value] of Object.entries(statsAddition))
@@ -285,29 +287,30 @@ export function createSizePreview(size: number, towerID?: number, cframe = new C
 const defaultSizePreviewHeight = Assets.SizePreview.Beam1.Width0;
 const defaultLeftAttachmentPosition = Assets.SizePreview.Left.Position;
 const defaultRightAttachmentPosition = Assets.SizePreview.Right.Position;
-export function resetSizePreviewHeight(sizePreview: typeof Assets.SizePreview, tweenInfo = new TweenInfoBuilder().SetTime(0.08)): Janitor {
+export function resetSizePreviewHeight(sizePreview: typeof Assets.SizePreview, tweenInfo = DEFAULT_SIZE_PREVIEW_TWEEN_INFO): Trash {
   return setSizePreviewHeight(sizePreview, defaultSizePreviewHeight, tweenInfo);
 }
 
-export function setSizePreviewHeight(sizePreview: typeof Assets.SizePreview, height: number, tweenInfo = new TweenInfoBuilder().SetTime(0.08)): Janitor {
-  const tweenJanitor = new Janitor;
+export function setSizePreviewHeight(sizePreview: typeof Assets.SizePreview, height: number, tweenInfo = DEFAULT_SIZE_PREVIEW_TWEEN_INFO): Trash {
+  const tweenTrash = new Trash;
   const difference = height - defaultSizePreviewHeight;
 
-  tweenJanitor.Add(tween(sizePreview.Beam1, tweenInfo, {
+  tweenTrash.add(tween(sizePreview.Beam1, tweenInfo, {
     Width0: height, Width1: height
-  }), "Cancel");
-  tweenJanitor.Add(tween(sizePreview.Beam2, tweenInfo, {
+  }));
+  tweenTrash.add(tween(sizePreview.Beam2, tweenInfo, {
     Width0: height, Width1: height
-  }), "Cancel");
-  tweenJanitor.Add(tween(sizePreview.Left, tweenInfo, {
+  }));
+  tweenTrash.add(tween(sizePreview.Left, tweenInfo, {
     Position: defaultLeftAttachmentPosition.add(new Vector3(0, difference / 2, 0))
-  }), "Cancel");
-  tweenJanitor.Add(tween(sizePreview.Right, tweenInfo, {
+  }));
+  tweenTrash.add(tween(sizePreview.Right, tweenInfo, {
     Position: defaultRightAttachmentPosition.add(new Vector3(0, difference / 2, 0))
-  }), "Cancel");
+  }));
 
-  return tweenJanitor;
+  return tweenTrash;
 }
+
 
 export function setSizePreviewColor(sizePreview: typeof Assets.SizePreview, color: Color3): typeof Assets.SizePreview {
   sizePreview.Beam1.Color = new ColorSequence(color);

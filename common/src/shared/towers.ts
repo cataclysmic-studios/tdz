@@ -25,16 +25,16 @@ export const enum ProjectileType {
 }
 
 export interface TowerStats {
-  price: number;
-  damageType: DamageType;
-  projectileType: ProjectileType;
-  damage: number;
-  range: number;
-  canSeeStealth: boolean;
-  reloadTime: number;
-  minimumRange?: number;
-  burstCount?: number;
-  splashRadius?: number;
+  readonly price: number;
+  readonly damageType: DamageType;
+  readonly projectileType: ProjectileType;
+  readonly damage: number;
+  readonly range: number;
+  readonly canSeeStealth: boolean;
+  readonly reloadTime: number;
+  readonly minimumRange?: number;
+  readonly burstCount?: number;
+  readonly splashRadius?: number;
 }
 
 export interface TowerMeta {

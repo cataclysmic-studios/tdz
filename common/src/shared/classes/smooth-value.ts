@@ -4,7 +4,7 @@ const { min } = math;
 
 export default class SmoothValue {
   public constructor(
-    public value = 0,
+    private value = 0,
     private speed = 1,
     private target = 0
   ) { }

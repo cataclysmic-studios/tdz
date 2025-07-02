@@ -1,5 +1,5 @@
 import { Controller, type OnInit, type OnStart } from "@flamework/core";
-import Signal from "@rbxts/signal";
+import Signal from "@rbxts/lemon-signal";
 
 import { Events, Functions } from "client/network";
 import { adjustAllSoundSpeeds, initializeDefaultSoundSpeeds } from "shared/utility";

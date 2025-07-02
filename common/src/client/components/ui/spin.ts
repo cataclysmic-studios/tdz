@@ -1,5 +1,6 @@
 import type { OnRender } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
+import { $nameof } from "rbxts-transform-debug";
 
 import { PlayerGui } from "../../../shared/utility/client";
 import { lerp } from "../../../shared/utility/numbers";
@@ -11,7 +12,7 @@ interface Attributes {
 }
 
 @Component({
-  tag: "Spin",
+  tag: $nameof<Spin>(),
   ancestorWhitelist: [PlayerGui],
   defaults: {
     Spin_DegreesPerSecond: 5

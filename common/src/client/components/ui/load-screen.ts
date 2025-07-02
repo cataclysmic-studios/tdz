@@ -27,17 +27,16 @@ export class LoadScreen extends DestroyableComponent<Attributes, PlayerGui["Load
   ) { super(); }
 
   public onStart(): void {
-    this.janitor.LinkToInstance(this.instance, true);
+    this.trash.linkToInstance(this.instance, { trackInstance: false });
 
     const logoSize = <UDim2>this.background.Logo.GetAttribute("DefaultSize");
-    task.delay(this.attributes.LoadScreen_Delay, () => {
+    task.delay(this.attributes.LoadScreen_Delay, async () => {
       this.startLogoAnimation(logoSize);
-      task.delay(this.attributes.LoadScreen_Lifetime, async () => {
-        await this.uiEffects.blackFade();
-        StarterGui.SetCoreGuiEnabled("All", true);
-        StarterGui.SetCoreGuiEnabled("Backpack", false);
-        this.instance.Destroy();
-      });
+      task.wait(this.attributes.LoadScreen_Lifetime);
+      await this.uiEffects.blackFade();
+      StarterGui.SetCoreGuiEnabled("All", true);
+      StarterGui.SetCoreGuiEnabled("Backpack", false);
+      this.instance.Destroy();
     });
   }
 

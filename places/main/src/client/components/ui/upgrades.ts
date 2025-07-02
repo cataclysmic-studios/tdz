@@ -1,22 +1,23 @@
-import { Component } from "@flamework/components";
-import { OnStart } from "@flamework/core";
+import type { OnStart } from "@flamework/core";
+import { BaseComponent, Component } from "@flamework/components";
 import { ContentProvider } from "@rbxts/services";
-import { Janitor } from "@rbxts/janitor";
+import { Trash } from "@rbxts/trash";
+import { StandardActionBuilder } from "@rbxts/mechanism";
 import Object from "@rbxts/object-utils";
 
 import { Events, Functions } from "client/network";
 import { Player, PlayerGui } from "common/shared/utility/client";
 import { toSuffixedNumber } from "common/shared/utility/numbers";
 import { TOWER_STATS, TOWER_UPGRADE_META } from "common/shared/towers";
+import { INPUT_MANAGER } from "common/shared/constants";
 import { MAX_PATH_LEVEL } from "shared/constants";
+import { TargetingType } from "shared/structs";
 import type { TowerMeta, TowerStats, UpgradePath } from "common/shared/towers";
 import type { TowerInfo } from "shared/entity-components";
 import Log from "common/shared/logger";
 
-import { InputInfluenced } from "common/client/base-components/input-influenced";
+import type { Tower } from "../tower";
 import type { SelectionController } from "client/controllers/selection";
-import { Tower } from "../tower";
-import { TargetingType } from "shared/structs";
 
 const INDICATOR_UNFILLED_BG = Color3.fromRGB(41, 44, 32);
 const INDICATOR_UNFILLED_STROKE = Color3.fromRGB(7, 21, 10);
@@ -27,8 +28,8 @@ const INDICATOR_FILLED_STROKE = Color3.fromRGB(68, 203, 97);
   tag: "Upgrades",
   ancestorWhitelist: [PlayerGui]
 })
-export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["TowerUpgrades"]> implements OnStart {
-  private readonly updateJanitor = new Janitor;
+export class Upgrades extends BaseComponent<{}, PlayerGui["Main"]["Main"]["TowerUpgrades"]> implements OnStart {
+  private readonly updateTrash = new Trash;
   private currentID?: number;
   private currentInfo?: Omit<TowerInfo, "patch">;
   private debounce = false;
@@ -38,9 +39,13 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
   ) { super(); }
 
   public onStart(): void {
-    this.input
-      .Bind("E", () => this.requestUpgrade(1))
-      .Bind("R", () => this.requestUpgrade(2));
+    const upgradePath1Action = new StandardActionBuilder("E");
+    const upgradePath2Action = new StandardActionBuilder("R");
+    upgradePath1Action.activated.Connect(() => this.requestUpgrade(1));
+    upgradePath2Action.activated.Connect(() => this.requestUpgrade(2));
+    INPUT_MANAGER
+      .bind(upgradePath1Action)
+      .bind(upgradePath2Action);
 
     this.instance.NextTargeting.MouseButton1Click.Connect(() => {
       if (this.currentID === undefined) return;
@@ -70,10 +75,10 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     const id = tower.attributes.ID;
     const info = tower.getInfo();
     const isMyTower = info.ownerID === Player.UserId;
-    this.updateJanitor.Cleanup();
+    this.updateTrash.purge();
     this.instance.Info.Damage.Title.Text = toSuffixedNumber(info.totalDamage);
-    this.instance.Info.Worth.Title.Text = `$${toSuffixedNumber(info.worth)}`;
-    this.instance.Sell.Price.Text = `$${toSuffixedNumber(math.floor(info.worth / 2))}`;
+    this.instance.Info.Worth.Title.Text = "$" + toSuffixedNumber(info.worth);
+    this.instance.Sell.Price.Text = "$" + toSuffixedNumber(math.floor(info.worth / 2));
     this.instance.TargetingType.Text = TargetingType[math.floor(info.targeting)].upper();
     this.instance.NextTargeting.Visible = isMyTower;
     this.instance.LastTargeting.Visible = isMyTower;
@@ -95,15 +100,15 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     path2.UpgradeName.Text = nextPath2Meta.name;
     path1.Icon.Image = nextPath1Meta.icon;
     path2.Icon.Image = nextPath2Meta.icon;
-    path1.Price.Text = `$${toSuffixedNumber(nextPath1Stats.price!)}`;
-    path2.Price.Text = `$${toSuffixedNumber(nextPath2Stats.price!)}`;
+    path1.Price.Text = "$" + toSuffixedNumber(nextPath1Stats.price!);
+    path2.Price.Text = "$" + toSuffixedNumber(nextPath2Stats.price!);
     this.fillOutIndicator(path1, path1Level);
     this.fillOutIndicator(path2, path2Level);
 
     if (!isMyTower) return;
-    this.updateJanitor.Add(path1.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(1)));
-    this.updateJanitor.Add(path2.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(2)));
-    this.updateJanitor.Add(this.instance.Sell.MouseButton1Click.Once(() => {
+    this.updateTrash.add(path1.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(1)));
+    this.updateTrash.add(path2.Upgrade.MouseButton1Click.Connect(() => this.requestUpgrade(2)));
+    this.updateTrash.add(this.instance.Sell.MouseButton1Click.Once(() => {
       tower.destroy();
       Events.sellTower(id);
     }));
@@ -113,7 +118,7 @@ export class Upgrades extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Tow
     if (this.currentID === undefined) return;
     if (this.currentInfo === undefined) return;
     if (!this.selection.isSelected()) return;
-    this.updateJanitor.Cleanup();
+    this.updateTrash.purge();
 
     const stats = this.getStats(path);
     if (stats === undefined)

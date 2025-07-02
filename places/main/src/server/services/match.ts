@@ -1,8 +1,8 @@
 import { Service, type OnInit, type OnStart } from "@flamework/core";
 import { Workspace as World, SoundService as Sound, Players } from "@rbxts/services";
-import { Janitor } from "@rbxts/janitor";
+import { Trash } from "@rbxts/trash";
 import Object from "@rbxts/object-utils";
-import Signal from "@rbxts/signal";
+import Signal from "@rbxts/lemon-signal";
 
 import type { LogStart } from "common/shared/hooks";
 import type { OnPlayerJoin, OnPlayerLeave } from "common/server/hooks";
@@ -30,12 +30,12 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   public timeScale = 1;
 
   private readonly playerCash: Record<number, number> = {};
-  private readonly playerJanitors: Partial<Record<number, Janitor>> = {};
+  private readonly playerTrash: Partial<Record<number, Trash>> = {};
   private teleportData!: TeleportData;
   private mapModel!: MapModel;
   private path!: Path;
   private currentTimer?: Timer;
-  private timerJanitor = new Janitor;
+  private timerTrash = new Trash;
   private playersLoaded: Partial<Record<number, true>> = {};
   private maxHealth = 0;
   private health = 0;
@@ -75,8 +75,8 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   }
 
   public onPlayerJoin(player: Player): void {
-    const janitor = new Janitor;
-    this.playerJanitors[player.UserId] = janitor;
+    const trash = new Trash;
+    this.playerTrash[player.UserId] = trash;
     if (!this.playersLoaded[player.UserId])
       this.playersLoaded[player.UserId] = true;
 
@@ -94,8 +94,9 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   }
 
   public onPlayerLeave(player: Player): void {
-    this.playerJanitors[player.UserId]?.Destroy();
-    this.playerJanitors[player.UserId] = undefined;
+    const id = player.UserId;
+    this.playerTrash[id]?.destroy();
+    this.playerTrash[id] = undefined;
   }
 
   public getPlayerCount(): number {
@@ -152,14 +153,14 @@ export class MatchService implements OnInit, OnStart, OnPlayerJoin, OnPlayerLeav
   }
 
   public startTimer(length: number): Timer {
-    this.currentTimer = this.timerJanitor.Add(new Timer(this, length), "destroy");
-    this.timerJanitor.Add(this.currentTimer.counted.Connect(remainingTime => Events.updateTimerUI.broadcast(remainingTime)));
-    this.timerJanitor.Add(this.currentTimer.ended.Once(() => this.destroyCurrentTimer()));
+    this.currentTimer = this.timerTrash.add(new Timer(this, length));
+    this.timerTrash.add(this.currentTimer.counted.Connect(remainingTime => Events.updateTimerUI.broadcast(remainingTime)));
+    this.timerTrash.add(this.currentTimer.ended.Once(() => this.destroyCurrentTimer()));
     return this.currentTimer;
   }
 
   public destroyCurrentTimer(): void {
-    this.timerJanitor.Cleanup();
+    this.timerTrash.purge();
     this.currentTimer = undefined;
   }
 

@@ -13,6 +13,7 @@ import type { MouseController } from "../controllers/mouse";
 import type { CharacterController } from "../controllers/character";
 import type { TimeScaleController } from "client/controllers/time-scale";
 import type { PathController } from "client/controllers/path";
+import { getDescendantsOfType } from "@rbxts/instance-utility";
 
 interface Attributes {
   readonly ID: number;
@@ -22,9 +23,9 @@ interface Attributes {
   tag: "Enemy"
 })
 export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implements OnStart, OnTick, OnRender {
-  private readonly currentTraitFrames: ImageLabel[] = [];
-  private readonly parts = this.instance.GetDescendants().filter((i): i is BasePart => i.IsA("BasePart"));
+  private readonly parts = getDescendantsOfType(this.instance, "BasePart");
   private readonly defaultTransparencies = this.parts.map(part => part.Transparency);
+  private currentTraitFrames: ImageLabel[] = [];
   private walkAnimation!: AnimationTrack;
   private info!: Omit<EnemyInfo, "patch">;
 
@@ -37,12 +38,11 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
 
   public onStart(): void {
     this.instance.AddTag("Enemy");
-    this.janitor.LinkToInstance(this.instance, true);
-    this.janitor.Add(() => this.updateInfoFrame(true));
-    this.janitor.Add(this.instance);
+    this.trash.linkToInstance(this.instance, { allowMultiple: true });
+    this.trash.add(() => this.updateInfoFrame(true));
 
     task.spawn(() => {
-      this.walkAnimation = this.janitor.Add(this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations.Walk));
+      this.walkAnimation = this.trash.add(this.instance.Humanoid.Animator.LoadAnimation(this.instance.Animations.Walk));
       this.walkAnimation.Priority = Enum.AnimationPriority.Idle;
       this.walkAnimation.Play();
 
@@ -53,9 +53,9 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
     });
   }
 
-  public onRender(dt: number): void {
+  public onRender(): void {
     // TODO: call this function on tap for mobile
-    task.spawn(() => this.updateInfoFrame());
+    this.updateInfoFrame()
   }
 
   public onTick(dt: number): void {
@@ -68,18 +68,16 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
       part.Transparency = this.info.isStealth ? 0.4 : this.defaultTransparencies[i];
     }
 
-    task.spawn(() => {
-      this.adjustWalkAnimationSpeed();
-      const path = this.path.get();
-      const map = path.map;
-      const cframe = path.getCFrameAtDistance(this.info.distance)
-        .sub(new Vector3(0, 1, 0))
-        .add(new Vector3(0, this.info.scale * 3, 0));
+    this.adjustWalkAnimationSpeed();
+    const path = this.path.get();
+    const map = path.map;
+    const cframe = path.getCFrameAtDistance(this.info.distance)
+      .sub(Vector3.yAxis)
+      .add(new Vector3(0, this.info.scale * 3, 0));
 
-      root.CFrame = root.CFrame.Lerp(cframe, dt / 0.2 * this.timeScale.get());
-      if (didEnemyCompletePath(cframe.Position, map.EndPoint.Position))
-        this.destroy();
-    });
+    root.CFrame = root.CFrame.Lerp(cframe, dt / 0.2 * this.timeScale.get());
+    if (didEnemyCompletePath(cframe.Position, map.EndPoint.Position))
+      this.destroy();
   }
 
   public setInfo(info: Omit<EnemyInfo, "patch">): void {
@@ -109,7 +107,7 @@ export class Enemy extends DestroyableComponent<Attributes, EnemyModel> implemen
       for (const frame of traitFrames)
         frame.Destroy();
 
-      this.currentTraitFrames.clear();
+      this.currentTraitFrames = [];
     };
 
     const updateNeeded = this.currentTraitFrames.size() < this.info.traits.size() || this.currentTraitFrames.size() > this.info.traits.size();

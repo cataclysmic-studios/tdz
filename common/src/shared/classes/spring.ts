@@ -10,9 +10,9 @@ const MAX_SPRING_DELTA = 1 / 40;
 
 export default class Spring {
   static readonly iterations = 8;
-  public target = new Vector3;
-  public position = new Vector3;
-  public velocity = new Vector3;
+  public target = Vector3.zero;
+  public position = Vector3.zero;
+  public velocity = Vector3.zero;
 
   public constructor(
     public mass = 5,

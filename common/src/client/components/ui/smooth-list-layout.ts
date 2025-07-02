@@ -1,7 +1,8 @@
 import type { OnStart } from "@flamework/core";
 import { Component } from "@flamework/components";
-import { TweenInfoBuilder } from "@rbxts/builders";
 import { endsWith } from "@rbxts/string-utils";
+import { getChildrenOfType } from "@rbxts/instance-utility";
+import { $nameof } from "rbxts-transform-debug";
 
 import { PlayerGui } from "../../../shared/utility/client";
 import { tween } from "../../../shared/utility/ui";
@@ -13,25 +14,23 @@ interface Attributes {
 }
 
 @Component({
-  tag: "SmoothListLayout",
+  tag: $nameof<SmoothListLayout>(),
   ancestorWhitelist: [PlayerGui],
   defaults: {
     SmoothListLayout_Speed: 0.2
   }
 })
 export class SmoothListLayout extends DestroyableComponent<Attributes, GuiObject & { UIListLayout: UIListLayout; }> implements OnStart {
-  private readonly tweenInfo = new TweenInfoBuilder().SetTime(this.attributes.SmoothListLayout_Speed);
+  private readonly tweenInfo = new TweenInfo(this.attributes.SmoothListLayout_Speed);
 
   public onStart(): void {
-    for (const child of this.instance.GetChildren()) {
-      if (!child.IsA("GuiObject")) continue;
-      this.janitor.Add(child.Destroying.Once(() => this.createTransition(child)));
-    }
+    for (const child of getChildrenOfType(this.instance, "GuiObject"))
+      this.trash.add(child.Destroying.Once(() => this.createTransition(child)));
 
-    this.janitor.Add(this.instance.ChildAdded.Connect(child => {
+    this.trash.add(this.instance.ChildAdded.Connect(child => {
       if (!child.IsA("GuiObject")) return;
       if (endsWith(child.Name, "_TransitionFrame")) return;
-      this.janitor.Add(child.Destroying.Once(() => this.createTransition(child)));
+      this.trash.add(child.Destroying.Once(() => this.createTransition(child)));
     }));
   }
 

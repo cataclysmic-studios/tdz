@@ -1,23 +1,24 @@
-import { Component, Components } from "@flamework/components";
-import { Janitor } from "@rbxts/janitor";
+import { BaseComponent, Component, Components } from "@flamework/components";
+import { Trash } from "@rbxts/trash";
 import { endsWith } from "@rbxts/string-utils";
-import type { RawActionEntry } from "@rbxts/gamejoy";
+import { $nameof } from "rbxts-transform-debug";
 
 import type { OnDataUpdate } from "common/client/hooks";
 import { PlayerGui } from "common/shared/utility/client";
 import { getTowerStats } from "shared/utility";
 import { toSuffixedNumber } from "common/shared/utility/numbers";
+import { ActionID, INPUT_MANAGER } from "common/shared/constants";
 
-import { InputInfluenced } from "common/client/base-components/input-influenced";
 import type { TowerViewport } from "./tower-viewport";
 import type { PlacementController } from "client/controllers/placement";
+import { RawInput, StandardActionBuilder } from "@rbxts/mechanism";
 
 @Component({
-  tag: "TowerList",
+  tag: $nameof<TowerList>(),
   ancestorWhitelist: [PlayerGui]
 })
-export class TowerList extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["Towers"]> implements OnDataUpdate {
-  private readonly updateJanitor = new Janitor;
+export class TowerList extends BaseComponent<{}, PlayerGui["Main"]["Main"]["Towers"]> implements OnDataUpdate {
+  private readonly updateTrash = new Trash;
   private readonly buttons = this.instance.GetChildren()
     .filter((i): i is ImageButton & { Price: TextLabel; Viewport: ViewportFrame; } => i.IsA("ImageButton"));
 
@@ -45,15 +46,17 @@ export class TowerList extends InputInfluenced<{}, PlayerGui["Main"]["Main"]["To
       }
 
       const { price } = getTowerStats(towerName, [0, 0]);
-      button.Price.Text = `$${toSuffixedNumber(price)}`;
+      button.Price.Text = "$" + toSuffixedNumber(price);
       towerViewport ??= this.components.addComponent<TowerViewport>(button.Viewport);
       towerViewport.loadModel();
 
-      const action = <RawActionEntry>button.Name;
+      const action = new StandardActionBuilder(button.Name as RawInput).setID("towerbutton_" + button.Name);
       const enterPlacement = () => this.placement.enterPlacement(towerName);
-      this.input.Bind(action, enterPlacement);
-      this.updateJanitor.Add(() => this.input.Unbind(action));
-      this.updateJanitor.Add(button.MouseButton1Click.Connect(enterPlacement));
+      action.activated.Connect(enterPlacement);
+
+      INPUT_MANAGER.bind(action);
+      this.updateTrash.add(() => INPUT_MANAGER.unbind(action));
+      this.updateTrash.add(button.MouseButton1Click.Connect(enterPlacement));
     }
   }
 }

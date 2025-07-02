@@ -1,6 +1,6 @@
 import { Controller, OnStart, type OnInit, type OnTick } from "@flamework/core";
 import { Components } from "@flamework/components";
-import { Janitor } from "@rbxts/janitor";
+import { Trash } from "@rbxts/trash";
 
 import type { LogStart } from "common/shared/hooks";
 import { PlayerGui } from "common/shared/utility/client";
@@ -14,7 +14,7 @@ import type { CharacterController } from "./character";
 @Controller()
 export class SelectionController implements OnInit, OnStart, OnTick, LogStart {
   private readonly selectedSizePreviewHeight = 0.75;
-  private readonly selectionJanitor = new Janitor;
+  private readonly selectionTrash = new Trash;
   private upgrades!: Upgrades;
   private selectedTower?: Tower;
   private lastTowerHovered?: Tower;
@@ -40,7 +40,7 @@ export class SelectionController implements OnInit, OnStart, OnTick, LogStart {
     });
   }
 
-  public onTick(dt: number): void {
+  public onTick(): void {
     const tower = this.getHoveredTower();
     if (this.lastTowerHovered !== undefined && this.lastTowerHovered !== tower) {
       this.lastTowerHovered.toggleHoverHighlight(false);
@@ -56,8 +56,8 @@ export class SelectionController implements OnInit, OnStart, OnTick, LogStart {
     this.deselect();
     this.selectedTower = tower;
     tower.toggleSelectionHighlight(true);
-    this.selectionJanitor.Add(tower.setSizePreviewHeight(this.selectedSizePreviewHeight));
-    this.selectionJanitor.Add(tower.createRangePreview());
+    this.selectionTrash.add(tower.setSizePreviewHeight(this.selectedSizePreviewHeight));
+    this.selectionTrash.add(tower.createRangePreview());
 
     const upgradesUI = PlayerGui.Main.Main.TowerUpgrades;
     upgradesUI.Viewport.Title.Text = tower.name;
@@ -65,14 +65,14 @@ export class SelectionController implements OnInit, OnStart, OnTick, LogStart {
     if (!upgradesUI.Viewport.HasTag("TowerViewport"))
       upgradesUI.Viewport.AddTag("TowerViewport");
 
-    this.selectionJanitor.Add(tower.infoUpdated.Connect(() => this.upgrades.updateInfo(tower)));
+    this.selectionTrash.add(tower.infoUpdated.Connect(() => this.upgrades.updateInfo(tower)));
     this.upgrades.updateInfo(tower);
     upgradesUI.Visible = true;
   }
 
   public deselect(): void {
     if (this.selectedTower === undefined) return;
-    this.selectionJanitor.Cleanup();
+    this.selectionTrash.purge();
 
     this.selectedTower.toggleHoverHighlight(false);
     this.selectedTower.toggleSelectionHighlight(false);

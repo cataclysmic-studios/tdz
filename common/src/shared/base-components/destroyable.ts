@@ -1,15 +1,15 @@
 import { BaseComponent } from "@flamework/components";
-import { Janitor } from "@rbxts/janitor";
+import { Trash } from "@rbxts/trash";
 
 export default class DestroyableComponent<A extends {} = {}, I extends Instance = Instance> extends BaseComponent<A, I> {
-  protected readonly janitor = new Janitor;
+  protected readonly trash = new Trash;
 
   public constructor(
     private readonly multipleUses = false
   ) { super(); }
 
   public destroy(): void {
-    if (this.janitor === undefined || !("Destroy" in this.janitor)) return;
-    this.multipleUses ? this.janitor.Cleanup() : this.janitor.Destroy();
+    if (this.trash === undefined || !("destroy" in this.trash)) return;
+    this.multipleUses ? this.trash.purge() : Trash.tryDestroy(this.trash);
   }
 }
