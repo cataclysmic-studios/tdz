@@ -357,11 +357,11 @@ export class Tower extends DestroyableComponent<Attributes, TowerModel> implemen
     if (gun === undefined) return;
 
     const part = gun.IsA("Model") ? gun.PrimaryPart! : gun;
-    return <Attachment>part.FindFirstChild("Muzzle");
+    return part.FindFirstChild<Attachment>("Muzzle");
   }
 
   private getWeapon<I extends Model | BasePart>(): Maybe<I> {
-    return <I>this.instance.FindFirstChild(this.attributes.WeaponName);
+    return this.instance.FindFirstChild<I>(this.attributes.WeaponName);
   }
 
   private playAnimation(name: AnimationName): AnimationTrack {
